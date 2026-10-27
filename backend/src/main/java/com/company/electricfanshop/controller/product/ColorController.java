@@ -4,7 +4,6 @@ import com.company.electricfanshop.dto.product.request.ColorCreateRequest;
 import com.company.electricfanshop.dto.product.request.ColorUpdateRequest;
 import com.company.electricfanshop.dto.product.response.ColorResponse;
 import com.company.electricfanshop.service.product.ColorService;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

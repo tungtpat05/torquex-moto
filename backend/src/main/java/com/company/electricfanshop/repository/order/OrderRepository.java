@@ -4,12 +4,10 @@
  */
 package com.company.electricfanshop.repository.order;
 
-import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import com.company.electricfanshop.entity.order.Order;
-import com.company.electricfanshop.entity.user.User;
 
 /**
  *

@@ -15,7 +15,7 @@ interface CartItemCardProps {
 const CartItemCard = ({ item, onIncrease, onDecrease, onRemove }: CartItemCardProps) => {
   const { variantId, productName, thumbnail, variantImage, color, unitPrice, quantity, lineTotal } = item;
   
-  const displayImage = variantImage || thumbnail || "https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=300";
+  const displayImage = variantImage || thumbnail;
   const colorName = color?.colorName || "Standard";
 
   return (

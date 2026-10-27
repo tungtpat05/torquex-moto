@@ -1,10 +1,7 @@
 package com.company.electricfanshop.mapper.product;
 
-import com.company.electricfanshop.dto.product.request.BrandCreateRequest;
 import com.company.electricfanshop.dto.product.request.CategoryCreateRequest;
 import com.company.electricfanshop.dto.product.request.CategoryUpdateRequest;
-import com.company.electricfanshop.dto.product.response.BrandResponse;
-import com.company.electricfanshop.entity.product.Brand;
 import org.springframework.stereotype.Component;
 
 import com.company.electricfanshop.dto.product.response.CategoryResponse;
