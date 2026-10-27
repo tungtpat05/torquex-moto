@@ -659,7 +659,7 @@ const VariantSection = ({ productId, productName, disabled }: VariantSectionProp
             <TextField
               fullWidth
               label="SKU (Stock Keeping Unit) *"
-              placeholder="e.g. FAN-BLK-01"
+              placeholder="e.g. TRX-BLK-01"
               value={variantForm.sku}
               onChange={(e) => setVariantForm({ ...variantForm, sku: e.target.value.toUpperCase() })}
               error={!!modalErrors.sku}

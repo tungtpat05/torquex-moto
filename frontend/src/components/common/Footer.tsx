@@ -37,8 +37,8 @@ const Footer = () => {
             <Typography
               sx={{ color: "text.secondary", maxWidth: 360, mb: 3 }}
             >
-              Modern electric fan shop with curated products, trusted brands, and
-              fast delivery. Upgrade your comfort with style and performance.
+              Premium motorcycle showroom with curated superbikes, trusted brands, and
+              high performance. Ride your passion with power and style.
             </Typography>
             <Stack direction="row" spacing={1.5}>
               <IconButton color="inherit" aria-label="facebook" size="small">

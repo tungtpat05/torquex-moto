@@ -239,7 +239,7 @@ const BasicInfoSection = ({
               required
               fullWidth
               label="PRODUCT NAME"
-              placeholder="e.g. Stand Fan Super 100"
+              placeholder="e.g. Ducati Panigale V4"
               value={formData.productName || ""}
               onChange={(e) => onChange("productName", e.target.value)}
               error={Boolean(errors?.productName)}
@@ -255,7 +255,7 @@ const BasicInfoSection = ({
               required
               fullWidth
               label="SLUG"
-              placeholder="e.g. stand-fan-super-100"
+              placeholder="e.g. ducati-panigale-v4"
               value={formData.slug || ""}
               onChange={(e) => onChange("slug", e.target.value)}
               error={Boolean(errors?.slug)}

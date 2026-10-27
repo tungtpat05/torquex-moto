@@ -1,0 +1,92 @@
+package com.company.torquexmoto.service.product;
+
+import com.company.torquexmoto.dto.product.request.ProductCreateRequest;
+import com.company.torquexmoto.dto.product.request.ProductUpdateRequest;
+import com.company.torquexmoto.dto.product.response.ProductResponse;
+import com.company.torquexmoto.entity.product.Brand;
+import com.company.torquexmoto.entity.product.Category;
+import com.company.torquexmoto.entity.product.Product;
+import com.company.torquexmoto.exception.ResourceNotFoundException;
+import com.company.torquexmoto.mapper.product.ProductMapper;
+import com.company.torquexmoto.repository.product.ProductRepository;
+import com.company.torquexmoto.service.storage.ImageStorageService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class ProductService {
+
+    private final ProductRepository productRepository;
+    private final BrandService brandService;
+    private final CategoryService categoryService;
+    private final ProductMapper productMapper;
+    private final ImageStorageService imageStorageService;
+
+    public List<ProductResponse> getAll() {
+        List<Product> products = productRepository.findAll();
+        return products.stream().map(productMapper::toResponse).toList();
+    }
+
+    public ProductResponse getById(Integer id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", id));
+        return productMapper.toResponse(product);
+    }
+
+    public List<ProductResponse> getByCategoryId(Integer categoryId) {
+        List<Product> products = productRepository.findByCategoryId(categoryId);
+        return products.stream().map(productMapper::toResponse).toList();
+    }
+
+    public ProductResponse create(ProductCreateRequest request) {
+        Product product = productMapper.toEntity(request);
+
+        // Set brand if provided
+        if (request.getBrandId() != null) {
+            Brand brand = brandService.getEntityById(request.getBrandId());
+            product.setBrand(brand);
+        }
+
+        // Set brand if provided
+        if (request.getCategoryId() != null) {
+            Category category = categoryService.getEntityById(request.getCategoryId());
+            product.setCategory(category);
+        }
+
+        productRepository.save(product);
+        return productMapper.toResponse(product);
+    }
+
+    public ProductResponse update(Integer id, ProductUpdateRequest request) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", id));
+
+        String oldPublicId = product.getThumbnailPublicId();
+        String newPublicId = request.getThumbnailPublicId();
+
+        if (oldPublicId != null && !oldPublicId.isEmpty() && (newPublicId == null || !oldPublicId.equals(newPublicId))) {
+            imageStorageService.delete(oldPublicId);
+        }
+
+        productMapper.updateEntityFromRequest(request, product);
+
+        // Update brand if provided
+        if (request.getBrandId() != null) {
+            Brand brand = brandService.getEntityById(request.getBrandId());
+            product.setBrand(brand);
+        }
+
+        // Update category if provided
+        if (request.getCategoryId() != null) {
+            Category category = categoryService.getEntityById(request.getCategoryId());
+            product.setCategory(category);
+        }
+
+        productRepository.save(product);
+        return productMapper.toResponse(product);
+    }
+
+}

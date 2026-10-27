@@ -1,0 +1,48 @@
+package com.company.torquexmoto.entity.review;
+
+import com.company.torquexmoto.entity.order.OrderItem;
+import com.company.torquexmoto.entity.product.Product;
+import com.company.torquexmoto.entity.user.User;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "review")
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+public class Review {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+
+    // OneToOne: OrderItem <-> Review (Each order item can only be reviewed once)
+    @OneToOne
+    @JoinColumn(name = "order_item_id", unique = true, nullable = false)
+    private OrderItem orderItem;
+
+    @ManyToOne
+    @JoinColumn(name = "product_id", nullable = false)
+    private Product product;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
+    @Column(nullable = false)
+    private Integer rating;
+
+    @Column(columnDefinition = "NVARCHAR(MAX)")
+    private String comment;
+
+    private Boolean isActive = true;
+
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+}

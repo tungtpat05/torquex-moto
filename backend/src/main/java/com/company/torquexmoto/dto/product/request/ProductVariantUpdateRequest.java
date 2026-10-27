@@ -1,0 +1,18 @@
+package com.company.torquexmoto.dto.product.request;
+
+import lombok.*;
+import java.math.BigDecimal;
+
+@AllArgsConstructor
+@NoArgsConstructor
+@Data
+public class ProductVariantUpdateRequest {
+    private Integer colorId;
+    private String sku;
+    private BigDecimal additionalPrice;
+    private Integer stockQuantity;
+    private String variantImage;
+    private String variantImagePublicId;
+    private Boolean isActive;
+}
+

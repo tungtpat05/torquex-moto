@@ -10,7 +10,6 @@ interface CartSummaryProps {
   total: number;
 }
 
-const PAYMENT_METHODS = ["Visa", "MasterCard", "Amex", "PayPal", "Apple Pay"];
 
 const CartSummary = ({ subtotal, deliveryFee, tax, total }: CartSummaryProps) => {
   return (

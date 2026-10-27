@@ -1,6 +1,6 @@
-# ⚡ ElectricFanShop (Version 2)
+# 🏍️ TorqueX Moto (torquex-moto)
 
-Hệ thống thương mại điện tử chuyên kinh xe mô tô, được xây dựng theo kiến trúc **Full-Stack Separated** (Spring Boot REST API + React TypeScript Frontend).
+Hệ thống thương mại điện tử chuyên kinh doanh xe mô tô phân khối lớn và phụ kiện cao cấp, được xây dựng theo kiến trúc **Full-Stack Separated** (Spring Boot 3 REST API + React 19 TypeScript Frontend).
 
 ---
 
@@ -11,7 +11,7 @@ Hệ thống thương mại điện tử chuyên kinh xe mô tô, được xây 
 * **Database**: Microsoft SQL Server
 * **Database Migration**: Flyway
 * **Security & Auth**: Spring Security, JWT (JSON Web Token), Google OAuth2 Client
-* **Cloud Storage**: Cloudinary Java SDK (Quản lý và tải lên hình ảnh sản phẩm)
+* **Cloud Storage**: Cloudinary Java SDK (Quản lý và tải lên hình ảnh mô tô, biến thể xe)
 * **API Documentation**: Springdoc OpenAPI / Swagger UI
 * **Build Tool**: Maven
 
@@ -25,27 +25,27 @@ Hệ thống thương mại điện tử chuyên kinh xe mô tô, được xây 
 ## ✨ Tính Năng Chính
 
 ### 🛍️ Khách hàng (Client Portal)
-* **Trang chủ & Danh mục**: Xem danh sách sản phẩm, lọc theo thương hiệu, loại quạt, khoảng giá.
-* **Chi tiết sản phẩm**: Xem thông số kỹ thuật, hình ảnh, biến thể sản phẩm, đánh giá từ khách hàng.
-* **Giỏ hàng & Đặt hàng**: Quản lý giỏ hàng, cập nhật số lượng, tạo và xem trạng thái đơn hàng.
-* **Xác thực người dùng**: Đăng ký, Đăng nhập (JWT), Đăng nhập nhanh qua Google OAuth2.
-* **Tài khoản cá nhân**: Quản lý thông tin profile, lịch sử mua hàng.
+* **Trang chủ & Showroom**: Khám phá các mẫu mô tô nổi bật, lọc theo thương hiệu (Ducati, Yamaha, Honda, Kawasaki...), dòng xe (Sportbike, Naked, Cruiser...), khoảng giá.
+* **Chi tiết xe**: Xem thông số kỹ thuật chi tiết (động cơ, mã lực, mô-men xoắn, dung tích xi-lanh), thư viện hình ảnh, các biến thể màu sắc, đánh giá thực tế từ biker.
+* **Giỏ hàng & Đặt mua**: Quản lý giỏ hàng, chọn biến thể xe/phụ kiện, đặt cọc/thanh toán và theo dõi tiến trình đơn hàng.
+* **Xác thực người dùng**: Đăng ký, Đăng nhập bảo mật với JWT, hỗ trợ Đăng nhập nhanh 1-chạm qua Google OAuth2.
+* **Tài khoản cá nhân**: Quản lý hồ sơ biker, danh sách địa chỉ giao nhận, lịch sử mua hàng và trạng thái vận chuyển.
 
 ### 🛡️ Quản trị viên (Admin Portal)
-* **Dashboard**: Tổng quan hệ thống.
-* **Quản lý sản phẩm**: Thêm, sửa, xóa sản phẩm, tải ảnh trực tiếp lên Cloudinary.
-* **Quản lý danh mục & thương hiệu**: Quản lý Category và Brand.
-* **Quản lý đơn hàng & khuyến mãi**: Theo dõi đơn hàng, áp dụng các chương trình giảm giá.
+* **Dashboard Thống kê**: Báo cáo tổng quan doanh thu, số lượng đơn xe và người dùng mới.
+* **Quản lý sản phẩm**: Thêm mới, chỉnh sửa thông tin xe, thông số kỹ thuật động cơ, tải ảnh trực tiếp lên Cloudinary.
+* **Quản lý danh mục & thương hiệu**: Quản trị danh mục xe và các hãng mô tô liên kết.
+* **Quản lý đơn hàng & khuyến mãi**: Tiếp nhận xử lý đơn hàng, quản lý mã voucher/coupon giảm giá.
 
 ---
 
 ## 📁 Cấu Trúc Dự Án (Project Structure)
 
 ```text
-ElectricFanShopVer2/
+torquex-moto/
 ├── backend/                  # Spring Boot REST API
 │   ├── src/main/java/        # Mã nguồn Java (Controller, Service, Entity, Security, DTO...)
-│   ├── src/main/resources/   # Application properties/yml & Flyway migration scripts
+│   ├── src/main/resources/   # Application config & Flyway migration scripts
 │   ├── .env                  # Cấu hình biến môi trường Backend
 │   └── pom.xml               # Maven configuration
 │
@@ -64,7 +64,7 @@ ElectricFanShopVer2/
 ### 📋 Yêu cầu hệ thống
 * **Java**: JDK 21+
 * **Node.js**: Node.js LTS (v18 trở lên)
-* **Database**: SQL Server 2019+
+* **Database**: Microsoft SQL Server 2019+
 
 ---
 
@@ -75,10 +75,10 @@ ElectricFanShopVer2/
    cd backend
    ```
 
-2. Tạo hoặc chỉnh sửa file `.env` tại thư mục `backend/` với các thông số phù hợp:
+2. Tạo hoặc cấu hình file `.env` tại thư mục `backend/` với các thông số phù hợp:
    ```env
-   SPRING_APPLICATION_NAME=electricfanshop
-   SPRING_DATASOURCE_URL=jdbc:sqlserver://localhost:1433;databaseName=ElectricFanShopDB;encrypt=false;trustServerCertificate=true
+   SPRING_APPLICATION_NAME=torquex-moto
+   SPRING_DATASOURCE_URL=jdbc:sqlserver://localhost:1433;databaseName=TorqueXMotoDB;encrypt=false;trustServerCertificate=true
    SPRING_DATASOURCE_USERNAME=sa
    SPRING_DATASOURCE_PASSWORD=your_password
    SERVER_PORT=8081

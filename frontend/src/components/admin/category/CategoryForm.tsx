@@ -164,7 +164,7 @@ const CategoryForm = ({ mode, categoryId, initialData }: CategoryFormProps) => {
                   required
                   fullWidth
                   label="CATEGORY NAME"
-                  placeholder="e.g. Table Fans"
+                  placeholder="e.g. Sportbike, Cruiser, Naked"
                   value={categoryName}
                   onChange={(e) => handleNameChange(e.target.value)}
                   error={Boolean(errors.categoryName)}
@@ -182,7 +182,7 @@ const CategoryForm = ({ mode, categoryId, initialData }: CategoryFormProps) => {
                   required
                   fullWidth
                   label="SLUG"
-                  placeholder="e.g. table-fans"
+                  placeholder="e.g. sportbike"
                   value={slug}
                   onChange={(e) => handleSlugChange(e.target.value)}
                   error={Boolean(errors.slug)}

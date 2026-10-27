@@ -140,7 +140,7 @@ const BrandForm = ({ mode, brandId, initialData }: BrandFormProps) => {
                   required
                   fullWidth
                   label="BRAND NAME"
-                  placeholder="e.g. Electric Fan Co."
+                  placeholder="e.g. Ducati, Yamaha, Honda"
                   value={brandName}
                   onChange={(e) => setBrandName(e.target.value)}
                   error={Boolean(errors.brandName)}

@@ -1,0 +1,55 @@
+package com.company.torquexmoto.controller.product;
+
+import com.company.torquexmoto.dto.product.request.BrandCreateRequest;
+import com.company.torquexmoto.dto.product.request.BrandUpdateRequest;
+import com.company.torquexmoto.dto.product.response.BrandResponse;
+import com.company.torquexmoto.service.product.BrandService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/v1/brands")
+@RequiredArgsConstructor
+public class BrandController {
+    private final BrandService brandService;
+
+    @GetMapping
+    public ResponseEntity<List<BrandResponse>> getAll() {
+        List<BrandResponse> list = brandService.getAll();
+        return ResponseEntity.ok(list);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<BrandResponse> getById(@PathVariable Integer id) {
+        BrandResponse response = brandService.getById(id);
+        if (response == null) {
+            return ResponseEntity.notFound().build();
+        } else {
+            return ResponseEntity.ok(response);
+        }
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping
+    public ResponseEntity<BrandResponse> create(@RequestBody BrandCreateRequest request) {
+        BrandResponse response = brandService.create(request);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{id}")
+    public ResponseEntity<BrandResponse> update(@PathVariable Integer id, @RequestBody BrandUpdateRequest request) {
+        BrandResponse response = brandService.update(id, request);
+        if(response == null) {
+            return ResponseEntity.notFound().build();
+        } else {
+            return ResponseEntity.ok(response);
+        }
+    }
+
+}

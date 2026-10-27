@@ -14,10 +14,10 @@
     </parent>
 
     <groupId>com.mycompany</groupId>
-    <artifactId>electricfanshop</artifactId>
+    <artifactId>torquex-moto</artifactId>
     <version>1.0.0</version>
-    <name>ElectricFanShop</name>
-    <description>Electric Fan Shop project with Spring Boot</description>
+    <name>TorqueXMoto</name>
+    <description>TorqueX Moto - Motorcycle E-commerce System with Spring Boot</description>
 
     <!-- Java LTS (Recommended) -->
     <properties>
