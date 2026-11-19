@@ -24,7 +24,9 @@ backend/build/
 # 3. DATABASE & ENVIRONMENT
 # ==========================================
 .env
-.env.*
+.env.local
+.env.*.local
+!.env.example
 *.db
 *.sqlite
 
@@ -39,3 +41,10 @@ backend/build/
 .project
 .DS_Store
 Thumbs.db
+
+# ==========================================
+# 5. AGENTS & LOCAL SKILLS
+# ==========================================
+.agents
+.aider-desk
+skills-lock.json

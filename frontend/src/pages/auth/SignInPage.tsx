@@ -13,7 +13,8 @@ import { useAuth } from '../../context';
 import logo from '@/assets/images/common/logo.png';
 
 const handleGoogleLogin = () => {
-    window.location.href = "http://localhost:8081/oauth2/authorization/google";
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || "";
+    window.location.href = `${backendUrl}/oauth2/authorization/google`;
 };
 
 const SignInPage = () => {
@@ -33,7 +34,7 @@ const SignInPage = () => {
 
         try {
             const response = await loginWithEmail(email, password);
-            loginSuccess(response.user, response.token);
+            loginSuccess(response.user);
 
             const userRole = response.user?.role?.toUpperCase() || "";
             const isAdmin = userRole === "ADMIN" || userRole === "ROLE_ADMIN";

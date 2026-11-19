@@ -1,34 +1,24 @@
 import axios from "axios";
 
-export const axiosClient = axios.create({
-  baseURL: "/api/v1",
-  timeout: 5000,
-});
+const baseURL = import.meta.env.VITE_API_BASE_URL;
+if (!baseURL && import.meta.env.DEV) {
+  console.warn("⚠️ [Config] VITE_API_BASE_URL is missing in .env, falling back to /api/v1");
+}
 
-// Add token to request headers automatically
-axiosClient.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("authToken");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+export const axiosClient = axios.create({
+  baseURL: baseURL || "/api/v1",
+  timeout: 10000,
+  withCredentials: true,
+});
 
 // Handle response errors
 axiosClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    // If token is expired (401), remove it and redirect (but not on login/register pages)
+    // If unauthorized (401), redirect to login (except when already on authentication pages)
     if (error.response?.status === 401) {
       const currentPath = window.location.pathname;
-      // Only redirect if not already on login or register page
-      if (currentPath !== "/login" && currentPath !== "/register") {
-        localStorage.removeItem("authToken");
+      if (currentPath !== "/login" && currentPath !== "/register" && currentPath !== "/auth/success") {
         window.location.href = "/login";
       }
     }

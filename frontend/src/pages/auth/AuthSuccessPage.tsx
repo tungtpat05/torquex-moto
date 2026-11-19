@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
     Box,
     CircularProgress,
@@ -14,16 +14,12 @@ import { useAuth } from "../../context";
 
 const AuthSuccessPage = () => {
     const navigate = useNavigate();
-    const [searchParams] = useSearchParams();
     const { isLogin, user, loading, refetchUser } = useAuth();
 
     useEffect(() => {
-        const token = searchParams.get("token");
-        if (token) {
-            localStorage.setItem("authToken", token);
-            refetchUser();
-        }
-    }, [searchParams, refetchUser]);
+        // Authenticate session from HttpOnly cookie set by OAuth2 redirect
+        refetchUser();
+    }, [refetchUser]);
 
     useEffect(() => {
         if (!loading && isLogin && user) {

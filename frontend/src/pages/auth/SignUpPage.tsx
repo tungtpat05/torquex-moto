@@ -127,7 +127,7 @@ const SignUpPage = () => {
 
         try {
             const response = await register(email, password, fullName);
-            loginSuccess(response.user, response.token);
+            loginSuccess(response.user);
 
             const userRole = response.user?.role?.toUpperCase() || "";
             const isAdmin = userRole === "ADMIN" || userRole === "ROLE_ADMIN";

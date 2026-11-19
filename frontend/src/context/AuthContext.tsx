@@ -5,7 +5,7 @@ export interface AuthContextType {
     isLogin: boolean;
     user: User | null;
     loading: boolean;
-    loginSuccess: (userData: User, token: string) => void;
+    loginSuccess: (userData: User, token?: string) => void;
     refetchUser: () => Promise<void>;
     logout: () => Promise<void>;
 }

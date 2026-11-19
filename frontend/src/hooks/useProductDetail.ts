@@ -21,9 +21,9 @@ export const useProductDetail = (id: number | string | undefined) => {
         const productId = Number(id);
         const [productData, specsData, imagesData, variantsData] = await Promise.all([
           getProductById(productId),
-          getProductSpecifications(productId).catch(() => []),
-          getProductImages(productId).catch(() => []),
-          getProductVariants(productId).catch(() => []),
+          getProductSpecifications(productId),
+          getProductImages(productId),
+          getProductVariants(productId),
         ]);
 
         setProduct({

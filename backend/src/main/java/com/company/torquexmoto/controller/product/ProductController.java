@@ -10,6 +10,7 @@ import com.company.torquexmoto.service.product.ProductService;
 import com.company.torquexmoto.service.product.ProductVariantService;
 import com.company.torquexmoto.service.product.ProductSpecificationService;
 import lombok.RequiredArgsConstructor;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -42,14 +43,14 @@ public class ProductController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
-    public ResponseEntity<ProductResponse> create(@RequestBody ProductCreateRequest request) {
+    public ResponseEntity<ProductResponse> create(@Valid @RequestBody ProductCreateRequest request) {
         ProductResponse response = productService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
-    public ResponseEntity<ProductResponse> update(@PathVariable Integer id, @RequestBody ProductUpdateRequest request) {
+    public ResponseEntity<ProductResponse> update(@PathVariable Integer id, @Valid @RequestBody ProductUpdateRequest request) {
         ProductResponse response = productService.update(id, request);
         return ResponseEntity.ok(response);
     }
@@ -70,7 +71,7 @@ public class ProductController {
     @PostMapping("/{productId}/images")
     public ResponseEntity<ProductImageResponse> createImage(
             @PathVariable Integer productId,
-            @RequestBody ProductImageCreateRequest request) {
+            @Valid @RequestBody ProductImageCreateRequest request) {
         ProductImageResponse response = productImageService.create(productId, request);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
@@ -80,7 +81,7 @@ public class ProductController {
     public ResponseEntity<ProductImageResponse> updateImage(
             @PathVariable Integer productId,
             @PathVariable Integer imageId,
-            @RequestBody ProductImageUpdateRequest request) {
+            @Valid @RequestBody ProductImageUpdateRequest request) {
         ProductImageResponse response = productImageService.update(productId, imageId, request);
         return ResponseEntity.ok(response);
     }
@@ -119,7 +120,7 @@ public class ProductController {
     @PostMapping("/{productId}/variants")
     public ResponseEntity<ProductVariantResponse> createVariant(
             @PathVariable Integer productId,
-            @RequestBody ProductVariantCreateRequest request) {
+            @Valid @RequestBody ProductVariantCreateRequest request) {
         ProductVariantResponse response = productVariantService.create(productId, request);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
@@ -129,7 +130,7 @@ public class ProductController {
     public ResponseEntity<ProductVariantResponse> updateVariant(
             @PathVariable Integer productId,
             @PathVariable Integer variantId,
-            @RequestBody ProductVariantUpdateRequest request) {
+            @Valid @RequestBody ProductVariantUpdateRequest request) {
         ProductVariantResponse response = productVariantService.update(productId, variantId, request);
         return ResponseEntity.ok(response);
     }
@@ -152,7 +153,7 @@ public class ProductController {
     @PostMapping("/{productId}/specifications")
     public ResponseEntity<ProductSpecificationResponse> createSpecification(
             @PathVariable Integer productId,
-            @RequestBody ProductSpecificationCreateRequest request) {
+            @Valid @RequestBody ProductSpecificationCreateRequest request) {
         ProductSpecificationResponse response = productSpecificationService.create(productId, request);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
@@ -162,7 +163,7 @@ public class ProductController {
     public ResponseEntity<ProductSpecificationResponse> updateSpecification(
             @PathVariable Integer productId,
             @PathVariable Integer specificationId,
-            @RequestBody ProductSpecificationUpdateRequest request) {
+            @Valid @RequestBody ProductSpecificationUpdateRequest request) {
         ProductSpecificationResponse response = productSpecificationService.update(productId, specificationId, request);
         return ResponseEntity.ok(response);
     }

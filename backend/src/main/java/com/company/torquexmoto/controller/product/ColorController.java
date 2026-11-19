@@ -4,6 +4,7 @@ import com.company.torquexmoto.dto.product.request.ColorCreateRequest;
 import com.company.torquexmoto.dto.product.request.ColorUpdateRequest;
 import com.company.torquexmoto.dto.product.response.ColorResponse;
 import com.company.torquexmoto.service.product.ColorService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,14 +33,14 @@ public class ColorController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
-    public ResponseEntity<ColorResponse> create(@RequestBody ColorCreateRequest request) {
+    public ResponseEntity<ColorResponse> create(@Valid @RequestBody ColorCreateRequest request) {
         ColorResponse response = colorService.create(request);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
-    public ResponseEntity<ColorResponse> update(@PathVariable Integer id, @RequestBody ColorUpdateRequest request) {
+    public ResponseEntity<ColorResponse> update(@PathVariable Integer id, @Valid @RequestBody ColorUpdateRequest request) {
         ColorResponse response = colorService.update(id, request);
         return ResponseEntity.ok(response);
     }

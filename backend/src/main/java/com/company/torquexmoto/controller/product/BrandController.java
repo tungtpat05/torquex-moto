@@ -4,6 +4,7 @@ import com.company.torquexmoto.dto.product.request.BrandCreateRequest;
 import com.company.torquexmoto.dto.product.request.BrandUpdateRequest;
 import com.company.torquexmoto.dto.product.response.BrandResponse;
 import com.company.torquexmoto.service.product.BrandService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -36,14 +37,14 @@ public class BrandController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
-    public ResponseEntity<BrandResponse> create(@RequestBody BrandCreateRequest request) {
+    public ResponseEntity<BrandResponse> create(@Valid @RequestBody BrandCreateRequest request) {
         BrandResponse response = brandService.create(request);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
-    public ResponseEntity<BrandResponse> update(@PathVariable Integer id, @RequestBody BrandUpdateRequest request) {
+    public ResponseEntity<BrandResponse> update(@PathVariable Integer id, @Valid @RequestBody BrandUpdateRequest request) {
         BrandResponse response = brandService.update(id, request);
         if(response == null) {
             return ResponseEntity.notFound().build();

@@ -12,31 +12,23 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
 
-    const loginSuccess = useCallback((userData: User, token: string) => {
-        localStorage.setItem("authToken", token);
+    const loginSuccess = useCallback((userData: User) => {
         setUser(userData);
         setIsLogin(true);
     }, []);
 
     const refetchUser = useCallback(async () => {
         try {
-            const token = localStorage.getItem("authToken");
-            if (!token) {
-                setIsLogin(false);
-                setUser(null);
-                return;
-            }
             const userData = await getUser();
             setUser(userData);
             setIsLogin(true);
         } catch (_err) {
-            localStorage.removeItem("authToken");
             setUser(null);
             setIsLogin(false);
         }
     }, []);
 
-    // Fetch user info on app initialization
+    // Fetch user info on app initialization via HttpOnly cookie
     useEffect(() => {
         refetchUser().finally(() => setLoading(false));
     }, [refetchUser]);
@@ -47,7 +39,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         } catch (_err) {
             console.error("Logout error:", _err);
         } finally {
-            localStorage.removeItem("authToken");
             setUser(null);
             setIsLogin(false);
         }
@@ -64,4 +55,3 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
-
