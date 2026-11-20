@@ -1,8 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Box, Typography } from '@mui/material';
-import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
-import VolumeUpIcon from '@mui/icons-material/VolumeUp';
-import VolumeOffIcon from '@mui/icons-material/VolumeOff';
 import { gsap } from 'gsap';
 import { getLenis } from '../../lib/smoothScroll';
 import awakeningBanner from '@/assets/images/home/awakening-banner.jpg';
@@ -12,12 +9,6 @@ export const KtmHeroAwakening: React.FC = () => {
   const bgRef = useRef<HTMLDivElement>(null);
   const leftBoxRef = useRef<HTMLDivElement>(null);
   const rightBoxRef = useRef<HTMLDivElement>(null);
-  const scrollCueRef = useRef<HTMLDivElement>(null);
-
-  // Audio synthesis state (Subtle mechanical paddock hum via Web Audio API)
-  const [isAudioActive, setIsAudioActive] = useState(false);
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  const gainNodeRef = useRef<GainNode | null>(null);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -82,18 +73,6 @@ export const KtmHeroAwakening: React.FC = () => {
         0
       );
 
-      // Fade out scroll cue early
-      scrollTl.to(
-        scrollCueRef.current,
-        {
-          opacity: 0,
-          y: 20,
-          duration: 20,
-          ease: 'power1.out',
-        },
-        0
-      );
-
       // Beat 2: Fade in Right Box as scroll progresses (35% -> 85%)
       scrollTl.fromTo(
         rightBoxRef.current,
@@ -113,59 +92,6 @@ export const KtmHeroAwakening: React.FC = () => {
 
     return () => ctx.revert();
   }, []);
-
-  // Web Audio Mechanical Ambience Synth (Low-frequency 42Hz engine idle rumble)
-  const togglePaddockAudio = () => {
-    if (!isAudioActive) {
-      try {
-        const AudioCtx =
-          window.AudioContext ||
-          (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-        const ctx = new AudioCtx();
-        audioCtxRef.current = ctx;
-
-        // Sub-bass oscillator (42Hz LC8 V-Twin idle cadence)
-        const osc = ctx.createOscillator();
-        const filter = ctx.createBiquadFilter();
-        const gain = ctx.createGain();
-
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(42, ctx.currentTime);
-
-        filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(110, ctx.currentTime);
-        filter.Q.setValueAtTime(3, ctx.currentTime);
-
-        gain.gain.setValueAtTime(0.01, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.08, ctx.currentTime + 1.5);
-
-        osc.connect(filter);
-        filter.connect(gain);
-        gain.connect(ctx.destination);
-
-        osc.start();
-        gainNodeRef.current = gain;
-        setIsAudioActive(true);
-      } catch (err) {
-        console.warn('Web Audio initialization error:', err);
-      }
-    } else {
-      if (gainNodeRef.current && audioCtxRef.current) {
-        gainNodeRef.current.gain.exponentialRampToValueAtTime(
-          0.0001,
-          audioCtxRef.current.currentTime + 0.5
-        );
-        setTimeout(() => {
-          audioCtxRef.current?.close();
-          audioCtxRef.current = null;
-          gainNodeRef.current = null;
-          setIsAudioActive(false);
-        }, 550);
-      } else {
-        setIsAudioActive(false);
-      }
-    }
-  };
 
   const handleScrollToSection = (sectionId: string) => {
     const targetElement = document.querySelector(sectionId);
@@ -537,91 +463,6 @@ export const KtmHeroAwakening: React.FC = () => {
           >
             EXPLORE ↓
           </Box>
-        </Box>
-      </Box>
-
-      {/* 5. BOTTOM UTILITIES: Scroll Cue & Paddock Ambience Switch */}
-      <Box
-        sx={{
-          position: 'absolute',
-          bottom: 24,
-          left: 0,
-          right: 0,
-          px: { xs: 3, md: 8 },
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          zIndex: 15,
-        }}
-      >
-        {/* Subtle Scroll Cue */}
-        <Box
-          ref={scrollCueRef}
-          onClick={() => handleScrollToSection('#anatomy')}
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1,
-            cursor: 'pointer',
-            opacity: 0.85,
-            transition: 'opacity 0.2s ease',
-            backgroundColor: 'rgba(7, 7, 9, 0.5)',
-            px: 1.5,
-            py: 0.5,
-            borderRadius: '20px',
-            backdropFilter: 'blur(8px)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            '&:hover': { opacity: 1 },
-          }}
-        >
-          <ArrowDownwardIcon sx={{ fontSize: '0.9rem', color: '#FF6700' }} />
-          <Typography
-            sx={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: '0.65rem',
-              letterSpacing: '0.14em',
-              color: '#D4D4D8',
-            }}
-          >
-            SCROLL TO UNVEIL THE 1390 BEAST
-          </Typography>
-        </Box>
-
-        {/* Paddock Ambience Sound Switch */}
-        <Box
-          onClick={togglePaddockAudio}
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1,
-            px: 1.6,
-            py: 0.6,
-            borderRadius: '20px',
-            backgroundColor: isAudioActive ? 'rgba(255, 103, 0, 0.2)' : 'rgba(7, 7, 9, 0.65)',
-            border: isAudioActive ? '1px solid #FF6700' : '1px solid rgba(255, 255, 255, 0.12)',
-            backdropFilter: 'blur(8px)',
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-            '&:hover': {
-              borderColor: '#FF6700',
-            },
-          }}
-        >
-          {isAudioActive ? (
-            <VolumeUpIcon sx={{ fontSize: '0.9rem', color: '#FF6700' }} />
-          ) : (
-            <VolumeOffIcon sx={{ fontSize: '0.9rem', color: '#A1A1AA' }} />
-          )}
-          <Typography
-            sx={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: '0.62rem',
-              letterSpacing: '0.1em',
-              color: isAudioActive ? '#FF6700' : '#A1A1AA',
-            }}
-          >
-            PADDOCK SOUND [{isAudioActive ? 'ON' : 'OFF'}]
-          </Typography>
         </Box>
       </Box>
     </Box>
