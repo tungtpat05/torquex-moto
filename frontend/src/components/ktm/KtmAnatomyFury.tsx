@@ -1,141 +1,153 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Box, Typography } from '@mui/material';
 import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+import frameImg from '@/assets/images/ktm/anatomy/1390_frame.png';
+import engineImg from '@/assets/images/ktm/anatomy/1390_engine.png';
+import forkImg from '@/assets/images/ktm/anatomy/1390_fork.png';
+import brakesImg from '@/assets/images/ktm/anatomy/1390_brakes.png';
+import bikeBaseImg from '@/assets/images/ktm/models/1390_sdr_90_right.png';
+
+gsap.registerPlugin(ScrollTrigger);
+
+interface TelemetryMetric {
+  label: string;
+  targetValue: number;
+  unit: string;
+  isDecimal?: boolean;
+  prefix?: string;
+}
 
 interface AnatomyStage {
   id: string;
   badge: string;
   headline: string;
   subhead: string;
-  image: string;
-  telemetry: { label: string; value: string; unit: string }[];
-  reticleTarget: { x: string; y: string; label: string };
-  svgGraphic: 'clamp' | 'suspension' | 'torque';
+  hardwareImage: string;
+  telemetry: TelemetryMetric[];
+  reticleTarget: {
+    x: number; // percentage in bike container
+    y: number;
+    label: string;
+  };
 }
 
-const STAGES: AnatomyStage[] = [
+const ANATOMY_STAGES: AnatomyStage[] = [
   {
-    id: 'brembo',
-    badge: 'STAGE 01 // KINEMATIC DECELERATION',
-    headline: 'BUILT TO BRAKE LATE.',
-    subhead: 'Brembo Stylema monobloc 4-piston calipers machined from solid aircraft aluminum billet, dissipating extreme thermal spikes under 300 km/h threshold braking.',
-    image: 'https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?auto=format&fit=crop&w=1600&q=85',
+    id: 'chassis',
+    badge: 'STAGE 01 // CHROMIUM-MOLYBDENUM TRELLIS CHASSIS',
+    headline: 'ULTRA-LIGHT CHROMOLY STIFFNESS.',
+    subhead: 'Engine utilized as a stressed member to maximize torsional rigidity (+12%). Laser-cut 25CrMo4 steel tubes hydroformed and powder-coated in Mattighofen racing orange for razor-sharp turn-in feedback.',
+    hardwareImage: frameImg,
     telemetry: [
-      { label: 'CLAMP FORCE', value: '18.4', unit: 'kN' },
-      { label: 'ROTOR DIAMETER', value: '320', unit: 'MM' },
-      { label: 'PEAK DISC TEMP', value: '750', unit: '°C' },
-      { label: 'FLUID SYSTEM', value: 'DOT 5.1', unit: 'RACE' },
+      { label: 'TORSIONAL RIGIDITY', targetValue: 12, unit: '% GAIN', prefix: '+' },
+      { label: 'DRY CHASSIS WEIGHT', targetValue: 189, unit: 'KG' },
+      { label: 'ALLOY GRADE', targetValue: 25, unit: 'CrMo4' },
+      { label: 'SUBFRAME CAST', targetValue: 100, unit: '% COMPOSITE' },
     ],
-    reticleTarget: { x: '58%', y: '52%', label: 'TITANIUM PISTON SEAL' },
-    svgGraphic: 'clamp',
+    reticleTarget: { x: 50, y: 38, label: 'TRELLIS HEADSTOCK NODE' },
   },
   {
-    id: 'wp-apex',
-    badge: 'STAGE 02 // ADAPTIVE DYNAMICS',
+    id: 'powertrain',
+    badge: 'STAGE 02 // 1,350 CC LC8 V-TWIN CAMSHIFT',
+    headline: '190 HP. 145 NM. ZERO COMPROMISE.',
+    subhead: 'Enlarged 1,350cc displacement with all-new CamShift technology. Dual intake cam profiles optimize torque spread below 6,000 RPM while unleashing unhinged top-end acceleration to the 10,500 RPM redline.',
+    hardwareImage: engineImg,
+    telemetry: [
+      { label: 'DISPLACEMENT', targetValue: 1350, unit: 'CC' },
+      { label: 'MAX PEAK POWER', targetValue: 190, unit: 'HP' },
+      { label: 'MAX OUTPUT TORQUE', targetValue: 145, unit: 'NM' },
+      { label: 'REDLINE LIMIT', targetValue: 10500, unit: 'RPM' },
+    ],
+    reticleTarget: { x: 48, y: 55, label: 'VARIABLE CAMSHIFT VALVE' },
+  },
+  {
+    id: 'suspension',
+    badge: 'STAGE 03 // 48 MM WP APEX SEMI-ACTIVE SUSPENSION',
     headline: 'TAMED BY CODE. UNLEASHED BY INSTINCT.',
-    subhead: 'WP APEX PRO Gen 3 semi-active suspension. Solenoid damping valves adapt damping rates across compression and rebound in 0.008 seconds.',
-    image: 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=1600&q=85',
+    subhead: 'WP APEX PRO Gen 3 semi-active split-function suspension. High-speed electromagnetic solenoid valves adapt compression and rebound damping dynamically in 0.008 seconds across 6 active riding modes.',
+    hardwareImage: forkImg,
     telemetry: [
-      { label: 'REBOUND LATENCY', value: '0.008', unit: 'SEC' },
-      { label: 'FORK STROKE', value: '125', unit: 'MM' },
-      { label: 'ALGORITHM CYCLE', value: '1,000', unit: 'Hz' },
-      { label: 'TUNING MODES', value: '6', unit: 'ACTIVE' },
+      { label: 'SOLENOID LATENCY', targetValue: 0.008, unit: 'SEC', isDecimal: true },
+      { label: 'FORK INNER TUBE', targetValue: 48, unit: 'MM' },
+      { label: 'SENSOR REFRESH', targetValue: 1000, unit: 'Hz' },
+      { label: 'ACTIVE MODES', targetValue: 6, unit: 'PROGRAMS' },
     ],
-    reticleTarget: { x: '50%', y: '46%', label: 'ELECTROMAGNETIC VALVE' },
-    svgGraphic: 'suspension',
+    reticleTarget: { x: 67, y: 38, label: 'MAGNETIC PRO VALVE' },
   },
   {
-    id: 'lc8-powertrain',
-    badge: 'STAGE 03 // LC8 V-TWIN COMBUSTION',
-    headline: '140 NM OF PURE DISRESPECT.',
-    subhead: '75° 1,301cc LC8 V-Twin engine with titanium intake valves and ultralight forged pistons, delivering violent low-end torque with a laser-cut 10,500 RPM redline.',
-    image: 'https://images.unsplash.com/photo-1609630875171-b1321377ee65?auto=format&fit=crop&w=1600&q=85',
+    id: 'brakes',
+    badge: 'STAGE 04 // BREMBO STYLEMA MONOBLOC DECELERATION',
+    headline: 'BUILT TO BRAKE LATE. REALLY LATE.',
+    subhead: 'Brembo Stylema monobloc 4-piston calipers machined from solid aircraft aluminum billet, matched with twin 320mm floating discs and Brembo MCS radial master cylinder for surgical trail-braking control.',
+    hardwareImage: brakesImg,
     telemetry: [
-      { label: 'DISPLACEMENT', value: '1,301', unit: 'CC' },
-      { label: 'OUTPUT TORQUE', value: '140', unit: 'NM' },
-      { label: 'COMPRESSION', value: '13.5:1', unit: 'RATIO' },
-      { label: 'REDLINE LIMIT', value: '10,500', unit: 'RPM' },
+      { label: 'PEAK CLAMP FORCE', targetValue: 18.4, unit: 'kN', isDecimal: true },
+      { label: 'ROTOR DIAMETER', targetValue: 320, unit: 'MM' },
+      { label: 'MAX THERMAL SPIKE', targetValue: 750, unit: '°C' },
+      { label: 'FLUID RATING', targetValue: 5.1, unit: 'DOT RACE', isDecimal: true },
     ],
-    reticleTarget: { x: '52%', y: '58%', label: 'TITANIUM INTAKE CAMS' },
-    svgGraphic: 'torque',
+    reticleTarget: { x: 72, y: 68, label: 'TITANIUM PISTON BORE' },
   },
 ];
 
 export const KtmAnatomyFury: React.FC = () => {
   const sectionRef = useRef<HTMLDivElement>(null);
-  const stageWrapperRef = useRef<HTMLDivElement>(null);
-  const [activeMobileIndex, setActiveMobileIndex] = useState(0);
-  const [activeDesktopIndex, setActiveDesktopIndex] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [activeStage, setActiveStage] = useState(0);
 
+  // Animated telemetry numbers state
+  const [currentValues, setCurrentValues] = useState<number[]>([0, 0, 0, 0]);
+
+  // Handle Desktop GSAP ScrollTrigger Pinned Dissection
   useEffect(() => {
-    // Only execute pinned scroll trigger on desktop viewports (>= 1024px)
+    // Only apply pinned stage on desktop/tablet landscape (>= 1024px)
     if (window.innerWidth < 1024) return;
 
     const ctx = gsap.context(() => {
-      const slides = gsap.utils.toArray<HTMLElement>('.anatomy-slide');
+      const stageCount = ANATOMY_STAGES.length;
 
-      // Timeline that controls the 3 staged components over 250vh travel
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          pin: true,
-          start: 'top top',
-          end: '+=250%',
-          scrub: 0.4,
-          anticipatePin: 1,
-          onUpdate: (self) => {
-            const p = self.progress;
-            if (p < 0.35) {
-              setActiveDesktopIndex(0);
-            } else if (p < 0.70) {
-              setActiveDesktopIndex(1);
-            } else {
-              setActiveDesktopIndex(2);
-            }
-          },
+      // Master Timeline over 320vh scroll travel
+      ScrollTrigger.create({
+        trigger: sectionRef.current,
+        pin: true,
+        start: 'top top',
+        end: '+=320%',
+        scrub: 0.5,
+        anticipatePin: 1,
+        onUpdate: (self) => {
+          const progress = self.progress; // 0 to 1
+          const stageIndex = Math.min(
+            Math.floor(progress * stageCount),
+            stageCount - 1
+          );
+          setActiveStage(stageIndex);
+
+          // Animate rolling numbers based on intra-stage progress
+          const intraStageProgress = (progress * stageCount) % 1;
+          const stageData = ANATOMY_STAGES[stageIndex];
+          const newVals = stageData.telemetry.map((t) => {
+            const raw = t.targetValue * Math.min(intraStageProgress * 1.5, 1);
+            return t.isDecimal ? parseFloat(raw.toFixed(t.targetValue < 1 ? 3 : 1)) : Math.round(raw);
+          });
+          setCurrentValues(newVals);
         },
       });
-
-      // Initially show Slide 0
-      gsap.set(slides[0], { opacity: 1, x: 0, scale: 1 });
-      gsap.set(slides.slice(1), { opacity: 0, x: 60, scale: 0.96 });
-
-      // Stage 1 Hold and Transition 1 -> 2 (around progress 30% - 42%)
-      tl.to(slides[0], {
-        opacity: 0,
-        x: -60,
-        scale: 1.05,
-        duration: 12,
-        ease: 'power1.inOut',
-      }, 28)
-      .to(slides[1], {
-        opacity: 1,
-        x: 0,
-        scale: 1,
-        duration: 12,
-        ease: 'power1.inOut',
-      }, 30);
-
-      // Stage 2 Hold and Transition 2 -> 3 (around progress 62% - 74%)
-      tl.to(slides[1], {
-        opacity: 0,
-        x: -60,
-        scale: 1.05,
-        duration: 12,
-        ease: 'power1.inOut',
-      }, 62)
-      .to(slides[2], {
-        opacity: 1,
-        x: 0,
-        scale: 1,
-        duration: 12,
-        ease: 'power1.inOut',
-      }, 64);
-
     }, sectionRef);
 
     return () => ctx.revert();
   }, []);
+
+  // Update telemetry values on mobile or when stage changes manually
+  useEffect(() => {
+    if (window.innerWidth < 1024) {
+      const stageData = ANATOMY_STAGES[activeStage];
+      setCurrentValues(stageData.telemetry.map((t) => t.targetValue));
+    }
+  }, [activeStage]);
+
+  const activeStageData = ANATOMY_STAGES[activeStage];
 
   return (
     <Box
@@ -153,339 +165,430 @@ export const KtmAnatomyFury: React.FC = () => {
         flexDirection: 'column',
         justifyContent: 'center',
         borderTop: '1px solid rgba(255, 255, 255, 0.05)',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
       }}
     >
-      {/* Background Ambient Spotlight Gradients */}
+      {/* 1. AMBIENT ATMOSPHERIC RADIAL GLOWS */}
       <Box
         sx={{
           position: 'absolute',
           inset: 0,
-          background: 'radial-gradient(circle at 65% 50%, rgba(255, 103, 0, 0.07) 0%, transparent 60%)',
+          background:
+            'radial-gradient(circle at 65% 50%, rgba(255, 103, 0, 0.08) 0%, rgba(7, 7, 9, 0) 65%), radial-gradient(circle at 20% 80%, rgba(255, 103, 0, 0.04) 0%, rgba(7, 7, 9, 0) 50%)',
           pointerEvents: 'none',
         }}
       />
 
-      {/* Persistent Section Top Bar */}
+      {/* 2. TOP STATUS BAR: CHAPTER BADGE & STAGE PILLS */}
       <Box
         sx={{
           position: { xs: 'relative', lg: 'absolute' },
-          top: { lg: 32 },
+          top: { lg: 28 },
           left: 0,
           right: 0,
           px: { xs: 3, md: 8 },
-          pt: { xs: 6, lg: 0 },
+          pt: { xs: 5, lg: 0 },
           display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
           justifyContent: 'space-between',
-          alignItems: 'center',
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          gap: 2,
           zIndex: 30,
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <Box sx={{ width: 12, height: 2, backgroundColor: '#FF6700' }} />
+          <Box sx={{ width: 14, height: 2, backgroundColor: '#FF6700' }} />
           <Typography
             sx={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: '0.72rem',
-              fontWeight: 700,
-              letterSpacing: '0.2em',
+              fontFamily: 'var(--font-mono, monospace)',
+              fontSize: '0.75rem',
+              fontWeight: 800,
+              letterSpacing: '0.22em',
               color: '#FF6700',
+              textTransform: 'uppercase',
             }}
           >
             ACT II // THE ANATOMY OF FURY
           </Typography>
         </Box>
 
-        {/* Desktop Step Indicators */}
-        <Box sx={{ display: { xs: 'none', lg: 'flex' }, alignItems: 'center', gap: 3 }}>
-          {STAGES.map((s, idx) => (
-            <Box
-              key={s.id}
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-                opacity: activeDesktopIndex === idx ? 1 : 0.4,
-                transition: 'opacity 0.3s ease',
-              }}
-            >
+        {/* Stage Progress Indicators */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          {ANATOMY_STAGES.map((stage, idx) => {
+            const isActive = idx === activeStage;
+            return (
               <Box
-                sx={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: '50%',
-                  backgroundColor: activeDesktopIndex === idx ? '#FF6700' : '#A1A1AA',
+                key={stage.id}
+                onClick={() => {
+                  if (window.innerWidth < 1024) setActiveStage(idx);
                 }}
-              />
-              <Typography
                 sx={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '0.68rem',
-                  letterSpacing: '0.12em',
-                  color: activeDesktopIndex === idx ? '#F4F4F5' : '#A1A1AA',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  px: 1.8,
+                  py: 0.6,
+                  borderRadius: '1px',
+                  backgroundColor: isActive ? 'rgba(255, 103, 0, 0.12)' : 'rgba(255, 255, 255, 0.03)',
+                  border: isActive ? '1px solid #FF6700' : '1px solid rgba(255, 255, 255, 0.08)',
+                  cursor: { xs: 'pointer', lg: 'default' },
+                  transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
                 }}
               >
-                0{idx + 1}
-              </Typography>
-            </Box>
-          ))}
+                <Typography
+                  sx={{
+                    fontFamily: 'var(--font-mono, monospace)',
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    color: isActive ? '#FF6700' : 'rgba(255, 255, 255, 0.4)',
+                    letterSpacing: '0.08em',
+                  }}
+                >
+                  0{idx + 1}
+                </Typography>
+                <Box
+                  sx={{
+                    width: 4,
+                    height: 4,
+                    borderRadius: '50%',
+                    backgroundColor: isActive ? '#FF6700' : 'transparent',
+                    boxShadow: isActive ? '0 0 8px #FF6700' : 'none',
+                  }}
+                />
+              </Box>
+            );
+          })}
         </Box>
       </Box>
 
-      {/* Mobile Tab Switcher (< 1024px) */}
+      {/* 3. MAIN INTERACTIVE DISSECTION STAGE (SPLIT VIEW) */}
       <Box
-        sx={{
-          display: { xs: 'flex', lg: 'none' },
-          overflowX: 'auto',
-          gap: 1.5,
-          px: 3,
-          py: 2,
-          mt: 2,
-          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-          '::-webkit-scrollbar': { display: 'none' },
-        }}
-      >
-        {STAGES.map((s, idx) => (
-          <Box
-            key={s.id}
-            onClick={() => setActiveMobileIndex(idx)}
-            sx={{
-              px: 2,
-              py: 0.8,
-              borderRadius: '2px',
-              backgroundColor: activeMobileIndex === idx ? 'rgba(255, 103, 0, 0.15)' : 'rgba(255, 255, 255, 0.03)',
-              border: activeMobileIndex === idx ? '1px solid #FF6700' : '1px solid rgba(255, 255, 255, 0.08)',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            <Typography
-              sx={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: '0.72rem',
-                fontWeight: 700,
-                color: activeMobileIndex === idx ? '#FF6700' : '#A1A1AA',
-              }}
-            >
-              0{idx + 1} {s.id.toUpperCase()}
-            </Typography>
-          </Box>
-        ))}
-      </Box>
-
-      {/* STAGE CONTAINER (Pinned on Desktop, Interactive/Tabbed on Mobile) */}
-      <Box
-        ref={stageWrapperRef}
+        ref={containerRef}
         sx={{
           position: 'relative',
           width: '100%',
-          height: { xs: 'auto', lg: '100%' },
-          display: 'flex',
+          maxWidth: '1800px',
+          mx: 'auto',
+          px: { xs: 3, md: 8 },
+          py: { xs: 6, lg: 0 },
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', lg: '460px 1fr' },
+          gap: { xs: 5, lg: 6 },
           alignItems: 'center',
-          justifyContent: 'center',
-          px: { xs: 3, md: 6, lg: 10 },
-          py: { xs: 4, lg: 0 },
+          minHeight: { xs: 'auto', lg: '700px' },
+          zIndex: 20,
         }}
       >
-        {STAGES.map((stage, idx) => {
-          const isMobileVisible = activeMobileIndex === idx;
-
-          return (
+        {/* LEFT COLUMN: DYNAMIC TELEMETRY CARD */}
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 2.5,
+            zIndex: 25,
+            maxWidth: { xs: '100%', lg: '460px' },
+          }}
+        >
+          {/* Active Badge */}
+          <Box
+            sx={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 1.2,
+              px: 1.6,
+              py: 0.5,
+              borderRadius: '2px',
+              backgroundColor: 'rgba(255, 103, 0, 0.08)',
+              border: '1px solid rgba(255, 103, 0, 0.35)',
+              alignSelf: 'flex-start',
+            }}
+          >
             <Box
-              key={stage.id}
-              className="anatomy-slide"
               sx={{
-                position: { xs: isMobileVisible ? 'relative' : 'none', lg: 'absolute' },
-                display: { xs: isMobileVisible ? 'grid' : 'none', lg: 'grid' },
-                inset: { lg: 0 },
-                width: '100%',
-                height: { xs: 'auto', lg: '100%' },
-                gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' },
-                gap: { xs: 4, lg: 8 },
-                alignItems: 'center',
-                px: { lg: 10 },
-                py: { lg: 10 },
-                zIndex: 10,
+                width: 6,
+                height: 6,
+                borderRadius: '50%',
+                backgroundColor: '#FF6700',
+                boxShadow: '0 0 10px #FF6700',
+              }}
+            />
+            <Typography
+              sx={{
+                fontFamily: 'var(--font-mono, monospace)',
+                fontSize: '0.68rem',
+                fontWeight: 700,
+                color: '#FF6700',
+                letterSpacing: '0.14em',
               }}
             >
-              {/* Left Column: Narrative Copy & Telemetry Matrix */}
-              <Box sx={{ display: 'flex', flexDirection: 'column', zIndex: 5 }}>
-                <Typography
-                  sx={{
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: '0.72rem',
-                    letterSpacing: '0.2em',
-                    color: '#FF6700',
-                    mb: 1.5,
-                  }}
-                >
-                  {stage.badge}
-                </Typography>
+              {activeStageData.badge}
+            </Typography>
+          </Box>
 
-                <Typography
-                  component="h2"
-                  sx={{
-                    fontFamily: 'var(--font-display)',
-                    fontWeight: 900,
-                    fontSize: { xs: '2rem', sm: '2.8rem', md: '3.6rem' },
-                    lineHeight: 1.02,
-                    letterSpacing: '-0.03em',
-                    color: '#F4F4F5',
-                    mb: 2.5,
-                  }}
-                >
-                  {stage.headline}
-                </Typography>
+          {/* Headline */}
+          <Typography
+            variant="h2"
+            sx={{
+              fontFamily: 'var(--font-display, "Outfit", sans-serif)',
+              fontSize: { xs: '2rem', sm: '2.5rem', lg: '2.85rem' },
+              fontWeight: 900,
+              color: '#FFFFFF',
+              lineHeight: 1.05,
+              letterSpacing: '-0.03em',
+              textTransform: 'uppercase',
+            }}
+          >
+            {activeStageData.headline}
+          </Typography>
 
-                <Typography
-                  sx={{
-                    fontFamily: 'var(--font-body)',
-                    fontSize: { xs: '0.92rem', md: '1.05rem' },
-                    lineHeight: 1.7,
-                    color: '#A1A1AA',
-                    mb: 4.5,
-                    maxWidth: '540px',
-                  }}
-                >
-                  {stage.subhead}
-                </Typography>
+          {/* Subhead narrative */}
+          <Typography
+            sx={{
+              fontFamily: 'var(--font-body, "Inter", sans-serif)',
+              fontSize: { xs: '0.88rem', lg: '0.94rem' },
+              color: '#A1A1AA',
+              lineHeight: 1.65,
+              fontWeight: 400,
+            }}
+          >
+            {activeStageData.subhead}
+          </Typography>
 
-                {/* Telemetry HUD Grid for this Stage */}
+          {/* 4-Cell Telemetry Matrix */}
+          <Box
+            sx={{
+              mt: 1,
+              display: 'grid',
+              gridTemplateColumns: 'repeat(2, 1fr)',
+              gap: 1.5,
+            }}
+          >
+            {activeStageData.telemetry.map((item, idx) => {
+              const displayVal = currentValues[idx] !== undefined ? currentValues[idx] : item.targetValue;
+              return (
                 <Box
+                  key={item.label}
                   sx={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(2, 1fr)',
-                    gap: 2,
-                    maxWidth: '540px',
-                    p: 2.5,
-                    borderRadius: '4px',
-                    backgroundColor: 'rgba(15, 15, 20, 0.78)',
-                    border: '1px solid rgba(255, 255, 255, 0.12)',
-                    borderTop: '1px solid rgba(255, 255, 255, 0.28)',
+                    p: 2,
+                    borderRadius: '2px',
+                    backgroundColor: 'rgba(15, 15, 20, 0.85)',
                     backdropFilter: 'blur(16px)',
-                    boxShadow: '0 20px 45px rgba(0, 0, 0, 0.6)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    borderTop: '1px solid rgba(255, 255, 255, 0.20)',
+                    transition: 'border-color 0.3s ease',
+                    '&:hover': {
+                      borderColor: '#FF6700',
+                    },
                   }}
                 >
-                  {stage.telemetry.map((t) => (
-                    <Box key={t.label}>
-                      <Typography
-                        sx={{
-                          fontFamily: 'var(--font-mono)',
-                          fontSize: '0.65rem',
-                          fontWeight: 600,
-                          color: '#D4D4D8',
-                          letterSpacing: '0.12em',
-                          mb: 0.3,
-                        }}
-                      >
-                        {t.label}
-                      </Typography>
-                      <Typography
-                        className="tabular-nums"
-                        sx={{
-                          fontFamily: 'var(--font-mono)',
-                          fontSize: '1.25rem',
-                          fontWeight: 700,
-                          color: '#F4F4F5',
-                        }}
-                      >
-                        {t.value} <span style={{ fontSize: '0.75rem', color: '#FF6700' }}>{t.unit}</span>
-                      </Typography>
-                    </Box>
-                  ))}
-                </Box>
-              </Box>
-
-              {/* Right Column: Macro Visual with Animated SVG Leader Reticles */}
-              <Box
-                sx={{
-                  position: 'relative',
-                  width: '100%',
-                  height: { xs: '320px', sm: '420px', lg: '560px' },
-                  borderRadius: '6px',
-                  overflow: 'hidden',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  boxShadow: '0 25px 60px rgba(0, 0, 0, 0.8)',
-                }}
-              >
-                {/* Visual Image */}
-                <Box
-                  component="img"
-                  src={stage.image}
-                  alt={stage.headline}
-                  loading="lazy"
-                  decoding="async"
-                  sx={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    objectPosition: 'center',
-                    filter: 'contrast(1.08) brightness(0.92)',
-                  }}
-                />
-
-                {/* Subtle Optical Vignette */}
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    inset: 0,
-                    background: 'radial-gradient(circle at center, transparent 40%, rgba(7, 7, 9, 0.7) 100%)',
-                    pointerEvents: 'none',
-                  }}
-                />
-
-                {/* Dynamic SVG Leader Line & Reticle Overlay */}
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    top: stage.reticleTarget.y,
-                    left: stage.reticleTarget.x,
-                    transform: 'translate(-50%, -50%)',
-                    zIndex: 15,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1.5,
-                  }}
-                >
-                  <Box
+                  <Typography
                     sx={{
-                      width: 14,
-                      height: 14,
-                      borderRadius: '50%',
-                      border: '2px solid #FF6700',
-                      backgroundColor: 'rgba(255, 103, 0, 0.3)',
-                      boxShadow: '0 0 16px #FF6700',
-                      animation: 'pulse-subtle 2s infinite ease-in-out',
-                    }}
-                  />
-                  <Box
-                    sx={{
-                      px: 1.2,
-                      py: 0.4,
-                      borderRadius: '2px',
-                      backgroundColor: 'rgba(7, 7, 9, 0.85)',
-                      border: '1px solid #FF6700',
-                      backdropFilter: 'blur(8px)',
+                      fontFamily: 'var(--font-mono, monospace)',
+                      fontSize: '0.62rem',
+                      fontWeight: 600,
+                      color: '#A1A1AA',
+                      letterSpacing: '0.1em',
+                      textTransform: 'uppercase',
+                      mb: 0.6,
                     }}
                   >
+                    {item.label}
+                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.8 }}>
                     <Typography
                       sx={{
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: '0.62rem',
-                        fontWeight: 700,
-                        letterSpacing: '0.14em',
-                        color: '#F4F4F5',
-                        whiteSpace: 'nowrap',
+                        fontFamily: 'var(--font-mono, monospace)',
+                        fontSize: { xs: '1.4rem', lg: '1.75rem' },
+                        fontWeight: 900,
+                        color: '#FFFFFF',
+                        letterSpacing: '-0.02em',
+                        fontVariantNumeric: 'tabular-nums',
                       }}
                     >
-                      {stage.reticleTarget.label}
+                      {item.prefix || ''}{displayVal.toLocaleString()}
+                    </Typography>
+                    <Typography
+                      sx={{
+                        fontFamily: 'var(--font-mono, monospace)',
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        color: '#FF6700',
+                        letterSpacing: '0.05em',
+                      }}
+                    >
+                      {item.unit}
                     </Typography>
                   </Box>
                 </Box>
-              </Box>
+              );
+            })}
+          </Box>
+        </Box>
+
+        {/* RIGHT COLUMN: THE EXPLODED MOTORCYCLE DISSECTION STAGE */}
+        <Box
+          sx={{
+            position: 'relative',
+            width: '100%',
+            height: { xs: '380px', sm: '500px', lg: '620px' },
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          {/* BASE LAYER: Blueprint Ghost Bike */}
+          <Box
+            component="img"
+            src={bikeBaseImg}
+            alt="KTM 1390 Super Duke R Technical Blueprint"
+            sx={{
+              position: 'absolute',
+              width: '95%',
+              maxHeight: '100%',
+              objectFit: 'contain',
+              opacity: 0.22,
+              filter: 'grayscale(0.6) brightness(0.6)',
+              userSelect: 'none',
+              pointerEvents: 'none',
+              transition: 'opacity 0.4s ease',
+            }}
+          />
+
+          {/* ACTIVE DISSECTION HARDWARE CUTOUT LAYER */}
+          {ANATOMY_STAGES.map((stage, idx) => {
+            const isActive = idx === activeStage;
+            return (
+              <Box
+                key={stage.id}
+                component="img"
+                src={stage.hardwareImage}
+                alt={stage.headline}
+                sx={{
+                  position: 'absolute',
+                  maxWidth: { xs: '88%', lg: '85%' },
+                  maxHeight: { xs: '88%', lg: '85%' },
+                  objectFit: 'contain',
+                  opacity: isActive ? 1 : 0,
+                  transform: isActive ? 'scale(1) translate3d(0, 0, 0)' : 'scale(0.92) translate3d(30px, 0, 0)',
+                  filter: isActive
+                    ? 'drop-shadow(0 0 28px rgba(255, 103, 0, 0.45)) drop-shadow(0 15px 35px rgba(0,0,0,0.8))'
+                    : 'none',
+                  transition: 'opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1), transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)',
+                  pointerEvents: 'none',
+                  userSelect: 'none',
+                  zIndex: 22,
+                }}
+              />
+            );
+          })}
+
+          {/* RETICLE TARGET CROSSHAIR & LASER RETICLE (DESKTOP) */}
+          <Box
+            sx={{
+              display: { xs: 'none', lg: 'block' },
+              position: 'absolute',
+              inset: 0,
+              pointerEvents: 'none',
+              zIndex: 26,
+            }}
+          >
+            {/* SVG Connecting Reticle Laser */}
+            <svg
+              width="100%"
+              height="100%"
+              style={{ position: 'absolute', top: 0, left: 0 }}
+            >
+              <circle
+                cx={`${activeStageData.reticleTarget.x}%`}
+                cy={`${activeStageData.reticleTarget.y}%`}
+                r="18"
+                fill="none"
+                stroke="#FF6700"
+                strokeWidth="1.5"
+                strokeDasharray="4 2"
+                style={{
+                  transition: 'cx 0.5s cubic-bezier(0.16, 1, 0.3, 1), cy 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
+                }}
+              />
+              <circle
+                cx={`${activeStageData.reticleTarget.x}%`}
+                cy={`${activeStageData.reticleTarget.y}%`}
+                r="4"
+                fill="#FF6700"
+                style={{
+                  transition: 'cx 0.5s cubic-bezier(0.16, 1, 0.3, 1), cy 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
+                }}
+              />
+            </svg>
+
+            {/* Reticle Target Label Pill */}
+            <Box
+              sx={{
+                position: 'absolute',
+                left: `${activeStageData.reticleTarget.x}%`,
+                top: `${activeStageData.reticleTarget.y}%`,
+                transform: 'translate(24px, -50%)',
+                px: 1.2,
+                py: 0.4,
+                borderRadius: '1px',
+                backgroundColor: 'rgba(7, 7, 9, 0.85)',
+                border: '1px solid #FF6700',
+                backdropFilter: 'blur(8px)',
+                transition: 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <Typography
+                sx={{
+                  fontFamily: 'var(--font-mono, monospace)',
+                  fontSize: '0.62rem',
+                  fontWeight: 800,
+                  color: '#FF6700',
+                  letterSpacing: '0.12em',
+                }}
+              >
+                [ TARGET // {activeStageData.reticleTarget.label} ]
+              </Typography>
             </Box>
-          );
-        })}
+          </Box>
+        </Box>
+      </Box>
+
+      {/* 4. BOTTOM TELEMETRY FOOTER & STAGE NAVIGATION */}
+      <Box
+        sx={{
+          position: { xs: 'relative', lg: 'absolute' },
+          bottom: { lg: 24 },
+          left: 0,
+          right: 0,
+          px: { xs: 3, md: 8 },
+          pb: { xs: 4, lg: 0 },
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          zIndex: 30,
+        }}
+      >
+        <Typography
+          sx={{
+            fontFamily: 'var(--font-mono, monospace)',
+            fontSize: '0.68rem',
+            color: '#71717A',
+            letterSpacing: '0.1em',
+          }}
+        >
+          CAD CADENCE // DISSECTION RATIO 1:1
+        </Typography>
+
+        <Typography
+          sx={{
+            fontFamily: 'var(--font-mono, monospace)',
+            fontSize: '0.68rem',
+            color: '#A1A1AA',
+            letterSpacing: '0.1em',
+          }}
+        >
+          SCROLL TO EXPLORE SUBSYSTEMS [ 0{activeStage + 1} / 04 ]
+        </Typography>
       </Box>
     </Box>
   );

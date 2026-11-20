@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
+import rc8cAction1Img from '@/assets/images/ktm/models/rc8c_action_1.jpg';
 
 interface Milestone {
   era: string;
@@ -29,7 +30,7 @@ const MILESTONES: Milestone[] = [
     badge: 'PREMIER GP TIER',
     title: 'RED BULL KTM FACTORY RACING',
     summary: 'Direct transfer of MotoGP aerodynamic carbon winglets, launch control software, and WP APEX PRO suspension from Brad Binder and Pedro Acosta’s RC16 prototype into every road-legal Super Duke.',
-    image: 'https://images.unsplash.com/photo-1609630875171-b1321377ee65?auto=format&fit=crop&w=1000&q=80',
+    image: rc8cAction1Img,
   },
 ];
 

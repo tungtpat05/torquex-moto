@@ -4,6 +4,13 @@ import { Box, Typography } from '@mui/material';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import { getLenis } from '../../lib/smoothScroll';
 
+import sdr1390RightImg from '@/assets/images/ktm/models/1390_sdr_90_right.png';
+import duke990Img from '@/assets/images/ktm/models/990_duke_90_right.png';
+import duke390Img from '@/assets/images/ktm/models/390_duke_90_right.png';
+import rc8cImg from '@/assets/images/ktm/models/rc_8c_studio.png';
+import adv1290Img from '@/assets/images/ktm/models/1290_adv_90_right.png';
+import smc690Img from '@/assets/images/ktm/models/690_smc_90_right.png';
+
 export interface KtmVehicle {
   id: number;
   slug: string;
@@ -18,23 +25,25 @@ export interface KtmVehicle {
   dryWeightKg: number;
   image: string;
   badge?: string;
+  isTransparent?: boolean;
 }
 
 export const KTM_FLEET: KtmVehicle[] = [
   {
     id: 53,
-    slug: '1290-super-duke-r-evo',
-    name: 'KTM 1290 Super Duke R Evo',
+    slug: '1390-super-duke-r-evo',
+    name: 'KTM 1390 Super Duke R Evo',
     tagline: 'THE BEAST // APEX PREDATOR',
     category: 'NAKED',
-    msrpUsd: 19799,
-    msrpVnd: '~502,000,000 VND',
-    powerHp: 180,
-    torqueNm: 140,
-    displacementCc: 1301,
+    msrpUsd: 21499,
+    msrpVnd: '~546,000,000 VND',
+    powerHp: 190,
+    torqueNm: 145,
+    displacementCc: 1350,
     dryWeightKg: 189,
-    image: 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=1200&q=85',
+    image: sdr1390RightImg,
     badge: 'CENTERPIECE FLAGSHIP',
+    isTransparent: true,
   },
   {
     id: 54,
@@ -48,7 +57,8 @@ export const KTM_FLEET: KtmVehicle[] = [
     torqueNm: 103,
     displacementCc: 947,
     dryWeightKg: 179,
-    image: 'https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?auto=format&fit=crop&w=1200&q=85',
+    image: duke990Img,
+    isTransparent: true,
   },
   {
     id: 56,
@@ -62,7 +72,8 @@ export const KTM_FLEET: KtmVehicle[] = [
     torqueNm: 39,
     displacementCc: 399,
     dryWeightKg: 165,
-    image: 'https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?auto=format&fit=crop&w=1200&q=85',
+    image: duke390Img,
+    isTransparent: true,
   },
   {
     id: 49,
@@ -76,8 +87,9 @@ export const KTM_FLEET: KtmVehicle[] = [
     torqueNm: 98,
     displacementCc: 889,
     dryWeightKg: 142,
-    image: 'https://images.unsplash.com/photo-1609630875171-b1321377ee65?auto=format&fit=crop&w=1200&q=85',
+    image: rc8cImg,
     badge: 'LIMITED 100 UNITS',
+    isTransparent: true,
   },
   {
     id: 57,
@@ -91,7 +103,8 @@ export const KTM_FLEET: KtmVehicle[] = [
     torqueNm: 138,
     displacementCc: 1301,
     dryWeightKg: 221,
-    image: 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=1200&q=85',
+    image: adv1290Img,
+    isTransparent: true,
   },
   {
     id: 61,
@@ -105,7 +118,8 @@ export const KTM_FLEET: KtmVehicle[] = [
     torqueNm: 73.5,
     displacementCc: 693,
     dryWeightKg: 147,
-    image: 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=1200&q=85',
+    image: smc690Img,
+    isTransparent: true,
   },
 ];
 
@@ -240,7 +254,18 @@ export const KtmBloodlineFleet: React.FC = () => {
               }}
             >
               {/* Vehicle Studio Image Frame */}
-              <Box sx={{ position: 'relative', width: '100%', height: '230px', overflow: 'hidden', backgroundColor: '#070709' }}>
+              <Box
+                sx={{
+                  position: 'relative',
+                  width: '100%',
+                  height: '230px',
+                  overflow: 'hidden',
+                  backgroundColor: '#070709',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
                 <Box
                   component="img"
                   src={bike.image}
@@ -248,11 +273,13 @@ export const KtmBloodlineFleet: React.FC = () => {
                   loading="lazy"
                   decoding="async"
                   sx={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
+                    width: bike.isTransparent ? '88%' : '100%',
+                    height: bike.isTransparent ? '88%' : '100%',
+                    objectFit: bike.isTransparent ? 'contain' : 'cover',
                     objectPosition: 'center',
-                    filter: 'contrast(1.06) brightness(0.95)',
+                    filter: bike.isTransparent
+                      ? 'drop-shadow(0 0 16px rgba(255,103,0,0.35))'
+                      : 'contrast(1.06) brightness(0.95)',
                     transition: 'transform 0.4s ease',
                     '&:hover': {
                       transform: 'scale(1.04)',

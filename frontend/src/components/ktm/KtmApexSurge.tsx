@@ -1,6 +1,14 @@
-import React, { useEffect, useRef } from 'react';
+﻿import React, { useEffect, useRef } from 'react';
 import { Box, Typography } from '@mui/material';
 import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+import wheelieActionImg from '@/assets/images/ktm/models/1390_wheelie_action.jpg';
+import apexActionImg from '@/assets/images/ktm/models/1390_apex_action.jpg';
+import tankImg from '@/assets/images/ktm/anatomy/1390_tank.png';
+import headlightImg from '@/assets/images/ktm/anatomy/1390_headlight.png';
+
+gsap.registerPlugin(ScrollTrigger);
 
 interface ActionMoment {
   id: string;
@@ -10,6 +18,7 @@ interface ActionMoment {
   description: string;
   image: string;
   telemetryMetric: string;
+  isTransparent?: boolean;
 }
 
 const ACTION_MOMENTS: ActionMoment[] = [
@@ -18,47 +27,63 @@ const ACTION_MOMENTS: ActionMoment[] = [
     index: '01',
     title: 'POWER WHEELIE',
     tagline: 'MTC DISENGAGED // RAW TORQUE',
-    description: '140 Nm hits the rear tire instantly. With anti-wheelie disabled, the front Bridgestone S22 claws skyward in second gear under sheer acceleration.',
-    image: 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=1200&q=80',
-    telemetryMetric: '0-100 KM/H: 3.1 SEC',
+    description: '145 Nm hits the rear tire instantly. With anti-wheelie disabled, the front Michelin Power GP claws skyward in second gear under sheer savage acceleration.',
+    image: wheelieActionImg,
+    telemetryMetric: '0-100 KM/H: 3.0 SEC',
   },
   {
     id: 'apex-angle',
     index: '02',
     title: '52° LEAN ANGLE',
     tagline: 'GRAVITY RESISTANCE // TRACK MODE',
-    description: 'ChroMo steel trellis frame provides razor-sharp lateral rigidity. Knee pucks scrape asphalt as the rider locks into the apex with zero chassis flex.',
-    image: 'https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?auto=format&fit=crop&w=1200&q=80',
-    telemetryMetric: 'MAX G-FORCE: 1.48 G',
+    description: 'ChroMo steel trellis frame provides razor-sharp lateral rigidity. Knee pucks scrape asphalt as the rider locks into the apex with zero chassis deflection.',
+    image: apexActionImg,
+    telemetryMetric: 'MAX G-FORCE: 1.52 G',
   },
   {
-    id: 'titanium-exhaust',
+    id: 'aero-tank',
     index: '03',
-    title: 'TITANIUM RESONANCE',
-    tagline: 'AKRAPOVIČ FULL SYSTEM // BLUE HEAT',
-    description: 'Hydroformed titanium headers glow translucent violet under continuous 10,500 RPM full-throttle load down the straightaway.',
-    image: 'https://images.unsplash.com/photo-1609630875171-b1321377ee65?auto=format&fit=crop&w=1200&q=80',
-    telemetryMetric: 'EXHAUST VELOCITY: MACH 0.4',
+    title: 'AERO WINGLETS // TANK FLOW',
+    tagline: 'HIGH-SPEED DOWNFORCE // 17.5L TANK',
+    description: 'Integrated aerodynamic winglets provide stability and front-wheel downforce at triple-digit speeds while channelling airflow directly into the radiators.',
+    image: tankImg,
+    telemetryMetric: 'DOWNFORCE: +3.5 KG @ 200 KM/H',
+    isTransparent: true,
   },
   {
     id: 'predator-drl',
     index: '04',
     title: 'PREDATOR INTAKE',
     tagline: 'SPLIT-FACE LED // RAM-AIR DUCT',
-    description: 'The iconic split headlight doubles as a central ram-air induction tunnel, feeding cool pressurized oxygen directly into the 1,301cc combustion chambers.',
-    image: 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=1200&q=80',
+    description: 'The iconic split headlight doubles as a central ram-air induction tunnel, feeding cool pressurized oxygen directly into the 1,350cc combustion chambers.',
+    image: headlightImg,
     telemetryMetric: 'RAM-AIR PRESSURE: +3.2 PSI',
+    isTransparent: true,
   },
 ];
 
 export const KtmApexSurge: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const marqueeRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      // Animate action cards on entrance with stagger and differential parallax
-      const cards = gsap.utils.toArray<HTMLElement>('.apex-card');
+      // 1. Kinetic Marquee Text Scrub (Differential Parallax)
+      if (marqueeRef.current) {
+        gsap.to(marqueeRef.current, {
+          xPercent: -25,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: containerRef.current,
+            start: 'top bottom',
+            end: 'bottom top',
+            scrub: 0.6,
+          },
+        });
+      }
 
+      // 2. Animate Action Cards on entrance
+      const cards = gsap.utils.toArray<HTMLElement>('.apex-card');
       cards.forEach((card) => {
         const img = card.querySelector('.apex-card-img');
 
@@ -69,7 +94,7 @@ export const KtmApexSurge: React.FC = () => {
             opacity: 1,
             y: 0,
             scale: 1,
-            duration: 0.9,
+            duration: 0.85,
             ease: 'power3.out',
             scrollTrigger: {
               trigger: card,
@@ -110,36 +135,52 @@ export const KtmApexSurge: React.FC = () => {
         position: 'relative',
         width: '100%',
         backgroundColor: '#070709',
-        py: { xs: 10, md: 16 },
-        px: { xs: 3, md: 6, lg: 10 },
+        py: { xs: 12, md: 18 },
         overflow: 'hidden',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
       }}
     >
-      {/* Background Decorative Track Geometry */}
+      {/* 1. GIANT KINETIC BACKGROUND MARQUEE TEXT */}
       <Box
         sx={{
           position: 'absolute',
-          top: 0,
-          right: '5%',
-          width: '500px',
-          height: '500px',
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(255, 103, 0, 0.05) 0%, transparent 70%)',
+          top: { xs: '6%', md: '10%' },
+          left: 0,
+          whiteSpace: 'nowrap',
+          userSelect: 'none',
           pointerEvents: 'none',
+          zIndex: 1,
+          opacity: 0.045,
         }}
-      />
+      >
+        <Typography
+          ref={marqueeRef}
+          sx={{
+            fontFamily: 'var(--font-display, "Outfit", sans-serif)',
+            fontSize: { xs: '6rem', sm: '10rem', md: '14rem' },
+            fontWeight: 900,
+            color: '#FFFFFF',
+            letterSpacing: '-0.02em',
+            lineHeight: 1,
+            display: 'inline-block',
+          }}
+        >
+          52° APEX LEAN ANGLE // BEND THE LAWS OF PHYSICS // READY TO RACE //
+        </Typography>
+      </Box>
 
-      {/* Section Header */}
-      <Box sx={{ maxWidth: '1280px', mx: 'auto', mb: { xs: 6, md: 10 } }}>
+      {/* 2. SECTION HEADER */}
+      <Box sx={{ maxWidth: '1400px', mx: 'auto', px: { xs: 3, md: 8 }, mb: { xs: 6, md: 10 }, position: 'relative', zIndex: 10 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
-          <Box sx={{ width: 12, height: 2, backgroundColor: '#FF6700' }} />
+          <Box sx={{ width: 14, height: 2, backgroundColor: '#FF6700' }} />
           <Typography
             sx={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: '0.72rem',
-              fontWeight: 700,
-              letterSpacing: '0.2em',
+              fontFamily: 'var(--font-mono, monospace)',
+              fontSize: '0.75rem',
+              fontWeight: 800,
+              letterSpacing: '0.22em',
               color: '#FF6700',
+              textTransform: 'uppercase',
             }}
           >
             ACT III // BRED ON TRACK. UNLEASHED ON ASPHALT.
@@ -147,30 +188,33 @@ export const KtmApexSurge: React.FC = () => {
         </Box>
 
         <Typography
-          component="h2"
+          variant="h2"
           sx={{
-            fontFamily: 'var(--font-display)',
+            fontFamily: 'var(--font-display, "Outfit", sans-serif)',
             fontWeight: 900,
-            fontSize: { xs: '2.4rem', sm: '3.6rem', md: '4.8rem' },
+            fontSize: { xs: '2.4rem', sm: '3.6rem', md: '4.6rem' },
             letterSpacing: '-0.035em',
             lineHeight: 0.98,
-            color: '#F4F4F5',
+            color: '#FFFFFF',
             textTransform: 'uppercase',
-            maxWidth: '850px',
+            maxWidth: '920px',
           }}
         >
           THE BEAST IN ITS NATURAL HUNTING GROUND.
         </Typography>
       </Box>
 
-      {/* 4 Staggered Action Cards Grid */}
+      {/* 3. STAGGERED ACTION CARDS GRID */}
       <Box
         sx={{
-          maxWidth: '1280px',
+          maxWidth: '1400px',
           mx: 'auto',
+          px: { xs: 3, md: 8 },
           display: 'grid',
           gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' },
           gap: { xs: 4, md: 6, lg: 8 },
+          position: 'relative',
+          zIndex: 10,
         }}
       >
         {ACTION_MOMENTS.map((moment, idx) => {
@@ -182,15 +226,17 @@ export const KtmApexSurge: React.FC = () => {
               className="apex-card"
               sx={{
                 position: 'relative',
-                borderRadius: '6px',
+                borderRadius: '3px',
                 overflow: 'hidden',
                 backgroundColor: '#0F0F14',
                 border: '1px solid rgba(255, 255, 255, 0.08)',
-                transition: 'border-color 0.3s ease, transform 0.3s ease',
+                borderTop: '1px solid rgba(255, 255, 255, 0.20)',
+                transition: 'border-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease',
                 mt: { md: isOffset ? 8 : 0 },
                 '&:hover': {
-                  borderColor: 'rgba(255, 103, 0, 0.5)',
-                  boxShadow: '0 20px 50px rgba(0, 0, 0, 0.7)',
+                  borderColor: '#FF6700',
+                  boxShadow: '0 20px 50px rgba(0, 0, 0, 0.75)',
+                  transform: 'translateY(-4px)',
                 },
               }}
             >
@@ -199,8 +245,12 @@ export const KtmApexSurge: React.FC = () => {
                 sx={{
                   position: 'relative',
                   width: '100%',
-                  height: { xs: '260px', sm: '340px', lg: '400px' },
+                  height: { xs: '260px', sm: '340px', lg: '420px' },
                   overflow: 'hidden',
+                  backgroundColor: moment.isTransparent ? '#0A0A0F' : 'transparent',
+                  display: moment.isTransparent ? 'flex' : 'block',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
               >
                 <Box
@@ -211,11 +261,13 @@ export const KtmApexSurge: React.FC = () => {
                   loading="lazy"
                   decoding="async"
                   sx={{
-                    width: '100%',
-                    height: '116%',
-                    objectFit: 'cover',
+                    width: moment.isTransparent ? '75%' : '100%',
+                    height: moment.isTransparent ? '75%' : '116%',
+                    objectFit: moment.isTransparent ? 'contain' : 'cover',
                     objectPosition: 'center',
-                    filter: 'contrast(1.08) brightness(0.95)',
+                    filter: moment.isTransparent
+                      ? 'drop-shadow(0 0 25px rgba(255,103,0,0.35))'
+                      : 'contrast(1.08) brightness(0.96)',
                   }}
                 />
 
@@ -228,18 +280,19 @@ export const KtmApexSurge: React.FC = () => {
                     px: 1.5,
                     py: 0.5,
                     borderRadius: '2px',
-                    backgroundColor: 'rgba(7, 7, 9, 0.85)',
-                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    backgroundColor: 'rgba(7, 7, 9, 0.88)',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
                     backdropFilter: 'blur(8px)',
                     display: 'flex',
                     alignItems: 'center',
                     gap: 1,
+                    zIndex: 5,
                   }}
                 >
-                  <Typography sx={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', fontWeight: 700, color: '#FF6700' }}>
+                  <Typography sx={{ fontFamily: 'var(--font-mono, monospace)', fontSize: '0.68rem', fontWeight: 800, color: '#FF6700' }}>
                     [{moment.index}]
                   </Typography>
-                  <Typography sx={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', letterSpacing: '0.1em', color: '#D4D4D8' }}>
+                  <Typography sx={{ fontFamily: 'var(--font-mono, monospace)', fontSize: '0.62rem', letterSpacing: '0.1em', color: '#D4D4D8' }}>
                     {moment.telemetryMetric}
                   </Typography>
                 </Box>
@@ -249,9 +302,10 @@ export const KtmApexSurge: React.FC = () => {
               <Box sx={{ p: { xs: 3, md: 4 } }}>
                 <Typography
                   sx={{
-                    fontFamily: 'var(--font-mono)',
+                    fontFamily: 'var(--font-mono, monospace)',
                     fontSize: '0.68rem',
                     letterSpacing: '0.14em',
+                    fontWeight: 700,
                     color: '#FF6700',
                     mb: 1,
                   }}
@@ -261,12 +315,13 @@ export const KtmApexSurge: React.FC = () => {
 
                 <Typography
                   sx={{
-                    fontFamily: 'var(--font-display)',
-                    fontWeight: 800,
-                    fontSize: { xs: '1.4rem', sm: '1.75rem' },
+                    fontFamily: 'var(--font-display, "Outfit", sans-serif)',
+                    fontWeight: 900,
+                    fontSize: { xs: '1.4rem', sm: '1.8rem' },
                     letterSpacing: '-0.02em',
-                    color: '#F4F4F5',
+                    color: '#FFFFFF',
                     mb: 1.5,
+                    textTransform: 'uppercase',
                   }}
                 >
                   {moment.title}
@@ -274,7 +329,7 @@ export const KtmApexSurge: React.FC = () => {
 
                 <Typography
                   sx={{
-                    fontFamily: 'var(--font-body)',
+                    fontFamily: 'var(--font-body, "Inter", sans-serif)',
                     fontSize: '0.88rem',
                     lineHeight: 1.65,
                     color: '#A1A1AA',
