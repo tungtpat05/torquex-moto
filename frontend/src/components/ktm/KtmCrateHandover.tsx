@@ -161,7 +161,7 @@ export const KtmCrateHandover: React.FC = () => {
                     EXPORT SEAL: VBKM-2026-AUT
                   </Typography>
                 </Box>
-                <Typography sx={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', color: '#71717A' }}>
+                <Typography sx={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', fontWeight: 600, color: '#D4D4D8', letterSpacing: '0.1em' }}>
                   MATTIGHOFEN PADDOCK VAULT
                 </Typography>
               </Box>
@@ -256,34 +256,36 @@ export const KtmCrateHandover: React.FC = () => {
               sx={{
                 p: 3,
                 borderRadius: '4px',
-                backgroundColor: 'rgba(255, 255, 255, 0.02)',
-                border: '1px solid rgba(255, 255, 255, 0.06)',
+                backgroundColor: 'rgba(255, 255, 255, 0.03)',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
+                borderTop: '1px solid rgba(255, 255, 255, 0.25)',
+                boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.1)',
                 mb: 4,
               }}
             >
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
-                <Typography sx={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: '#71717A' }}>
+                <Typography sx={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 600, color: '#D4D4D8' }}>
                   Total Vehicle MSRP
                 </Typography>
-                <Typography className="tabular-nums" sx={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: '#D4D4D8' }}>
+                <Typography className="tabular-nums" sx={{ fontFamily: 'var(--font-mono)', fontSize: '0.88rem', fontWeight: 700, color: '#FFFFFF' }}>
                   $19,799 (~502,000,000 VND)
                 </Typography>
               </Box>
 
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
-                <Typography sx={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: '#FF6700', fontWeight: 700 }}>
+                <Typography sx={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: '#FF6700', fontWeight: 700 }}>
                   10% Deposit to Lock VIN (PayOS)
                 </Typography>
-                <Typography className="tabular-nums" sx={{ fontFamily: 'var(--font-mono)', fontSize: '0.95rem', fontWeight: 800, color: '#FF6700' }}>
+                <Typography className="tabular-nums" sx={{ fontFamily: 'var(--font-mono)', fontSize: '1rem', fontWeight: 800, color: '#FF6700' }}>
                   $1,979 (~50,200,000 VND)
                 </Typography>
               </Box>
 
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', pt: 1.5, borderTop: '1px dashed rgba(255, 255, 255, 0.1)' }}>
-                <Typography sx={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: '#71717A' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', pt: 1.5, borderTop: '1px dashed rgba(255, 255, 255, 0.14)' }}>
+                <Typography sx={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 600, color: '#A1A1AA' }}>
                   90% Balance Due Upon Paddock Handover
                 </Typography>
-                <Typography className="tabular-nums" sx={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: '#A1A1AA' }}>
+                <Typography className="tabular-nums" sx={{ fontFamily: 'var(--font-mono)', fontSize: '0.88rem', fontWeight: 600, color: '#E4E4E7' }}>
                   $17,820 (~451,800,000 VND)
                 </Typography>
               </Box>
@@ -362,7 +364,7 @@ export const KtmCrateHandover: React.FC = () => {
               <Typography sx={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: '1.4rem', color: '#F4F4F5', mb: 1 }}>
                 KTM 1290 SUPER DUKE R EVO
               </Typography>
-              <Typography sx={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: '#71717A', mb: 3 }}>
+              <Typography sx={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 600, color: '#D4D4D8', mb: 3 }}>
                 DEPOSIT AMOUNT: 50,200,000 VND ($1,979 USD)
               </Typography>
 

@@ -222,7 +222,7 @@ export const KtmAnatomyFury: React.FC = () => {
                   fontFamily: 'var(--font-mono)',
                   fontSize: '0.68rem',
                   letterSpacing: '0.12em',
-                  color: activeDesktopIndex === idx ? '#F4F4F5' : '#71717A',
+                  color: activeDesktopIndex === idx ? '#F4F4F5' : '#A1A1AA',
                 }}
               >
                 0{idx + 1}
@@ -359,9 +359,11 @@ export const KtmAnatomyFury: React.FC = () => {
                     maxWidth: '540px',
                     p: 2.5,
                     borderRadius: '4px',
-                    backgroundColor: 'rgba(15, 15, 20, 0.65)',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    backdropFilter: 'blur(12px)',
+                    backgroundColor: 'rgba(15, 15, 20, 0.78)',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    borderTop: '1px solid rgba(255, 255, 255, 0.28)',
+                    backdropFilter: 'blur(16px)',
+                    boxShadow: '0 20px 45px rgba(0, 0, 0, 0.6)',
                   }}
                 >
                   {stage.telemetry.map((t) => (
@@ -369,8 +371,9 @@ export const KtmAnatomyFury: React.FC = () => {
                       <Typography
                         sx={{
                           fontFamily: 'var(--font-mono)',
-                          fontSize: '0.62rem',
-                          color: '#71717A',
+                          fontSize: '0.65rem',
+                          fontWeight: 600,
+                          color: '#D4D4D8',
                           letterSpacing: '0.12em',
                           mb: 0.3,
                         }}

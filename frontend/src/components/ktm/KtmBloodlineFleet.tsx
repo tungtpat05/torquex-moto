@@ -335,48 +335,50 @@ export const KtmBloodlineFleet: React.FC = () => {
                     gap: 1.5,
                     p: 2,
                     borderRadius: '4px',
-                    backgroundColor: 'rgba(255, 255, 255, 0.02)',
-                    border: '1px solid rgba(255, 255, 255, 0.05)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    borderTop: '1px solid rgba(255, 255, 255, 0.25)',
+                    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.1)',
                     mb: 3,
                   }}
                 >
                   <Box>
-                    <Typography sx={{ fontFamily: 'var(--font-mono)', fontSize: '0.58rem', color: '#71717A' }}>
+                    <Typography sx={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', fontWeight: 600, color: '#D4D4D8', letterSpacing: '0.08em' }}>
                       POWER
                     </Typography>
-                    <Typography className="tabular-nums" sx={{ fontFamily: 'var(--font-mono)', fontSize: '0.95rem', fontWeight: 700, color: '#F4F4F5' }}>
-                      {bike.powerHp} <span style={{ fontSize: '0.65rem', color: '#FF6700' }}>HP</span>
+                    <Typography className="tabular-nums" sx={{ fontFamily: 'var(--font-mono)', fontSize: '0.98rem', fontWeight: 700, color: '#FFFFFF' }}>
+                      {bike.powerHp} <span style={{ fontSize: '0.68rem', color: '#FF6700', fontWeight: 800 }}>HP</span>
                     </Typography>
                   </Box>
                   <Box>
-                    <Typography sx={{ fontFamily: 'var(--font-mono)', fontSize: '0.58rem', color: '#71717A' }}>
+                    <Typography sx={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', fontWeight: 600, color: '#D4D4D8', letterSpacing: '0.08em' }}>
                       TORQUE
                     </Typography>
-                    <Typography className="tabular-nums" sx={{ fontFamily: 'var(--font-mono)', fontSize: '0.95rem', fontWeight: 700, color: '#F4F4F5' }}>
-                      {bike.torqueNm} <span style={{ fontSize: '0.65rem', color: '#FF6700' }}>NM</span>
+                    <Typography className="tabular-nums" sx={{ fontFamily: 'var(--font-mono)', fontSize: '0.98rem', fontWeight: 700, color: '#FFFFFF' }}>
+                      {bike.torqueNm} <span style={{ fontSize: '0.68rem', color: '#FF6700', fontWeight: 800 }}>NM</span>
                     </Typography>
                   </Box>
                   <Box>
-                    <Typography sx={{ fontFamily: 'var(--font-mono)', fontSize: '0.58rem', color: '#71717A' }}>
+                    <Typography sx={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', fontWeight: 600, color: '#D4D4D8', letterSpacing: '0.08em' }}>
                       DRY WT
                     </Typography>
-                    <Typography className="tabular-nums" sx={{ fontFamily: 'var(--font-mono)', fontSize: '0.95rem', fontWeight: 700, color: '#F4F4F5' }}>
-                      {bike.dryWeightKg} <span style={{ fontSize: '0.65rem', color: '#FF6700' }}>KG</span>
+                    <Typography className="tabular-nums" sx={{ fontFamily: 'var(--font-mono)', fontSize: '0.98rem', fontWeight: 700, color: '#FFFFFF' }}>
+                      {bike.dryWeightKg} <span style={{ fontSize: '0.68rem', color: '#FF6700', fontWeight: 800 }}>KG</span>
                     </Typography>
                   </Box>
                 </Box>
 
                 {/* MSRP & Action Buttons */}
-                <Box sx={{ mt: 'auto', pt: 2, borderTop: '1px solid rgba(255, 255, 255, 0.06)' }}>
+                <Box sx={{ mt: 'auto', pt: 2, borderTop: '1px solid rgba(255, 255, 255, 0.1)' }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', mb: 2 }}>
-                    <Typography sx={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', color: '#71717A' }}>
+                    <Typography sx={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', fontWeight: 600, color: '#D4D4D8', letterSpacing: '0.08em' }}>
                       STARTING MSRP
                     </Typography>
                     <Box sx={{ textAlign: 'right' }}>
-                      <Typography className="tabular-nums" sx={{ fontFamily: 'var(--font-mono)', fontSize: '1.15rem', fontWeight: 800, color: '#F4F4F5' }}>
+                      <Typography className="tabular-nums" sx={{ fontFamily: 'var(--font-mono)', fontSize: '1.2rem', fontWeight: 800, color: '#FFFFFF' }}>
                         ${bike.msrpUsd.toLocaleString()}
                       </Typography>
-                      <Typography sx={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: '#71717A' }}>
+                      <Typography sx={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: '#A1A1AA' }}>
                         {bike.msrpVnd}
                       </Typography>
                     </Box>
