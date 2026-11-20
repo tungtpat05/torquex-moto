@@ -38,7 +38,8 @@ const ANATOMY_STAGES: AnatomyStage[] = [
     id: 'chassis',
     badge: 'STAGE 01 // CHROMIUM-MOLYBDENUM TRELLIS CHASSIS',
     headline: 'ULTRA-LIGHT CHROMOLY STIFFNESS.',
-    subhead: 'Engine utilized as a stressed member to maximize torsional rigidity (+12%). Laser-cut 25CrMo4 steel tubes hydroformed and powder-coated in Mattighofen racing orange for razor-sharp turn-in feedback.',
+    subhead:
+      'Engine utilized as a stressed member to maximize torsional rigidity (+12%). Laser-cut 25CrMo4 steel tubes hydroformed and powder-coated in Mattighofen racing orange for razor-sharp turn-in feedback.',
     hardwareImage: frameImg,
     telemetry: [
       { label: 'TORSIONAL RIGIDITY', targetValue: 12, unit: '% GAIN', prefix: '+' },
@@ -52,7 +53,8 @@ const ANATOMY_STAGES: AnatomyStage[] = [
     id: 'powertrain',
     badge: 'STAGE 02 // 1,350 CC LC8 V-TWIN CAMSHIFT',
     headline: '190 HP. 145 NM. ZERO COMPROMISE.',
-    subhead: 'Enlarged 1,350cc displacement with all-new CamShift technology. Dual intake cam profiles optimize torque spread below 6,000 RPM while unleashing unhinged top-end acceleration to the 10,500 RPM redline.',
+    subhead:
+      'Enlarged 1,350cc displacement with all-new CamShift technology. Dual intake cam profiles optimize torque spread below 6,000 RPM while unleashing unhinged top-end acceleration to the 10,500 RPM redline.',
     hardwareImage: engineImg,
     telemetry: [
       { label: 'DISPLACEMENT', targetValue: 1350, unit: 'CC' },
@@ -66,7 +68,8 @@ const ANATOMY_STAGES: AnatomyStage[] = [
     id: 'suspension',
     badge: 'STAGE 03 // 48 MM WP APEX SEMI-ACTIVE SUSPENSION',
     headline: 'TAMED BY CODE. UNLEASHED BY INSTINCT.',
-    subhead: 'WP APEX PRO Gen 3 semi-active split-function suspension. High-speed electromagnetic solenoid valves adapt compression and rebound damping dynamically in 0.008 seconds across 6 active riding modes.',
+    subhead:
+      'WP APEX PRO Gen 3 semi-active split-function suspension. High-speed electromagnetic solenoid valves adapt compression and rebound damping dynamically in 0.008 seconds across 6 active riding modes.',
     hardwareImage: forkImg,
     telemetry: [
       { label: 'SOLENOID LATENCY', targetValue: 0.008, unit: 'SEC', isDecimal: true },
@@ -80,7 +83,8 @@ const ANATOMY_STAGES: AnatomyStage[] = [
     id: 'brakes',
     badge: 'STAGE 04 // BREMBO STYLEMA MONOBLOC DECELERATION',
     headline: 'BUILT TO BRAKE LATE. REALLY LATE.',
-    subhead: 'Brembo Stylema monobloc 4-piston calipers machined from solid aircraft aluminum billet, matched with twin 320mm floating discs and Brembo MCS radial master cylinder for surgical trail-braking control.',
+    subhead:
+      'Brembo Stylema monobloc 4-piston calipers machined from solid aircraft aluminum billet, matched with twin 320mm floating discs and Brembo MCS radial master cylinder for surgical trail-braking control.',
     hardwareImage: brakesImg,
     telemetry: [
       { label: 'PEAK CLAMP FORCE', targetValue: 18.4, unit: 'kN', isDecimal: true },
@@ -94,52 +98,215 @@ const ANATOMY_STAGES: AnatomyStage[] = [
 
 export const KtmAnatomyFury: React.FC = () => {
   const sectionRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const portalCardRef = useRef<HTMLDivElement>(null);
+  const centerHookRef = useRef<HTMLDivElement>(null);
+  const splitStageRef = useRef<HTMLDivElement>(null);
   const [activeStage, setActiveStage] = useState(0);
 
-  // Animated telemetry numbers state
-  const [currentValues, setCurrentValues] = useState<number[]>([0, 0, 0, 0]);
+  // Animated telemetry numbers state (initialized with stage 0 targets for zero flash)
+  const [currentValues, setCurrentValues] = useState<number[]>([12, 189, 25, 100]);
 
   // Handle Desktop GSAP ScrollTrigger Pinned Dissection
   useEffect(() => {
-    // Only apply pinned stage on desktop/tablet landscape (>= 1024px)
     if (window.innerWidth < 1024) return;
 
     const ctx = gsap.context(() => {
-      const stageCount = ANATOMY_STAGES.length;
+      // MASTER SCRUBBED TIMELINE:
+      // 0 -> 18: Porsche-style Portal Card Expansion (Width 60% -> 100%, Height 62% -> 100%, Radius 32px -> 0px)
+      // 18 -> 26: Center hook text crossfades into the 2-column Dissection Stage
+      // 26 -> 44: Stage 01 (Chassis) fully active
+      // 44 -> 54: Smooth Crossfade Stage 01 -> Stage 02 (Powertrain)
+      // 54 -> 72: Stage 02 (Powertrain) fully active
+      // 72 -> 82: Smooth Crossfade Stage 02 -> Stage 03 (Suspension)
+      // 82 -> 92: Stage 03 (Suspension) fully active
+      // 92 -> 98: Smooth Crossfade Stage 03 -> Stage 04 (Brakes)
+      // 98 -> 100: Stage 04 (Brakes) fully active & clamped to 100% permanently into Act III
+      const masterTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: sectionRef.current,
+          pin: true,
+          start: 'top top',
+          end: '+=380%',
+          scrub: 0.6,
+          anticipatePin: 1,
+          onUpdate: (self) => {
+            const progress = self.progress; // 0 to 1
 
-      // Master Timeline over 320vh scroll travel
-      ScrollTrigger.create({
-        trigger: sectionRef.current,
-        pin: true,
-        start: 'top top',
-        end: '+=320%',
-        scrub: 0.5,
-        anticipatePin: 1,
-        onUpdate: (self) => {
-          const progress = self.progress; // 0 to 1
-          const stageIndex = Math.min(
-            Math.floor(progress * stageCount),
-            stageCount - 1
-          );
-          setActiveStage(stageIndex);
+            // Determine active stage & intra-stage counter progress
+            let stageIndex = 0;
+            let counterRatio = 0;
 
-          // Animate rolling numbers based on intra-stage progress
-          const intraStageProgress = (progress * stageCount) % 1;
-          const stageData = ANATOMY_STAGES[stageIndex];
-          const newVals = stageData.telemetry.map((t) => {
-            const raw = t.targetValue * Math.min(intraStageProgress * 1.5, 1);
-            return t.isDecimal ? parseFloat(raw.toFixed(t.targetValue < 1 ? 3 : 1)) : Math.round(raw);
-          });
-          setCurrentValues(newVals);
+            if (progress < 0.44) {
+              stageIndex = 0;
+              // counts up smoothly in first part of stage, then locks at 1.0
+              counterRatio = Math.min(1, Math.max(0, (progress - 0.18) / 0.16));
+            } else if (progress < 0.72) {
+              stageIndex = 1;
+              counterRatio = Math.min(1, Math.max(0, (progress - 0.44) / 0.15));
+            } else if (progress < 0.92) {
+              stageIndex = 2;
+              counterRatio = Math.min(1, Math.max(0, (progress - 0.72) / 0.12));
+            } else {
+              stageIndex = 3;
+              // Stage 04 reaches 100% by progress 0.96 and stays clamped at 1.0
+              // permanently, even when user scrolls past 1.0 into Act III!
+              counterRatio = Math.min(1, Math.max(0, (progress - 0.92) / 0.05));
+            }
+
+            setActiveStage(stageIndex);
+
+            // Compute precision rolling numbers
+            const stageData = ANATOMY_STAGES[stageIndex];
+            const newVals = stageData.telemetry.map((t) => {
+              const raw = t.targetValue * counterRatio;
+              return t.isDecimal
+                ? parseFloat(raw.toFixed(t.targetValue < 1 ? 3 : 1))
+                : Math.round(raw);
+            });
+            setCurrentValues(newVals);
+          },
         },
       });
+
+      // 1. PORSCHE-STYLE VIEWPORT ZOOM PORTAL ENTRANCE (0% -> 18%)
+      // Starts as a compact centered 60% card and expands to 100% full screen
+      masterTl.fromTo(
+        portalCardRef.current,
+        {
+          width: '60%',
+          height: '62%',
+          borderRadius: 32,
+          borderWidth: 1,
+          borderStyle: 'solid',
+          borderColor: 'rgba(255, 103, 0, 0.55)',
+          boxShadow: '0 30px 100px rgba(0, 0, 0, 0.95), 0 0 60px rgba(255, 103, 0, 0.35)',
+        },
+        {
+          width: '100%',
+          height: '100%',
+          borderRadius: 0,
+          borderColor: 'rgba(255, 255, 255, 0.04)',
+          boxShadow: 'none',
+          ease: 'power2.out',
+          duration: 18,
+        },
+        0
+      );
+
+      // Center Hook Statement behavior during zoom (0% -> 18% -> 26%)
+      masterTl.fromTo(
+        centerHookRef.current,
+        { opacity: 0.6, scale: 0.95, filter: 'blur(6px)' },
+        { opacity: 1, scale: 1, filter: 'blur(0px)', duration: 12, ease: 'power2.out' },
+        0
+      );
+
+      masterTl.to(
+        centerHookRef.current,
+        { opacity: 0, scale: 1.05, filter: 'blur(10px)', duration: 8, ease: 'power2.inOut', pointerEvents: 'none' },
+        18
+      );
+
+      // Split Dissection Stage reveals as center hook fades out (18% -> 26%)
+      masterTl.fromTo(
+        splitStageRef.current,
+        { opacity: 0, scale: 0.96, filter: 'blur(10px)' },
+        { opacity: 1, scale: 1, filter: 'blur(0px)', duration: 8, ease: 'power2.out' },
+        18
+      );
+
+      // Hardware images initial state setup
+      gsap.set('.hardware-stage-0', { opacity: 1, scale: 1, filter: 'blur(0px)' });
+      gsap.set('.hardware-stage-1', { opacity: 0, scale: 0.92, filter: 'blur(10px)' });
+      gsap.set('.hardware-stage-2', { opacity: 0, scale: 0.92, filter: 'blur(10px)' });
+      gsap.set('.hardware-stage-3', { opacity: 0, scale: 0.92, filter: 'blur(10px)' });
+
+      // Kinetic text panels initial state
+      gsap.set('.kinetic-panel-0', { opacity: 1, y: 0, filter: 'blur(0px)' });
+      gsap.set('.kinetic-panel-1', { opacity: 0, y: 35, filter: 'blur(10px)' });
+      gsap.set('.kinetic-panel-2', { opacity: 0, y: 35, filter: 'blur(10px)' });
+      gsap.set('.kinetic-panel-3', { opacity: 0, y: 35, filter: 'blur(10px)' });
+
+      // 2. CROSSFADE STAGE 0 -> STAGE 1 (Powertrain) at 44% -> 54%
+      masterTl
+        // Stage 0 exits
+        .to(
+          '.hardware-stage-0',
+          { opacity: 0, scale: 0.94, filter: 'blur(8px)', duration: 10, ease: 'power2.inOut' },
+          44
+        )
+        .to(
+          '.kinetic-panel-0',
+          { opacity: 0, y: -30, filter: 'blur(8px)', duration: 10, ease: 'power2.inOut' },
+          44
+        )
+        // Stage 1 enters
+        .to(
+          '.hardware-stage-1',
+          { opacity: 1, scale: 1, filter: 'blur(0px)', duration: 10, ease: 'power2.inOut' },
+          45
+        )
+        .to(
+          '.kinetic-panel-1',
+          { opacity: 1, y: 0, filter: 'blur(0px)', duration: 10, ease: 'power2.inOut' },
+          45
+        );
+
+      // 3. CROSSFADE STAGE 1 -> STAGE 2 (Suspension) at 72% -> 82%
+      masterTl
+        // Stage 1 exits
+        .to(
+          '.hardware-stage-1',
+          { opacity: 0, scale: 0.94, filter: 'blur(8px)', duration: 10, ease: 'power2.inOut' },
+          72
+        )
+        .to(
+          '.kinetic-panel-1',
+          { opacity: 0, y: -30, filter: 'blur(8px)', duration: 10, ease: 'power2.inOut' },
+          72
+        )
+        // Stage 2 enters
+        .to(
+          '.hardware-stage-2',
+          { opacity: 1, scale: 1, filter: 'blur(0px)', duration: 10, ease: 'power2.inOut' },
+          73
+        )
+        .to(
+          '.kinetic-panel-2',
+          { opacity: 1, y: 0, filter: 'blur(0px)', duration: 10, ease: 'power2.inOut' },
+          73
+        );
+
+      // 4. CROSSFADE STAGE 2 -> STAGE 3 (Brakes) at 92% -> 98%
+      masterTl
+        // Stage 2 exits
+        .to(
+          '.hardware-stage-2',
+          { opacity: 0, scale: 0.94, filter: 'blur(8px)', duration: 6, ease: 'power2.inOut' },
+          92
+        )
+        .to(
+          '.kinetic-panel-2',
+          { opacity: 0, y: -30, filter: 'blur(8px)', duration: 6, ease: 'power2.inOut' },
+          92
+        )
+        // Stage 3 enters and STAYS locked through 100% and unpin
+        .to(
+          '.hardware-stage-3',
+          { opacity: 1, scale: 1, filter: 'blur(0px)', duration: 6, ease: 'power2.inOut' },
+          93
+        )
+        .to(
+          '.kinetic-panel-3',
+          { opacity: 1, y: 0, filter: 'blur(0px)', duration: 6, ease: 'power2.inOut' },
+          93
+        );
     }, sectionRef);
 
     return () => ctx.revert();
   }, []);
 
-  // Update telemetry values on mobile or when stage changes manually
+  // Mobile fallback
   useEffect(() => {
     if (window.innerWidth < 1024) {
       const stageData = ANATOMY_STAGES[activeStage];
@@ -162,144 +329,79 @@ export const KtmAnatomyFury: React.FC = () => {
         minHeight: { xs: 'auto', lg: '100vh' },
         height: { xs: 'auto', lg: '100vh' },
         display: 'flex',
-        flexDirection: 'column',
+        alignItems: 'center',
         justifyContent: 'center',
-        borderTop: '1px solid rgba(255, 255, 255, 0.05)',
       }}
     >
-      {/* 1. AMBIENT ATMOSPHERIC RADIAL GLOWS */}
+      {/* PORSCHE-STYLE VIEWPORT ZOOM EXPANSION CARD (Starts at 60% and expands to 100%) */}
       <Box
-        sx={{
-          position: 'absolute',
-          inset: 0,
-          background:
-            'radial-gradient(circle at 65% 50%, rgba(255, 103, 0, 0.08) 0%, rgba(7, 7, 9, 0) 65%), radial-gradient(circle at 20% 80%, rgba(255, 103, 0, 0.04) 0%, rgba(7, 7, 9, 0) 50%)',
-          pointerEvents: 'none',
-        }}
-      />
-
-      {/* 2. TOP STATUS BAR: CHAPTER BADGE & STAGE PILLS */}
-      <Box
-        sx={{
-          position: { xs: 'relative', lg: 'absolute' },
-          top: { lg: 28 },
-          left: 0,
-          right: 0,
-          px: { xs: 3, md: 8 },
-          pt: { xs: 5, lg: 0 },
-          display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row' },
-          justifyContent: 'space-between',
-          alignItems: { xs: 'flex-start', sm: 'center' },
-          gap: 2,
-          zIndex: 30,
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <Box sx={{ width: 14, height: 2, backgroundColor: '#FF6700' }} />
-          <Typography
-            sx={{
-              fontFamily: 'var(--font-mono, monospace)',
-              fontSize: '0.75rem',
-              fontWeight: 800,
-              letterSpacing: '0.22em',
-              color: '#FF6700',
-              textTransform: 'uppercase',
-            }}
-          >
-            ACT II // THE ANATOMY OF FURY
-          </Typography>
-        </Box>
-
-        {/* Stage Progress Indicators */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          {ANATOMY_STAGES.map((stage, idx) => {
-            const isActive = idx === activeStage;
-            return (
-              <Box
-                key={stage.id}
-                onClick={() => {
-                  if (window.innerWidth < 1024) setActiveStage(idx);
-                }}
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1,
-                  px: 1.8,
-                  py: 0.6,
-                  borderRadius: '1px',
-                  backgroundColor: isActive ? 'rgba(255, 103, 0, 0.12)' : 'rgba(255, 255, 255, 0.03)',
-                  border: isActive ? '1px solid #FF6700' : '1px solid rgba(255, 255, 255, 0.08)',
-                  cursor: { xs: 'pointer', lg: 'default' },
-                  transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-                }}
-              >
-                <Typography
-                  sx={{
-                    fontFamily: 'var(--font-mono, monospace)',
-                    fontSize: '0.72rem',
-                    fontWeight: 700,
-                    color: isActive ? '#FF6700' : 'rgba(255, 255, 255, 0.4)',
-                    letterSpacing: '0.08em',
-                  }}
-                >
-                  0{idx + 1}
-                </Typography>
-                <Box
-                  sx={{
-                    width: 4,
-                    height: 4,
-                    borderRadius: '50%',
-                    backgroundColor: isActive ? '#FF6700' : 'transparent',
-                    boxShadow: isActive ? '0 0 8px #FF6700' : 'none',
-                  }}
-                />
-              </Box>
-            );
-          })}
-        </Box>
-      </Box>
-
-      {/* 3. MAIN INTERACTIVE DISSECTION STAGE (SPLIT VIEW) */}
-      <Box
-        ref={containerRef}
+        ref={portalCardRef}
         sx={{
           position: 'relative',
-          width: '100%',
-          maxWidth: '1800px',
-          mx: 'auto',
-          px: { xs: 3, md: 8 },
-          py: { xs: 6, lg: 0 },
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', lg: '460px 1fr' },
-          gap: { xs: 5, lg: 6 },
+          width: { xs: '100%', lg: '60%' },
+          height: { xs: 'auto', lg: '62%' },
+          minHeight: { xs: 'auto', lg: 'auto' },
+          display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
-          minHeight: { xs: 'auto', lg: '700px' },
-          zIndex: 20,
+          justifyContent: 'center',
+          backgroundColor: '#0c0c12',
+          overflow: 'hidden',
+          willChange: 'width, height, transform, border-radius, box-shadow',
         }}
       >
-        {/* LEFT COLUMN: DYNAMIC TELEMETRY CARD */}
+        {/* 1. ATMOSPHERIC AMBIENT GLOW & TECHNICAL BLUEPRINT GRID */}
         <Box
           sx={{
-            display: 'flex',
+            position: 'absolute',
+            inset: 0,
+            background:
+              'radial-gradient(circle at 35% 50%, rgba(255, 103, 0, 0.12) 0%, rgba(7, 7, 9, 0) 65%), radial-gradient(circle at 75% 65%, rgba(255, 103, 0, 0.05) 0%, rgba(7, 7, 9, 0) 55%)',
+            pointerEvents: 'none',
+          }}
+        />
+
+        {/* Technical Sub-micron Grid Texture */}
+        <Box
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            opacity: 0.035,
+            backgroundImage:
+              'linear-gradient(rgba(255, 255, 255, 0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.4) 1px, transparent 1px)',
+            backgroundSize: '40px 40px',
+            pointerEvents: 'none',
+          }}
+        />
+
+        {/* 2. PORSCHE-STYLE OPENING CENTER HOOK (Visible during initial zoom, fades out as dissection reveals) */}
+        <Box
+          ref={centerHookRef}
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            display: { xs: 'none', lg: 'flex' },
             flexDirection: 'column',
-            gap: 2.5,
-            zIndex: 25,
-            maxWidth: { xs: '100%', lg: '460px' },
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 2,
+            zIndex: 15,
+            px: 4,
+            textAlign: 'center',
+            pointerEvents: 'none',
           }}
         >
-          {/* Active Badge */}
           <Box
             sx={{
               display: 'inline-flex',
               alignItems: 'center',
               gap: 1.2,
-              px: 1.6,
-              py: 0.5,
+              px: 2,
+              py: 0.6,
               borderRadius: '2px',
-              backgroundColor: 'rgba(255, 103, 0, 0.08)',
-              border: '1px solid rgba(255, 103, 0, 0.35)',
-              alignSelf: 'flex-start',
+              backgroundColor: 'rgba(255, 103, 0, 0.12)',
+              border: '1px solid #FF6700',
+              boxShadow: '0 0 20px rgba(255, 103, 0, 0.3)',
             }}
           >
             <Box
@@ -314,281 +416,438 @@ export const KtmAnatomyFury: React.FC = () => {
             <Typography
               sx={{
                 fontFamily: 'var(--font-mono, monospace)',
-                fontSize: '0.68rem',
-                fontWeight: 700,
+                fontSize: '0.72rem',
+                fontWeight: 800,
                 color: '#FF6700',
-                letterSpacing: '0.14em',
+                letterSpacing: '0.18em',
               }}
             >
-              {activeStageData.badge}
+              DISSECTION PROTOCOL // 1,350 CC BEAST
             </Typography>
           </Box>
 
-          {/* Headline */}
           <Typography
-            variant="h2"
             sx={{
               fontFamily: 'var(--font-display, "Outfit", sans-serif)',
-              fontSize: { xs: '2rem', sm: '2.5rem', lg: '2.85rem' },
+              fontSize: { lg: '3.6rem', xl: '4.4rem' },
               fontWeight: 900,
               color: '#FFFFFF',
-              lineHeight: 1.05,
-              letterSpacing: '-0.03em',
+              lineHeight: 1.0,
+              letterSpacing: '-0.04em',
+              textTransform: 'uppercase',
+              textShadow: '0 4px 30px rgba(0,0,0,0.9), 0 0 50px rgba(255, 103, 0, 0.3)',
+              maxWidth: '900px',
+            }}
+          >
+            THE BEAST STRIPPED BARE.
+          </Typography>
+
+          <Typography
+            sx={{
+              fontFamily: 'var(--font-mono, monospace)',
+              fontSize: '0.85rem',
+              color: '#A1A1AA',
+              letterSpacing: '0.22em',
               textTransform: 'uppercase',
             }}
           >
-            {activeStageData.headline}
+            SURGICAL PRECISION // RAW UNCOMPROMISING MECHANICS
           </Typography>
-
-          {/* Subhead narrative */}
-          <Typography
-            sx={{
-              fontFamily: 'var(--font-body, "Inter", sans-serif)',
-              fontSize: { xs: '0.88rem', lg: '0.94rem' },
-              color: '#A1A1AA',
-              lineHeight: 1.65,
-              fontWeight: 400,
-            }}
-          >
-            {activeStageData.subhead}
-          </Typography>
-
-          {/* 4-Cell Telemetry Matrix */}
-          <Box
-            sx={{
-              mt: 1,
-              display: 'grid',
-              gridTemplateColumns: 'repeat(2, 1fr)',
-              gap: 1.5,
-            }}
-          >
-            {activeStageData.telemetry.map((item, idx) => {
-              const displayVal = currentValues[idx] !== undefined ? currentValues[idx] : item.targetValue;
-              return (
-                <Box
-                  key={item.label}
-                  sx={{
-                    p: 2,
-                    borderRadius: '2px',
-                    backgroundColor: 'rgba(15, 15, 20, 0.85)',
-                    backdropFilter: 'blur(16px)',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    borderTop: '1px solid rgba(255, 255, 255, 0.20)',
-                    transition: 'border-color 0.3s ease',
-                    '&:hover': {
-                      borderColor: '#FF6700',
-                    },
-                  }}
-                >
-                  <Typography
-                    sx={{
-                      fontFamily: 'var(--font-mono, monospace)',
-                      fontSize: '0.62rem',
-                      fontWeight: 600,
-                      color: '#A1A1AA',
-                      letterSpacing: '0.1em',
-                      textTransform: 'uppercase',
-                      mb: 0.6,
-                    }}
-                  >
-                    {item.label}
-                  </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.8 }}>
-                    <Typography
-                      sx={{
-                        fontFamily: 'var(--font-mono, monospace)',
-                        fontSize: { xs: '1.4rem', lg: '1.75rem' },
-                        fontWeight: 900,
-                        color: '#FFFFFF',
-                        letterSpacing: '-0.02em',
-                        fontVariantNumeric: 'tabular-nums',
-                      }}
-                    >
-                      {item.prefix || ''}{displayVal.toLocaleString()}
-                    </Typography>
-                    <Typography
-                      sx={{
-                        fontFamily: 'var(--font-mono, monospace)',
-                        fontSize: '0.72rem',
-                        fontWeight: 700,
-                        color: '#FF6700',
-                        letterSpacing: '0.05em',
-                      }}
-                    >
-                      {item.unit}
-                    </Typography>
-                  </Box>
-                </Box>
-              );
-            })}
-          </Box>
         </Box>
 
-        {/* RIGHT COLUMN: THE EXPLODED MOTORCYCLE DISSECTION STAGE */}
+        {/* 3. MAIN SPLIT DISSECTION STAGE (SWAPPED: LEFT = MOTORCYCLE, RIGHT = INFORMATION) */}
         <Box
+          ref={splitStageRef}
           sx={{
             position: 'relative',
             width: '100%',
-            height: { xs: '380px', sm: '500px', lg: '620px' },
-            display: 'flex',
+            maxWidth: '1920px',
+            mx: 'auto',
+            px: { xs: 3, md: 5, xl: 8 },
+            py: { xs: 6, lg: 0 },
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', lg: '1fr 480px', xl: '1fr 520px' },
+            gap: { xs: 5, lg: 4, xl: 8 },
             alignItems: 'center',
-            justifyContent: 'center',
+            minHeight: { xs: 'auto', lg: '740px', xl: '820px' },
+            zIndex: 20,
+            opacity: { xs: 1, lg: 0 }, // Driven by GSAP reveal
           }}
         >
-          {/* BASE LAYER: Blueprint Ghost Bike */}
+          {/* COLUMN 1 (LEFT): THE EXPANDED HIGH-IMPACT MOTORCYCLE DISSECTION STAGE */}
           <Box
-            component="img"
-            src={bikeBaseImg}
-            alt="KTM 1390 Super Duke R Technical Blueprint"
             sx={{
-              position: 'absolute',
-              width: '95%',
-              maxHeight: '100%',
-              objectFit: 'contain',
-              opacity: 0.22,
-              filter: 'grayscale(0.6) brightness(0.6)',
-              userSelect: 'none',
-              pointerEvents: 'none',
-              transition: 'opacity 0.4s ease',
+              position: 'relative',
+              width: '100%',
+              height: { xs: '380px', sm: '500px', md: '620px', lg: '720px', xl: '800px' },
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              // Gentle left mask to eliminate any visible flat boundary from transparent crop
+              maskImage: 'linear-gradient(to right, transparent 0%, black 28px, black 100%)',
+              WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 28px, black 100%)',
             }}
-          />
+          >
+            {/* BASE LAYER: High-Resolution Blueprint Ghost Bike (Facing Right) */}
+            <Box
+              component="img"
+              src={bikeBaseImg}
+              alt="KTM 1390 Super Duke R Technical Blueprint"
+              sx={{
+                position: 'absolute',
+                width: '100%',
+                maxWidth: '100%',
+                maxHeight: '100%',
+                objectFit: 'contain',
+                opacity: 0.38,
+                filter: 'grayscale(0.35) brightness(0.85) contrast(1.15) drop-shadow(0 0 35px rgba(255, 103, 0, 0.15))',
+                userSelect: 'none',
+                pointerEvents: 'none',
+              }}
+            />
 
-          {/* ACTIVE DISSECTION HARDWARE CUTOUT LAYER */}
-          {ANATOMY_STAGES.map((stage, idx) => {
-            const isActive = idx === activeStage;
-            return (
+            {/* ACTIVE DISSECTION HARDWARE CUTOUT LAYERS (Scrubbed Smoothly with GSAP) */}
+            {ANATOMY_STAGES.map((stage, idx) => (
               <Box
                 key={stage.id}
                 component="img"
                 src={stage.hardwareImage}
                 alt={stage.headline}
+                className={`hardware-stage-${idx}`}
                 sx={{
                   position: 'absolute',
-                  maxWidth: { xs: '88%', lg: '85%' },
-                  maxHeight: { xs: '88%', lg: '85%' },
+                  maxWidth: { xs: '94%', lg: '92%' },
+                  maxHeight: { xs: '94%', lg: '92%' },
                   objectFit: 'contain',
-                  opacity: isActive ? 1 : 0,
-                  transform: isActive ? 'scale(1) translate3d(0, 0, 0)' : 'scale(0.92) translate3d(30px, 0, 0)',
-                  filter: isActive
-                    ? 'drop-shadow(0 0 28px rgba(255, 103, 0, 0.45)) drop-shadow(0 15px 35px rgba(0,0,0,0.8))'
-                    : 'none',
-                  transition: 'opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1), transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)',
+                  filter:
+                    'drop-shadow(0 0 35px rgba(255, 103, 0, 0.65)) drop-shadow(0 20px 50px rgba(0, 0, 0, 0.95))',
                   pointerEvents: 'none',
                   userSelect: 'none',
                   zIndex: 22,
+                  willChange: 'transform, opacity, filter',
                 }}
               />
-            );
-          })}
+            ))}
 
-          {/* RETICLE TARGET CROSSHAIR & LASER RETICLE (DESKTOP) */}
-          <Box
-            sx={{
-              display: { xs: 'none', lg: 'block' },
-              position: 'absolute',
-              inset: 0,
-              pointerEvents: 'none',
-              zIndex: 26,
-            }}
-          >
-            {/* SVG Connecting Reticle Laser */}
-            <svg
-              width="100%"
-              height="100%"
-              style={{ position: 'absolute', top: 0, left: 0 }}
-            >
-              <circle
-                cx={`${activeStageData.reticleTarget.x}%`}
-                cy={`${activeStageData.reticleTarget.y}%`}
-                r="18"
-                fill="none"
-                stroke="#FF6700"
-                strokeWidth="1.5"
-                strokeDasharray="4 2"
-                style={{
-                  transition: 'cx 0.5s cubic-bezier(0.16, 1, 0.3, 1), cy 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
-                }}
-              />
-              <circle
-                cx={`${activeStageData.reticleTarget.x}%`}
-                cy={`${activeStageData.reticleTarget.y}%`}
-                r="4"
-                fill="#FF6700"
-                style={{
-                  transition: 'cx 0.5s cubic-bezier(0.16, 1, 0.3, 1), cy 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
-                }}
-              />
-            </svg>
-
-            {/* Reticle Target Label Pill */}
+            {/* RETICLE TARGET CROSSHAIR & LASER RETICLE (DESKTOP) */}
             <Box
               sx={{
+                display: { xs: 'none', lg: 'block' },
                 position: 'absolute',
-                left: `${activeStageData.reticleTarget.x}%`,
-                top: `${activeStageData.reticleTarget.y}%`,
-                transform: 'translate(24px, -50%)',
-                px: 1.2,
-                py: 0.4,
-                borderRadius: '1px',
-                backgroundColor: 'rgba(7, 7, 9, 0.85)',
-                border: '1px solid #FF6700',
-                backdropFilter: 'blur(8px)',
-                transition: 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
-                whiteSpace: 'nowrap',
+                inset: 0,
+                pointerEvents: 'none',
+                zIndex: 26,
               }}
             >
-              <Typography
+              {/* SVG Connecting Reticle Laser */}
+              <svg
+                width="100%"
+                height="100%"
+                style={{ position: 'absolute', top: 0, left: 0 }}
+              >
+                <circle
+                  cx={`${activeStageData.reticleTarget.x}%`}
+                  cy={`${activeStageData.reticleTarget.y}%`}
+                  r="20"
+                  fill="none"
+                  stroke="#FF6700"
+                  strokeWidth="1.5"
+                  strokeDasharray="4 2"
+                  style={{
+                    transition: 'cx 0.6s cubic-bezier(0.16, 1, 0.3, 1), cy 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
+                  }}
+                />
+                <circle
+                  cx={`${activeStageData.reticleTarget.x}%`}
+                  cy={`${activeStageData.reticleTarget.y}%`}
+                  r="4"
+                  fill="#FF6700"
+                  style={{
+                    transition: 'cx 0.6s cubic-bezier(0.16, 1, 0.3, 1), cy 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
+                  }}
+                />
+              </svg>
+
+              {/* Reticle Target Label Pill (Pointing naturally to the right toward data) */}
+              <Box
                 sx={{
-                  fontFamily: 'var(--font-mono, monospace)',
-                  fontSize: '0.62rem',
-                  fontWeight: 800,
-                  color: '#FF6700',
-                  letterSpacing: '0.12em',
+                  position: 'absolute',
+                  left: `${activeStageData.reticleTarget.x}%`,
+                  top: `${activeStageData.reticleTarget.y}%`,
+                  transform: 'translate(26px, -50%)',
+                  px: 1.4,
+                  py: 0.5,
+                  borderRadius: '2px',
+                  backgroundColor: 'rgba(7, 7, 9, 0.92)',
+                  border: '1px solid #FF6700',
+                  boxShadow: '0 0 20px rgba(255, 103, 0, 0.35)',
+                  backdropFilter: 'blur(12px)',
+                  transition: 'left 0.6s cubic-bezier(0.16, 1, 0.3, 1), top 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
+                  whiteSpace: 'nowrap',
                 }}
               >
-                [ TARGET // {activeStageData.reticleTarget.label} ]
-              </Typography>
+                <Typography
+                  sx={{
+                    fontFamily: 'var(--font-mono, monospace)',
+                    fontSize: '0.64rem',
+                    fontWeight: 800,
+                    color: '#FF6700',
+                    letterSpacing: '0.12em',
+                  }}
+                >
+                  [ TARGET // {activeStageData.reticleTarget.label} ]
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+
+          {/* COLUMN 2 (RIGHT): KINETIC TELEMETRY STAGES & SPECIFICATIONS */}
+          <Box
+            sx={{
+              position: 'relative',
+              display: 'flex',
+              flexDirection: 'column',
+              zIndex: 25,
+              width: '100%',
+              minHeight: { xs: 'auto', lg: '500px' },
+            }}
+          >
+            {ANATOMY_STAGES.map((stage, idx) => {
+              const isCurrent = idx === activeStage;
+              return (
+                <Box
+                  key={stage.id}
+                  className={`kinetic-panel-${idx}`}
+                  sx={{
+                    position: { xs: isCurrent ? 'relative' : 'none', lg: idx === 0 ? 'relative' : 'absolute' },
+                    display: { xs: isCurrent ? 'flex' : 'none', lg: 'flex' },
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    flexDirection: 'column',
+                    gap: 2.2,
+                    pointerEvents: isCurrent ? 'auto' : 'none',
+                    willChange: 'transform, opacity, filter',
+                  }}
+                >
+                  {/* Active Hardware Badge */}
+                  <Box
+                    sx={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 1.2,
+                      px: 1.8,
+                      py: 0.6,
+                      borderRadius: '2px',
+                      backgroundColor: 'rgba(255, 103, 0, 0.08)',
+                      border: '1px solid rgba(255, 103, 0, 0.45)',
+                      boxShadow: '0 0 16px rgba(255, 103, 0, 0.18)',
+                      alignSelf: 'flex-start',
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        backgroundColor: '#FF6700',
+                        boxShadow: '0 0 10px #FF6700',
+                      }}
+                    />
+                    <Typography
+                      sx={{
+                        fontFamily: 'var(--font-mono, monospace)',
+                        fontSize: { xs: '0.66rem', lg: '0.72rem' },
+                        fontWeight: 800,
+                        color: '#FF6700',
+                        letterSpacing: '0.14em',
+                      }}
+                    >
+                      {stage.badge}
+                    </Typography>
+                  </Box>
+
+                  {/* High-Impact Kinetic Headline */}
+                  <Typography
+                    variant="h2"
+                    sx={{
+                      fontFamily: 'var(--font-display, "Outfit", sans-serif)',
+                      fontSize: { xs: '2.1rem', sm: '2.6rem', lg: '2.9rem', xl: '3.2rem' },
+                      fontWeight: 900,
+                      color: '#FFFFFF',
+                      lineHeight: 1.02,
+                      letterSpacing: '-0.035em',
+                      textTransform: 'uppercase',
+                      textShadow: '0 4px 20px rgba(0,0,0,0.9), 0 0 35px rgba(255, 103, 0, 0.25)',
+                    }}
+                  >
+                    {stage.headline}
+                  </Typography>
+
+                  {/* Subhead narrative */}
+                  <Typography
+                    sx={{
+                      fontFamily: 'var(--font-body, "Inter", sans-serif)',
+                      fontSize: { xs: '0.88rem', lg: '0.94rem' },
+                      color: '#A1A1AA',
+                      lineHeight: 1.65,
+                      fontWeight: 400,
+                      maxWidth: '520px',
+                    }}
+                  >
+                    {stage.subhead}
+                  </Typography>
+
+                  {/* 4-Cell Telemetry Matrix */}
+                  <Box
+                    sx={{
+                      mt: 1,
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(2, 1fr)',
+                      gap: 1.5,
+                      width: '100%',
+                    }}
+                  >
+                    {stage.telemetry.map((item, mIdx) => {
+                      // On desktop, use live scrubbed rolling value for active stage
+                      const displayVal =
+                        isCurrent && currentValues[mIdx] !== undefined
+                          ? currentValues[mIdx]
+                          : item.targetValue;
+                      return (
+                        <Box
+                          key={item.label}
+                          sx={{
+                            p: { xs: 1.8, lg: 2.2 },
+                            borderRadius: '2px',
+                            backgroundColor: 'rgba(15, 15, 20, 0.88)',
+                            backdropFilter: 'blur(20px)',
+                            border: '1px solid rgba(255, 255, 255, 0.10)',
+                            borderTop: '1px solid rgba(255, 255, 255, 0.32)',
+                            boxShadow: '0 12px 32px rgba(0, 0, 0, 0.65)',
+                            transition: 'border-color 0.3s ease, transform 0.2s ease',
+                            '&:hover': {
+                              borderColor: '#FF6700',
+                              transform: 'translateY(-1px)',
+                            },
+                          }}
+                        >
+                          <Typography
+                            sx={{
+                              fontFamily: 'var(--font-mono, monospace)',
+                              fontSize: '0.62rem',
+                              fontWeight: 700,
+                              color: '#A1A1AA',
+                              letterSpacing: '0.1em',
+                              textTransform: 'uppercase',
+                              mb: 0.6,
+                            }}
+                          >
+                            {item.label}
+                          </Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.8 }}>
+                            <Typography
+                              sx={{
+                                fontFamily: 'var(--font-mono, monospace)',
+                                fontSize: { xs: '1.45rem', lg: '1.85rem' },
+                                fontWeight: 900,
+                                color: '#FFFFFF',
+                                letterSpacing: '-0.02em',
+                                fontVariantNumeric: 'tabular-nums',
+                                textShadow: '0 2px 10px rgba(0,0,0,0.8)',
+                              }}
+                            >
+                              {item.prefix || ''}
+                              {displayVal.toLocaleString()}
+                            </Typography>
+                            <Typography
+                              sx={{
+                                fontFamily: 'var(--font-mono, monospace)',
+                                fontSize: '0.74rem',
+                                fontWeight: 800,
+                                color: '#FF6700',
+                                letterSpacing: '0.06em',
+                              }}
+                            >
+                              {item.unit}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      );
+                    })}
+                  </Box>
+                </Box>
+              );
+            })}
+
+            {/* Mobile Fallback Navigation Tabs (Hidden on Desktop) */}
+            <Box
+              sx={{
+                display: { xs: 'flex', lg: 'none' },
+                flexWrap: 'wrap',
+                gap: 1,
+                mt: 3,
+              }}
+            >
+              {ANATOMY_STAGES.map((st, idx) => (
+                <Box
+                  key={st.id}
+                  onClick={() => setActiveStage(idx)}
+                  sx={{
+                    px: 1.5,
+                    py: 0.5,
+                    fontSize: '0.72rem',
+                    fontFamily: 'var(--font-mono, monospace)',
+                    color: idx === activeStage ? '#FF6700' : '#A1A1AA',
+                    border: idx === activeStage ? '1px solid #FF6700' : '1px solid rgba(255,255,255,0.1)',
+                    backgroundColor: idx === activeStage ? 'rgba(255,103,0,0.12)' : 'transparent',
+                    cursor: 'pointer',
+                  }}
+                >
+                  0{idx + 1} // {st.id.toUpperCase()}
+                </Box>
+              ))}
             </Box>
           </Box>
         </Box>
-      </Box>
 
-      {/* 4. BOTTOM TELEMETRY FOOTER & STAGE NAVIGATION */}
-      <Box
-        sx={{
-          position: { xs: 'relative', lg: 'absolute' },
-          bottom: { lg: 24 },
-          left: 0,
-          right: 0,
-          px: { xs: 3, md: 8 },
-          pb: { xs: 4, lg: 0 },
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          zIndex: 30,
-        }}
-      >
-        <Typography
+        {/* 4. DISCREET CAD CADENCE FOOTER */}
+        <Box
           sx={{
-            fontFamily: 'var(--font-mono, monospace)',
-            fontSize: '0.68rem',
-            color: '#71717A',
-            letterSpacing: '0.1em',
+            position: { xs: 'relative', lg: 'absolute' },
+            bottom: { lg: 20 },
+            left: 0,
+            right: 0,
+            px: { xs: 3, md: 8, xl: 10 },
+            pb: { xs: 4, lg: 0 },
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            zIndex: 30,
           }}
         >
-          CAD CADENCE // DISSECTION RATIO 1:1
-        </Typography>
+          <Typography
+            sx={{
+              fontFamily: 'var(--font-mono, monospace)',
+              fontSize: '0.68rem',
+              color: '#52525B',
+              letterSpacing: '0.12em',
+            }}
+          >
+            CAD CADENCE // DISSECTION RATIO 1:1 // MATTIGHOFEN DYNAMICS
+          </Typography>
 
-        <Typography
-          sx={{
-            fontFamily: 'var(--font-mono, monospace)',
-            fontSize: '0.68rem',
-            color: '#A1A1AA',
-            letterSpacing: '0.1em',
-          }}
-        >
-          SCROLL TO EXPLORE SUBSYSTEMS [ 0{activeStage + 1} / 04 ]
-        </Typography>
+          <Typography
+            sx={{
+              fontFamily: 'var(--font-mono, monospace)',
+              fontSize: '0.68rem',
+              color: '#A1A1AA',
+              letterSpacing: '0.12em',
+            }}
+          >
+            EXPLORE SUBSYSTEMS [ 0{activeStage + 1} / 04 ]
+          </Typography>
+        </Box>
       </Box>
     </Box>
   );
