@@ -10,7 +10,7 @@ const MainLayout = () => {
   return (
     <Box sx={{ minHeight: '100vh', backgroundColor: '#070709', color: '#F4F4F5' }}>
       <KtmNavbar />
-      <Box component="main" sx={{ pt: isHomePage ? 0 : '72px' }}>
+      <Box component="main" sx={{ pt: isHomePage ? 0 : '88px' }}>
         <Outlet />
       </Box>
       <Footer />
