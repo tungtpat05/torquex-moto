@@ -76,7 +76,7 @@ export const KtmPedigreeHeritage: React.FC = () => {
                 color: '#FF6700',
               }}
             >
-              CHAPTER 04 // BLOODLINE PEDIGREE
+              CHAPTER 04 • BLOODLINE PEDIGREE
             </Typography>
           </Box>
 

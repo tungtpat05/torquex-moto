@@ -34,7 +34,7 @@ interface AnatomyStage {
 const ANATOMY_STAGES: AnatomyStage[] = [
   {
     id: 'chassis',
-    badge: 'STAGE 01 // CHROMIUM-MOLYBDENUM TRELLIS CHASSIS',
+    badge: 'STAGE 01 • CHROMIUM-MOLYBDENUM TRELLIS CHASSIS',
     headline: 'ULTRA-LIGHT CHROMOLY STIFFNESS.',
     subhead:
       'Engine utilized as a stressed member to maximize torsional rigidity (+12%). Laser-cut 25CrMo4 steel tubes hydroformed and powder-coated in Mattighofen racing orange for razor-sharp turn-in feedback.',
@@ -48,7 +48,7 @@ const ANATOMY_STAGES: AnatomyStage[] = [
   },
   {
     id: 'powertrain',
-    badge: 'STAGE 02 // 1,350 CC LC8 V-TWIN CAMSHIFT',
+    badge: 'STAGE 02 • 1,350 CC LC8 V-TWIN CAMSHIFT',
     headline: '190 HP. 145 NM. ZERO COMPROMISE.',
     subhead:
       'Enlarged 1,350cc displacement with all-new CamShift technology. Dual intake cam profiles optimize torque spread below 6,000 RPM while unleashing unhinged top-end acceleration to the 10,500 RPM redline.',
@@ -270,17 +270,14 @@ export const KtmHeroAwakening: React.FC = () => {
           54
         );
 
-        // Initial setup:
-        // Stage 01: BikeBase is the main hero (opacity: 1.0)
-        // Stage 02: Engine is hidden initially
-        gsap.set('.dissection-bike-base', { opacity: 0.95, scale: 1, filter: 'blur(0px)' });
-        gsap.set('.dissection-engine-standalone', { opacity: 0, scale: 0.88, filter: 'blur(12px)' });
-
-        gsap.set('.kinetic-panel-0', { opacity: 1, y: 0, filter: 'blur(0px)' });
-        gsap.set('.kinetic-panel-1', { opacity: 0, y: 35, filter: 'blur(10px)' });
+        // Initial timeline state anchors at time 0
+        masterTl.set('.dissection-bike-base', { opacity: 0.95, scale: 1, filter: 'blur(0px)' }, 0);
+        masterTl.set(['.dissection-engine-standalone', '.dissection-engine-glow'], { opacity: 0, visibility: 'hidden', scale: 0.9 }, 0);
+        masterTl.set('.kinetic-panel-0', { opacity: 1, y: 0, filter: 'blur(0px)' }, 0);
+        masterTl.set('.kinetic-panel-1', { opacity: 0, y: 35, filter: 'blur(10px)' }, 0);
 
         // CROSSFADE STAGE 01 (Khung sườn) -> STAGE 02 (Động cơ LC8) at 78% -> 86%
-        // Yêu cầu: "Phần show động cơ, xóa xe ở background đi"
+        // Yêu cầu: "phần 1 khung sườn giữ nguyên như cũ, xóa cái động cơ đi, còn ở phần 2 động cơ thì zoom to ảnh động cơ lên"
         masterTl
           // 1. Hide bike background completely
           .to(
@@ -294,15 +291,23 @@ export const KtmHeroAwakening: React.FC = () => {
             { opacity: 0, y: -30, filter: 'blur(8px)', duration: 8, ease: 'power2.inOut' },
             78
           )
-          // 3. Bring in standalone raw LC8 Engine as hero
-          .to(
+          // 3. Bring in standalone raw LC8 Engine as hero & ZOOM TO IMPACT (scale 0.9 -> 1.35)
+          .fromTo(
             '.dissection-engine-standalone',
-            { opacity: 1, scale: 1, filter: 'blur(0px)', duration: 8, ease: 'power2.inOut' },
+            { opacity: 0, visibility: 'visible', scale: 0.9, filter: 'blur(10px)' },
+            { opacity: 1, visibility: 'visible', scale: 1.35, filter: 'blur(0px)', duration: 8, ease: 'power2.out' },
+            79
+          )
+          .fromTo(
+            '.dissection-engine-glow',
+            { opacity: 0, visibility: 'visible', scale: 0.75 },
+            { opacity: 1, visibility: 'visible', scale: 1.25, duration: 8, ease: 'power2.out' },
             79
           )
           // 4. Bring in Stage 02 text (LC8 Camshift 190 HP)
-          .to(
+          .fromTo(
             '.kinetic-panel-1',
+            { opacity: 0, y: 35, filter: 'blur(10px)' },
             { opacity: 1, y: 0, filter: 'blur(0px)', duration: 8, ease: 'power2.inOut' },
             79
           );
@@ -564,7 +569,7 @@ export const KtmHeroAwakening: React.FC = () => {
             textShadow: '0 2px 10px rgba(0,0,0,0.9)',
           }}
         >
-          THE BEAST EVOLVED <span style={{ color: '#FF6700' }}>//</span> 1:1 POWER-TO-WEIGHT
+          THE BEAST EVOLVED • 1:1 POWER-TO-WEIGHT
         </Typography>
 
         {/* Specifications Matrix Grid */}
@@ -770,7 +775,7 @@ export const KtmHeroAwakening: React.FC = () => {
                 letterSpacing: '0.18em',
               }}
             >
-              DISSECTION PROTOCOL // 1,350 CC BEAST
+              CORE ARCHITECTURE • 1,350 CC BEAST
             </Typography>
           </Box>
 
@@ -806,7 +811,7 @@ export const KtmHeroAwakening: React.FC = () => {
                   '0 4px 40px rgba(0,0,0,0.95), 0 0 50px rgba(255, 103, 0, 0.8), 0 0 90px rgba(255, 103, 0, 0.45)',
               }}
             >
-              STRIPPED BARE.
+              CHASSIS & ENGINE
             </Typography>
           </Box>
 
@@ -822,7 +827,7 @@ export const KtmHeroAwakening: React.FC = () => {
               mt: 1,
             }}
           >
-            SURGICAL PRECISION // RAW UNCOMPROMISING MECHANICS
+            CHROMIUM-MOLYBDENUM TRELLIS BACKBONE • 190 HP LC8 V-TWIN HEART
           </Typography>
         </Box>
 
@@ -879,7 +884,28 @@ export const KtmHeroAwakening: React.FC = () => {
               }}
             />
 
-            {/* STAGE 02: Standalone Raw LC8 CamShift Engine (Background bike is deleted) */}
+            {/* STAGE 02: Standalone Raw LC8 CamShift Engine (Hidden during Stage 01, Zooms in Stage 02) */}
+            <Box
+              className="dissection-engine-glow"
+              sx={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: { xs: '340px', sm: '480px', md: '620px', lg: '780px', xl: '880px' },
+                height: { xs: '340px', sm: '480px', md: '620px', lg: '780px', xl: '880px' },
+                borderRadius: '50%',
+                background:
+                  'radial-gradient(circle, rgba(255, 103, 0, 0.32) 0%, rgba(255, 103, 0, 0.08) 45%, transparent 72%)',
+                filter: 'blur(65px)',
+                pointerEvents: 'none',
+                zIndex: 21,
+                opacity: 0,
+                visibility: 'hidden',
+                willChange: 'transform, opacity',
+              }}
+            />
+
             <Box
               component="img"
               src={engineImg}
@@ -887,14 +913,17 @@ export const KtmHeroAwakening: React.FC = () => {
               className="dissection-engine-standalone"
               sx={{
                 position: 'absolute',
-                maxWidth: { xs: '90%', lg: '85%' },
-                maxHeight: { xs: '90%', lg: '85%' },
+                width: { xs: '92%', sm: '88%', md: '84%', lg: '100%', xl: '108%' },
+                maxWidth: { xs: '520px', sm: '650px', md: '780px', lg: '920px', xl: '1050px' },
+                maxHeight: { xs: '92%', lg: '96%', xl: '100%' },
                 objectFit: 'contain',
                 filter:
-                  'drop-shadow(0 0 45px rgba(255, 103, 0, 0.75)) drop-shadow(0 25px 60px rgba(0, 0, 0, 0.95))',
+                  'drop-shadow(0 0 55px rgba(255, 103, 0, 0.65)) drop-shadow(0 30px 70px rgba(0, 0, 0, 0.98))',
                 pointerEvents: 'none',
                 userSelect: 'none',
                 zIndex: 22,
+                opacity: 0,
+                visibility: 'hidden',
                 willChange: 'transform, opacity, filter',
               }}
             />
