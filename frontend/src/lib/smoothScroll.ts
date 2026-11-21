@@ -21,10 +21,11 @@ export const initSmoothScroll = (): Lenis => {
   }
 
   const lenis = new Lenis({
-    duration: 1.15,
-    easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // Exponential deceleration
+    duration: 1.8,
+    easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // Luxurious exponential deceleration
     smoothWheel: true,
-    touchMultiplier: 1.1,
+    wheelMultiplier: 0.55, // Deliberate, weighted cinematic scroll pace
+    touchMultiplier: 0.8,
   });
 
   lenisInstance = lenis;

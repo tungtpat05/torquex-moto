@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { Box } from '@mui/material';
 import { initSmoothScroll, destroySmoothScroll } from '@/lib/smoothScroll';
 import KtmHeroAwakening from '@/components/ktm/KtmHeroAwakening';
-import KtmAnatomyFury from '@/components/ktm/KtmAnatomyFury';
 import KtmApexSurge from '@/components/ktm/KtmApexSurge';
 import KtmPedigreeHeritage from '@/components/ktm/KtmPedigreeHeritage';
 import KtmBloodlineFleet from '@/components/ktm/KtmBloodlineFleet';
@@ -27,11 +26,8 @@ const HomePage: React.FC = () => {
         overflowX: 'hidden',
       }}
     >
-      {/* Act I: The Awakening (100svh Natural Parallax Flow — No Pinning) */}
+      {/* Act I & Act II: The Awakening & The Anatomy of Fury (Unified Porsche-Style Seamless Master Experience) */}
       <KtmHeroAwakening />
-
-      {/* Act II: The Anatomy of Fury (250vh Pinned Stage — The ONLY Pin) */}
-      <KtmAnatomyFury />
 
       {/* Act III: The Apex Surge (High-Velocity Editorial Action Cascade) */}
       <KtmApexSurge />
