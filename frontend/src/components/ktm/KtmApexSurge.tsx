@@ -1,7 +1,9 @@
-﻿import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Box, Typography, Modal, IconButton } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import ArrowOutwardIcon from '@mui/icons-material/ArrowOutward';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 import wheelieActionImg from '@/assets/images/ktm/models/1390_wheelie_action.jpg';
 import apexActionImg from '@/assets/images/ktm/models/1390_apex_action.jpg';
@@ -10,6 +12,8 @@ import tankImg from '@/assets/images/ktm/anatomy/1390_tank.png';
 import headlightImg from '@/assets/images/ktm/anatomy/1390_headlight.png';
 import engineImg from '@/assets/images/ktm/anatomy/1390_engine.png';
 import brakesImg from '@/assets/images/ktm/anatomy/1390_brakes.png';
+
+gsap.registerPlugin(ScrollTrigger);
 
 interface CardItem {
   id: string;
@@ -98,6 +102,148 @@ const STACK_PAIR_2: [CardItem, CardItem] = [
 export const KtmApexSurge: React.FC = () => {
   const [selectedCard, setSelectedCard] = useState<CardItem | null>(null);
 
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const videoWrapperRef = useRef<HTMLDivElement>(null);
+  const headlineBoxRef = useRef<HTMLDivElement>(null);
+  const marqueeBoxRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Check prefers-reduced-motion
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const ctx = gsap.context(() => {
+      // PORSCHE MOTORSPORT CINEMATIC SCROLL CHOREOGRAPHY (Desktop only)
+      if (window.innerWidth >= 1024 && !prefersReducedMotion) {
+        const masterTl = gsap.timeline({
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: 'top top',
+            end: '+=220%', // 2.2 viewport heights scrub distance
+            pin: true,
+            scrub: 0.8,
+            anticipatePin: 1,
+          },
+        });
+
+        // BEAT 1: ENTRANCE & GAP COLLAPSE (0% -> 20%)
+        // Video container expands from a floating rounded card (scale 0.94, radius 28px)
+        // into full-bleed screen (scale 1.0, radius 0px), actively reducing distance
+        // and dissolving any blank gap from the previous section.
+        masterTl.fromTo(
+          videoWrapperRef.current,
+          {
+            scale: 0.94,
+            borderRadius: '28px',
+            boxShadow: '0 25px 80px rgba(0, 0, 0, 0.95), 0 0 50px rgba(255, 103, 0, 0.25)',
+          },
+          {
+            scale: 1.0,
+            borderRadius: '0px',
+            boxShadow: 'none',
+            duration: 20,
+            ease: 'power2.out',
+          },
+          0
+        );
+
+        // INITIAL HIDDEN STATES FOR CLEAN VIDEO FOCUS (0% -> 22%)
+        masterTl.set(
+          headlineBoxRef.current,
+          { opacity: 0, y: 45, filter: 'blur(14px)' },
+          0
+        );
+        masterTl.set(
+          marqueeBoxRef.current,
+          { opacity: 0, y: 140, pointerEvents: 'none' },
+          0
+        );
+
+        // BEAT 2: THE "RACEBORN" STATEMENT REVEAL (22% -> 50%)
+        // After observing the raw power wheelie action, the kinetic headline enters
+        masterTl.to(
+          headlineBoxRef.current,
+          {
+            opacity: 1,
+            y: 0,
+            filter: 'blur(0px)',
+            duration: 26,
+            ease: 'power3.out',
+          },
+          22
+        );
+
+        masterTl.fromTo(
+          '.apex-pill',
+          { opacity: 0, scale: 0.85, y: -15 },
+          { opacity: 1, scale: 1, y: 0, duration: 16, ease: 'back.out(1.5)' },
+          22
+        );
+
+        masterTl.fromTo(
+          '.apex-headline-word-1',
+          { y: 40, opacity: 0 },
+          { y: 0, opacity: 1, duration: 20, ease: 'power2.out' },
+          24
+        );
+
+        masterTl.fromTo(
+          '.apex-headline-word-2',
+          { y: 40, opacity: 0 },
+          { y: 0, opacity: 1, duration: 20, ease: 'power2.out' },
+          27
+        );
+
+        masterTl.fromTo(
+          '.apex-subhead-narrative',
+          { y: 25, opacity: 0 },
+          { y: 0, opacity: 1, duration: 18, ease: 'power2.out' },
+          30
+        );
+
+        // BEAT 3: READABLE HOLD (50% -> 70%)
+        // Steady pause allowing full statement reading while motorcycle wheelie plays underneath
+        masterTl.to({}, { duration: 20 }, 50);
+
+        // BEAT 4: HARDWARE MARQUEE DOCK SLIDES UP (70% -> 95%)
+        // Headline ascends slightly with subtle scale to clear middle viewing corridor
+        masterTl.to(
+          headlineBoxRef.current,
+          {
+            y: -36,
+            scale: 0.95,
+            opacity: 0.88,
+            duration: 25,
+            ease: 'power2.inOut',
+          },
+          70
+        );
+
+        // Marquee cards slide smoothly up into lower third dock
+        masterTl.fromTo(
+          marqueeBoxRef.current,
+          {
+            opacity: 0,
+            y: 140,
+            pointerEvents: 'none',
+          },
+          {
+            opacity: 1,
+            y: 0,
+            pointerEvents: 'auto',
+            duration: 25,
+            ease: 'power3.out',
+          },
+          70
+        );
+
+        // BEAT 5: Final cushion into Act IV Pedigree (95% -> 100%)
+        masterTl.to({}, { duration: 5 }, 95);
+      }
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, []);
+
   // Render a 3:4 Hero Card
   const renderHeroCard = (card: CardItem, keyPrefix: string) => (
     <Box
@@ -105,20 +251,21 @@ export const KtmApexSurge: React.FC = () => {
       onClick={() => setSelectedCard(card)}
       sx={{
         flexShrink: 0,
-        width: { xs: '300px', sm: '360px', lg: '410px' },
-        height: { xs: '420px', sm: '500px', lg: '560px' },
+        width: { xs: '260px', sm: '300px', lg: '340px' },
+        height: { xs: '360px', sm: '390px', lg: '430px' },
         borderRadius: '16px',
         overflow: 'hidden',
         position: 'relative',
         cursor: 'pointer',
-        backgroundColor: '#0E0E14',
-        border: '1px solid rgba(255, 255, 255, 0.10)',
-        boxShadow: '0 20px 50px rgba(0, 0, 0, 0.75)',
+        backgroundColor: 'rgba(14, 14, 20, 0.82)',
+        backdropFilter: 'blur(16px)',
+        border: '1px solid rgba(255, 255, 255, 0.12)',
+        boxShadow: '0 16px 45px rgba(0, 0, 0, 0.80)',
         transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
         '&:hover': {
           borderColor: '#FF6700',
-          transform: 'translateY(-8px)',
-          boxShadow: '0 30px 60px rgba(0, 0, 0, 0.9), 0 0 35px rgba(255, 103, 0, 0.35)',
+          transform: 'translateY(-6px)',
+          boxShadow: '0 24px 50px rgba(0, 0, 0, 0.95), 0 0 30px rgba(255, 103, 0, 0.35)',
           '& .card-arrow': {
             backgroundColor: '#FF6700',
             color: '#FFFFFF',
@@ -153,7 +300,7 @@ export const KtmApexSurge: React.FC = () => {
           position: 'absolute',
           inset: 0,
           background:
-            'linear-gradient(to top, rgba(7, 7, 9, 0.95) 0%, rgba(7, 7, 9, 0.4) 50%, rgba(7, 7, 9, 0.1) 100%)',
+            'linear-gradient(to top, rgba(7, 7, 9, 0.95) 0%, rgba(7, 7, 9, 0.45) 50%, rgba(7, 7, 9, 0.15) 100%)',
           pointerEvents: 'none',
         }}
       />
@@ -162,9 +309,9 @@ export const KtmApexSurge: React.FC = () => {
       <Box
         sx={{
           position: 'absolute',
-          top: 20,
-          left: 20,
-          right: 20,
+          top: 16,
+          left: 16,
+          right: 16,
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -173,10 +320,10 @@ export const KtmApexSurge: React.FC = () => {
       >
         <Box
           sx={{
-            px: 1.6,
-            py: 0.6,
+            px: 1.4,
+            py: 0.5,
             borderRadius: '100px',
-            backgroundColor: 'rgba(7, 7, 9, 0.82)',
+            backgroundColor: 'rgba(7, 7, 9, 0.85)',
             backdropFilter: 'blur(12px)',
             border: '1px solid rgba(255, 255, 255, 0.14)',
           }}
@@ -184,7 +331,7 @@ export const KtmApexSurge: React.FC = () => {
           <Typography
             sx={{
               fontFamily: 'var(--font-mono, monospace)',
-              fontSize: '0.64rem',
+              fontSize: '0.62rem',
               fontWeight: 800,
               color: '#FF6700',
               letterSpacing: '0.12em',
@@ -197,10 +344,10 @@ export const KtmApexSurge: React.FC = () => {
         <Box
           className="card-arrow"
           sx={{
-            width: 36,
-            height: 36,
+            width: 32,
+            height: 32,
             borderRadius: '50%',
-            backgroundColor: 'rgba(7, 7, 9, 0.82)',
+            backgroundColor: 'rgba(7, 7, 9, 0.85)',
             backdropFilter: 'blur(12px)',
             border: '1px solid rgba(255, 255, 255, 0.14)',
             color: '#E4E4E7',
@@ -210,7 +357,7 @@ export const KtmApexSurge: React.FC = () => {
             transition: 'all 0.3s ease',
           }}
         >
-          <ArrowOutwardIcon sx={{ fontSize: '1.05rem' }} />
+          <ArrowOutwardIcon sx={{ fontSize: '0.95rem' }} />
         </Box>
       </Box>
 
@@ -218,16 +365,16 @@ export const KtmApexSurge: React.FC = () => {
       <Box
         sx={{
           position: 'absolute',
-          bottom: 24,
-          left: 24,
-          right: 24,
+          bottom: 20,
+          left: 20,
+          right: 20,
           zIndex: 5,
         }}
       >
         <Typography
           sx={{
             fontFamily: 'var(--font-display, "Outfit", sans-serif)',
-            fontSize: { xs: '1.5rem', sm: '1.85rem' },
+            fontSize: { xs: '1.3rem', sm: '1.5rem', lg: '1.65rem' },
             fontWeight: 900,
             color: '#FFFFFF',
             lineHeight: 1.1,
@@ -245,17 +392,17 @@ export const KtmApexSurge: React.FC = () => {
             display: 'inline-flex',
             alignItems: 'center',
             gap: 1,
-            px: 1.4,
-            py: 0.5,
+            px: 1.2,
+            py: 0.4,
             borderRadius: '4px',
-            backgroundColor: 'rgba(255, 103, 0, 0.14)',
+            backgroundColor: 'rgba(255, 103, 0, 0.15)',
             border: '1px solid rgba(255, 103, 0, 0.45)',
           }}
         >
           <Typography
             sx={{
               fontFamily: 'var(--font-mono, monospace)',
-              fontSize: '0.68rem',
+              fontSize: '0.65rem',
               fontWeight: 800,
               color: '#FF6700',
               letterSpacing: '0.1em',
@@ -274,11 +421,11 @@ export const KtmApexSurge: React.FC = () => {
       key={`${keyPrefix}-cluster`}
       sx={{
         flexShrink: 0,
-        width: { xs: '300px', sm: '360px', lg: '400px' },
-        height: { xs: '420px', sm: '500px', lg: '560px' },
+        width: { xs: '260px', sm: '300px', lg: '340px' },
+        height: { xs: '360px', sm: '390px', lg: '430px' },
         display: 'flex',
         flexDirection: 'column',
-        gap: { xs: 2, lg: 2.5 },
+        gap: { xs: 1.5, lg: 2 },
       }}
     >
       {pair.map((card) => (
@@ -291,18 +438,19 @@ export const KtmApexSurge: React.FC = () => {
             overflow: 'hidden',
             position: 'relative',
             cursor: 'pointer',
-            backgroundColor: '#0C0C12',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            boxShadow: '0 12px 35px rgba(0, 0, 0, 0.65)',
+            backgroundColor: 'rgba(12, 12, 18, 0.85)',
+            backdropFilter: 'blur(16px)',
+            border: '1px solid rgba(255, 255, 255, 0.10)',
+            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.70)',
             display: 'flex',
             alignItems: 'center',
-            p: 3,
-            gap: 2.5,
+            p: 2.2,
+            gap: 2,
             transition: 'all 0.35s ease',
             '&:hover': {
               borderColor: '#FF6700',
               transform: 'translateY(-4px)',
-              boxShadow: '0 20px 45px rgba(0, 0, 0, 0.85), 0 0 25px rgba(255, 103, 0, 0.25)',
+              boxShadow: '0 18px 40px rgba(0, 0, 0, 0.90), 0 0 25px rgba(255, 103, 0, 0.30)',
               '& .stack-img': {
                 transform: 'scale(1.1) rotate(2deg)',
               },
@@ -316,16 +464,16 @@ export const KtmApexSurge: React.FC = () => {
           {/* Hardware Visual Thumbnail */}
           <Box
             sx={{
-              width: { xs: '85px', sm: '110px' },
-              height: { xs: '85px', sm: '110px' },
+              width: { xs: '75px', sm: '90px' },
+              height: { xs: '75px', sm: '90px' },
               flexShrink: 0,
               borderRadius: '10px',
-              backgroundColor: 'rgba(255, 255, 255, 0.03)',
-              border: '1px solid rgba(255, 255, 255, 0.06)',
+              backgroundColor: 'rgba(255, 255, 255, 0.04)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              p: 1.2,
+              p: 1,
             }}
           >
             <Box
@@ -337,7 +485,7 @@ export const KtmApexSurge: React.FC = () => {
                 maxWidth: '100%',
                 maxHeight: '100%',
                 objectFit: 'contain',
-                filter: 'drop-shadow(0 0 16px rgba(255, 103, 0, 0.45))',
+                filter: 'drop-shadow(0 0 14px rgba(255, 103, 0, 0.45))',
                 transition: 'transform 0.5s ease',
               }}
             />
@@ -348,11 +496,11 @@ export const KtmApexSurge: React.FC = () => {
             <Typography
               sx={{
                 fontFamily: 'var(--font-mono, monospace)',
-                fontSize: '0.62rem',
+                fontSize: '0.60rem',
                 fontWeight: 800,
                 color: '#FF6700',
                 letterSpacing: '0.14em',
-                mb: 0.5,
+                mb: 0.4,
               }}
             >
               {card.tag}
@@ -361,12 +509,12 @@ export const KtmApexSurge: React.FC = () => {
             <Typography
               sx={{
                 fontFamily: 'var(--font-display, "Outfit", sans-serif)',
-                fontSize: { xs: '1.05rem', sm: '1.25rem' },
+                fontSize: { xs: '0.95rem', sm: '1.1rem' },
                 fontWeight: 900,
                 color: '#FFFFFF',
                 lineHeight: 1.15,
                 textTransform: 'uppercase',
-                mb: 0.8,
+                mb: 0.6,
               }}
             >
               {card.title}
@@ -375,7 +523,7 @@ export const KtmApexSurge: React.FC = () => {
             <Typography
               sx={{
                 fontFamily: 'var(--font-mono, monospace)',
-                fontSize: '0.68rem',
+                fontSize: '0.64rem',
                 color: '#A1A1AA',
                 fontWeight: 700,
               }}
@@ -387,8 +535,8 @@ export const KtmApexSurge: React.FC = () => {
           <Box
             className="stack-arrow"
             sx={{
-              width: 32,
-              height: 32,
+              width: 28,
+              height: 28,
               borderRadius: '50%',
               backgroundColor: 'rgba(255, 255, 255, 0.05)',
               display: 'flex',
@@ -398,7 +546,7 @@ export const KtmApexSurge: React.FC = () => {
               transition: 'all 0.25s ease',
             }}
           >
-            <ArrowOutwardIcon sx={{ fontSize: '0.95rem' }} />
+            <ArrowOutwardIcon sx={{ fontSize: '0.85rem' }} />
           </Box>
         </Box>
       ))}
@@ -408,18 +556,20 @@ export const KtmApexSurge: React.FC = () => {
   return (
     <Box
       id="action"
+      ref={sectionRef}
       component="section"
       sx={{
         position: 'relative',
         width: '100%',
-        minHeight: { xs: 'auto', lg: '1050px', xl: '1120px' },
+        height: { xs: 'auto', lg: '100vh' },
         backgroundColor: '#070709',
         overflow: 'hidden',
-        py: { xs: 10, lg: 12 },
+        py: { xs: 8, lg: 0 },
       }}
     >
-      {/* 1. CINEMATIC AMBIENT BACKGROUND RACETRACK VIDEO (PORSCHE STYLE) */}
+      {/* 1. CINEMATIC AMBIENT BACKGROUND RACETRACK VIDEO (PORSCHE "RACEBORN" STAGING) */}
       <Box
+        ref={videoWrapperRef}
         sx={{
           position: 'absolute',
           top: 0,
@@ -429,11 +579,13 @@ export const KtmApexSurge: React.FC = () => {
           zIndex: 1,
           overflow: 'hidden',
           pointerEvents: 'none',
+          transformOrigin: 'center center',
+          transition: 'border-radius 0.3s ease',
         }}
       >
         <Box
           component="video"
-          src="/videos/track-run.mp4"
+          src="/videos/1390-wheelie.mp4"
           autoPlay
           muted
           loop
@@ -442,48 +594,63 @@ export const KtmApexSurge: React.FC = () => {
             width: '100%',
             height: '100%',
             objectFit: 'cover',
-            objectPosition: 'center 40%',
-            opacity: 0.42,
-            filter: 'contrast(1.15) brightness(0.85)',
+            objectPosition: { xs: 'center 40%', md: 'center 46%' },
+            opacity: 0.92, // Fully vivid & luminous, no longer smothered at 0.42!
+            filter: 'contrast(1.08) brightness(1.02)',
           }}
         />
 
-        {/* Master Vignette Gradients */}
+        {/* Minimal Non-Obtrusive Edge Vignettes (No heavy radial blackouts) */}
+        {/* Top edge gradient for clean section blend */}
         <Box
           sx={{
             position: 'absolute',
-            inset: 0,
+            top: 0,
+            left: 0,
+            right: 0,
+            height: { xs: '20%', md: '26%' },
             background:
-              'linear-gradient(to bottom, #070709 0%, rgba(7, 7, 9, 0.25) 30%, rgba(7, 7, 9, 0.70) 70%, #070709 100%)',
+              'linear-gradient(to bottom, #070709 0%, rgba(7, 7, 9, 0.45) 45%, transparent 100%)',
           }}
         />
+
+        {/* Bottom edge gradient for hardware dock grounding */}
         <Box
           sx={{
             position: 'absolute',
-            inset: 0,
-            background: 'radial-gradient(ellipse at center, transparent 35%, rgba(7, 7, 9, 0.85) 100%)',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: { xs: '28%', md: '36%' },
+            background:
+              'linear-gradient(to top, #070709 0%, rgba(7, 7, 9, 0.65) 50%, transparent 100%)',
           }}
         />
       </Box>
 
-      {/* 2. PORSCHE-STYLE MONUMENTAL CENTERED HEADLINE */}
+      {/* 2. PORSCHE-STYLE MONUMENTAL HEADLINE (CHOREOGRAPHED KINETIC REVEAL) */}
       <Box
+        ref={headlineBoxRef}
         sx={{
-          position: 'relative',
+          position: 'absolute',
+          top: { xs: 32, sm: 48, lg: '12%' },
+          left: 0,
+          right: 0,
           zIndex: 10,
           textAlign: 'center',
-          maxWidth: '1300px',
+          maxWidth: '1200px',
           mx: 'auto',
           px: { xs: 3, md: 6 },
-          mb: { xs: 8, lg: 10 },
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: 1.8,
+          gap: { xs: 1.2, md: 1.6 },
+          pointerEvents: 'none',
         }}
       >
         {/* Pulsing Status Pill */}
         <Box
+          className="apex-pill"
           sx={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -491,9 +658,10 @@ export const KtmApexSurge: React.FC = () => {
             px: 2.2,
             py: 0.6,
             borderRadius: '100px',
-            backgroundColor: 'rgba(255, 103, 0, 0.12)',
+            backgroundColor: 'rgba(7, 7, 9, 0.75)',
+            backdropFilter: 'blur(12px)',
             border: '1px solid #FF6700',
-            boxShadow: '0 0 20px rgba(255, 103, 0, 0.3)',
+            boxShadow: '0 0 20px rgba(255, 103, 0, 0.35)',
           }}
         >
           <Box
@@ -508,7 +676,7 @@ export const KtmApexSurge: React.FC = () => {
           <Typography
             sx={{
               fontFamily: 'var(--font-mono, monospace)',
-              fontSize: { xs: '0.68rem', md: '0.74rem' },
+              fontSize: { xs: '0.66rem', md: '0.72rem' },
               fontWeight: 800,
               color: '#FF6700',
               letterSpacing: '0.18em',
@@ -519,27 +687,31 @@ export const KtmApexSurge: React.FC = () => {
           </Typography>
         </Box>
 
-        {/* Colossal Statement Headline */}
+        {/* Colossal Statement Headline (Scaled for balanced hierarchy, leaving center wheelie clear) */}
         <Typography
           variant="h2"
           sx={{
             fontFamily: 'var(--font-display, "Outfit", sans-serif)',
-            fontSize: { xs: '2.5rem', sm: '3.8rem', md: '5.0rem', lg: '6.2rem' },
+            fontSize: { xs: '2.0rem', sm: '2.8rem', md: '3.6rem', lg: '4.4rem' },
             fontWeight: 950,
-            lineHeight: 0.96,
+            lineHeight: 1.02,
             letterSpacing: '-0.035em',
             color: '#FFFFFF',
             textTransform: 'uppercase',
-            textShadow: '0 4px 30px rgba(0,0,0,0.95), 0 0 50px rgba(255, 255, 255, 0.15)',
+            textShadow: '0 4px 30px rgba(0,0,0,0.95), 0 0 45px rgba(255, 255, 255, 0.15)',
           }}
         >
-          BRED ON TRACK.{' '}
+          <Box component="span" className="apex-headline-word-1" sx={{ display: 'inline-block' }}>
+            BRED ON TRACK.{' '}
+          </Box>
           <Box
             component="span"
+            className="apex-headline-word-2"
             sx={{
+              display: 'inline-block',
               color: '#FF6700',
               textShadow:
-                '0 4px 40px rgba(0,0,0,0.95), 0 0 50px rgba(255, 103, 0, 0.75), 0 0 90px rgba(255, 103, 0, 0.35)',
+                '0 4px 40px rgba(0,0,0,0.95), 0 0 45px rgba(255, 103, 0, 0.80), 0 0 80px rgba(255, 103, 0, 0.40)',
             }}
           >
             UNLEASHED ON ASPHALT.
@@ -548,13 +720,14 @@ export const KtmApexSurge: React.FC = () => {
 
         {/* Subhead Narrative */}
         <Typography
+          className="apex-subhead-narrative"
           sx={{
             fontFamily: 'var(--font-body, "Inter", sans-serif)',
-            fontSize: { xs: '0.85rem', md: '1.05rem' },
-            color: '#A1A1AA',
+            fontSize: { xs: '0.84rem', md: '0.98rem' },
+            color: '#D4D4D8',
             letterSpacing: '0.04em',
-            maxWidth: '680px',
-            mt: 0.5,
+            maxWidth: '640px',
+            textShadow: '0 2px 14px rgba(0,0,0,0.9)',
           }}
         >
           Born from 18 Dakar Championships and Grand Prix prototype telemetry. Every millimeter engineered for
@@ -562,13 +735,17 @@ export const KtmApexSurge: React.FC = () => {
         </Typography>
       </Box>
 
-      {/* 3. HARDWARE-ACCELERATED CONTINUOUS CSS INFINITE MARQUEE (PORSCHE STYLE) */}
-      {/* Overlaps the bottom of the video, pauses instantly on hover */}
+      {/* 3. HARDWARE-ACCELERATED DOCKED TELEMETRY MARQUEE (PORSCHE STYLE BOTTOM TIER) */}
       <Box
+        ref={marqueeBoxRef}
         sx={{
-          position: 'relative',
+          position: { xs: 'relative', lg: 'absolute' },
+          bottom: { lg: 32, xl: 40 },
+          left: 0,
+          right: 0,
           zIndex: 15,
           width: '100%',
+          mt: { xs: 6, lg: 0 },
           overflow: 'hidden',
           maskImage:
             'linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)',
@@ -583,10 +760,11 @@ export const KtmApexSurge: React.FC = () => {
           className="marquee-track"
           sx={{
             display: 'flex',
-            gap: { xs: 2.5, lg: 3.5 },
+            gap: { xs: 2, lg: 2.8 },
             width: 'max-content',
             animation: 'apexMarqueeScroll 48s linear infinite',
             willChange: 'transform',
+            py: 1,
             '@keyframes apexMarqueeScroll': {
               '0%': { transform: 'translate3d(0, 0, 0)' },
               '100%': { transform: 'translate3d(-50%, 0, 0)' },

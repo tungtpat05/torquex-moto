@@ -725,7 +725,7 @@ export const KtmHeroAwakening: React.FC = () => {
             pointerEvents: 'none',
           }}
         >
-          {/* Laser Glow Aura behind Title */}
+          {/* Laser Glow Aura behind Title - Wide Seamless Atmospheric Halo */}
           <Box
             className="kinetic-hook-glow"
             sx={{
@@ -733,11 +733,11 @@ export const KtmHeroAwakening: React.FC = () => {
               top: '50%',
               left: '50%',
               transform: 'translate(-50%, -50%)',
-              width: { xs: '320px', md: '640px', xl: '800px' },
-              height: { xs: '180px', md: '300px', xl: '380px' },
+              width: { xs: '90vw', md: '1200px', xl: '1500px' },
+              height: { xs: '220px', md: '340px', xl: '420px' },
               background:
-                'radial-gradient(ellipse at center, rgba(255, 103, 0, 0.40) 0%, rgba(255, 103, 0, 0.12) 50%, transparent 75%)',
-              filter: 'blur(50px)',
+                'radial-gradient(ellipse 75% 55% at center, rgba(255, 103, 0, 0.42) 0%, rgba(255, 103, 0, 0.16) 42%, rgba(255, 103, 0, 0.02) 68%, transparent 82%)',
+              filter: 'blur(65px)',
               pointerEvents: 'none',
               zIndex: -1,
             }}
@@ -779,40 +779,82 @@ export const KtmHeroAwakening: React.FC = () => {
             </Typography>
           </Box>
 
-          {/* Colossal Masked Kinetic Title (Two-Tone, Split Kinetic Entrance) */}
-          <Box sx={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <Typography
-              className="kinetic-hook-title-1"
+          {/* Colossal Kinetic Title with Seamless Technical Border Gradients (No Hard Edges) */}
+          <Box
+            sx={{
+              position: 'relative',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              py: 1.5,
+              px: { xs: 2, md: 6 },
+              width: '100%',
+            }}
+          >
+            {/* Top Technical Border Gradient (Seamless falloff at left & right) */}
+            <Box
               sx={{
-                fontFamily: 'var(--font-display, "Outfit", sans-serif)',
-                fontSize: { xs: '3.2rem', sm: '4.8rem', md: '6.4rem', lg: '8.0rem', xl: '9.4rem' },
-                fontWeight: 950,
-                color: '#FFFFFF',
-                lineHeight: 0.94,
-                letterSpacing: '-0.035em',
-                textTransform: 'uppercase',
-                textShadow: '0 4px 30px rgba(0,0,0,0.95), 0 0 40px rgba(255, 255, 255, 0.25)',
+                width: '100%',
+                maxWidth: { xs: '380px', sm: '600px', md: '880px', lg: '1100px' },
+                height: '1px',
+                background:
+                  'linear-gradient(90deg, transparent 0%, rgba(255, 103, 0, 0.25) 20%, rgba(255, 103, 0, 0.85) 50%, rgba(255, 103, 0, 0.25) 80%, transparent 100%)',
+                boxShadow: '0 0 12px rgba(255, 103, 0, 0.4)',
+                mb: 1.5,
               }}
-            >
-              THE BEAST
-            </Typography>
+            />
 
-            <Typography
-              className="kinetic-hook-title-2"
+            {/* Line 1: THE BEAST with individual kinetic overflow mask */}
+            <Box sx={{ overflow: 'hidden', width: '100%', display: 'flex', justifyContent: 'center', py: 0.5, px: 2 }}>
+              <Typography
+                className="kinetic-hook-title-1"
+                sx={{
+                  fontFamily: 'var(--font-display, "Outfit", sans-serif)',
+                  fontSize: { xs: '3.2rem', sm: '4.8rem', md: '6.4rem', lg: '8.0rem', xl: '9.4rem' },
+                  fontWeight: 950,
+                  color: '#FFFFFF',
+                  lineHeight: 0.94,
+                  letterSpacing: '-0.035em',
+                  textTransform: 'uppercase',
+                  textShadow: '0 4px 30px rgba(0,0,0,0.95), 0 0 40px rgba(255, 255, 255, 0.25)',
+                }}
+              >
+                THE BEAST
+              </Typography>
+            </Box>
+
+            {/* Line 2: CHASSIS & ENGINE with individual kinetic overflow mask & soft glow */}
+            <Box sx={{ overflow: 'hidden', width: '100%', display: 'flex', justifyContent: 'center', py: 0.5, px: 2 }}>
+              <Typography
+                className="kinetic-hook-title-2"
+                sx={{
+                  fontFamily: 'var(--font-display, "Outfit", sans-serif)',
+                  fontSize: { xs: '3.2rem', sm: '4.8rem', md: '6.4rem', lg: '8.0rem', xl: '9.4rem' },
+                  fontWeight: 950,
+                  color: '#FF6700',
+                  lineHeight: 0.94,
+                  letterSpacing: '-0.035em',
+                  textTransform: 'uppercase',
+                  textShadow:
+                    '0 4px 40px rgba(0,0,0,0.95), 0 0 35px rgba(255, 103, 0, 0.7), 0 0 60px rgba(255, 103, 0, 0.25)',
+                }}
+              >
+                CHASSIS & ENGINE
+              </Typography>
+            </Box>
+
+            {/* Bottom Technical Border Gradient (Seamless falloff at left & right) */}
+            <Box
               sx={{
-                fontFamily: 'var(--font-display, "Outfit", sans-serif)',
-                fontSize: { xs: '3.2rem', sm: '4.8rem', md: '6.4rem', lg: '8.0rem', xl: '9.4rem' },
-                fontWeight: 950,
-                color: '#FF6700',
-                lineHeight: 0.94,
-                letterSpacing: '-0.035em',
-                textTransform: 'uppercase',
-                textShadow:
-                  '0 4px 40px rgba(0,0,0,0.95), 0 0 50px rgba(255, 103, 0, 0.8), 0 0 90px rgba(255, 103, 0, 0.45)',
+                width: '100%',
+                maxWidth: { xs: '380px', sm: '600px', md: '880px', lg: '1100px' },
+                height: '1px',
+                background:
+                  'linear-gradient(90deg, transparent 0%, rgba(255, 103, 0, 0.25) 20%, rgba(255, 103, 0, 0.85) 50%, rgba(255, 103, 0, 0.25) 80%, transparent 100%)',
+                boxShadow: '0 0 12px rgba(255, 103, 0, 0.4)',
+                mt: 1.5,
               }}
-            >
-              CHASSIS & ENGINE
-            </Typography>
+            />
           </Box>
 
           {/* Expanding Tracking Subhead */}
