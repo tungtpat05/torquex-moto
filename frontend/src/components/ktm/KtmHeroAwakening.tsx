@@ -344,6 +344,7 @@ export const KtmHeroAwakening: React.FC = () => {
         minHeight: '100vh',
         overflow: 'hidden',
         backgroundColor: '#070709',
+        zIndex: 1,
       }}
     >
       {/* 1. HERO AWAKENING MOTORCYCLE BACKGROUND (Crisp, High-Resolution Base) */}
@@ -705,6 +706,20 @@ export const KtmHeroAwakening: React.FC = () => {
             background:
               'radial-gradient(circle at 35% 50%, rgba(255, 103, 0, 0.12) 0%, rgba(7, 7, 9, 0) 65%), radial-gradient(circle at 75% 65%, rgba(255, 103, 0, 0.05) 0%, rgba(7, 7, 9, 0) 55%)',
             pointerEvents: 'none',
+          }}
+        />
+
+        {/* Subtle Bottom Atmospheric Fade: melts CAD grid and #0c0c12 into #070709 void */}
+        <Box
+          sx={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: '12%',
+            background: 'linear-gradient(to top, #070709 0%, rgba(7, 7, 9, 0.6) 45%, transparent 100%)',
+            pointerEvents: 'none',
+            zIndex: 28,
           }}
         />
 

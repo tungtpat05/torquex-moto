@@ -103,6 +103,7 @@ export const KtmApexSurge: React.FC = () => {
   const [selectedCard, setSelectedCard] = useState<CardItem | null>(null);
 
   const sectionRef = useRef<HTMLDivElement>(null);
+  const compressionRef = useRef<HTMLDivElement>(null);
   const videoWrapperRef = useRef<HTMLDivElement>(null);
   const headlineBoxRef = useRef<HTMLDivElement>(null);
   const marqueeBoxRef = useRef<HTMLDivElement>(null);
@@ -114,6 +115,27 @@ export const KtmApexSurge: React.FC = () => {
     const ctx = gsap.context(() => {
       // PORSCHE MOTORSPORT CINEMATIC SCROLL CHOREOGRAPHY (Desktop only)
       if (window.innerWidth >= 1024 && !prefersReducedMotion) {
+        // ELASTIC ACCORDION COMPRESSION TWEEN (Between Part 2 and Part 3)
+        // Part 2 scrolls naturally upwards. Part 3 enters from bottom with an expanded
+        // +270px offset (+50% increase from 180px for rich breathing room, gap = 10).
+        // As user scrolls, y smoothly scrubs from 270px -> 0px, causing Part 3 to catch up
+        // and compress the distance (10 -> 9 -> 8 -> 7 -> 6 -> 5 -> 4), maintaining refined
+        // visual separation without ever freezing Part 2 or overlapping!
+        gsap.fromTo(
+          compressionRef.current,
+          { y: 270 },
+          {
+            y: 0,
+            ease: 'none',
+            scrollTrigger: {
+              trigger: sectionRef.current,
+              start: 'top bottom',
+              end: 'top top',
+              scrub: 0.5,
+            },
+          }
+        );
+
         const masterTl = gsap.timeline({
           scrollTrigger: {
             trigger: sectionRef.current,
@@ -125,28 +147,10 @@ export const KtmApexSurge: React.FC = () => {
           },
         });
 
-        // BEAT 1: ENTRANCE & GAP COLLAPSE (0% -> 20%)
-        // Video container expands from a floating rounded card (scale 0.94, radius 28px)
-        // into full-bleed screen (scale 1.0, radius 0px), actively reducing distance
-        // and dissolving any blank gap from the previous section.
-        masterTl.fromTo(
-          videoWrapperRef.current,
-          {
-            scale: 0.94,
-            borderRadius: '28px',
-            boxShadow: '0 25px 80px rgba(0, 0, 0, 0.95), 0 0 50px rgba(255, 103, 0, 0.25)',
-          },
-          {
-            scale: 1.0,
-            borderRadius: '0px',
-            boxShadow: 'none',
-            duration: 20,
-            ease: 'power2.out',
-          },
-          0
-        );
-
-        // INITIAL HIDDEN STATES FOR CLEAN VIDEO FOCUS (0% -> 22%)
+        // BEAT 1: PURE FULL-WIDTH RACETRACK VIDEO HOLD (0% -> 22%)
+        // The video is 100% full-bleed from moment 1 (no zoom-in, no rounded inset).
+        // Initial states: headline and marquee dock are hidden so the power wheelie
+        // is observed clean and unobstructed as it slides over Act II.
         masterTl.set(
           headlineBoxRef.current,
           { opacity: 0, y: 45, filter: 'blur(14px)' },
@@ -567,393 +571,406 @@ export const KtmApexSurge: React.FC = () => {
         py: { xs: 8, lg: 0 },
       }}
     >
-      {/* 1. CINEMATIC AMBIENT BACKGROUND RACETRACK VIDEO (PORSCHE "RACEBORN" STAGING) */}
+      {/* Elastic compression stage: pulls up by 180px during entrance to shrink gap from 10 -> 4 */}
       <Box
-        ref={videoWrapperRef}
+        ref={compressionRef}
         sx={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
+          position: 'relative',
           width: '100%',
           height: '100%',
-          zIndex: 1,
-          overflow: 'hidden',
-          pointerEvents: 'none',
-          transformOrigin: 'center center',
-          transition: 'border-radius 0.3s ease',
+          willChange: 'transform',
         }}
       >
+        {/* 1. CINEMATIC AMBIENT BACKGROUND RACETRACK VIDEO (PORSCHE "RACEBORN" 100% FULL WIDTH WITH ALPHA FEATHERING) */}
         <Box
-          component="video"
-          src="/videos/1390-wheelie.mp4"
-          autoPlay
-          muted
-          loop
-          playsInline
+          ref={videoWrapperRef}
           sx={{
+            position: 'absolute',
+            inset: 0,
             width: '100%',
             height: '100%',
-            objectFit: 'cover',
-            objectPosition: { xs: 'center 40%', md: 'center 46%' },
-            opacity: 0.92, // Fully vivid & luminous, no longer smothered at 0.42!
-            filter: 'contrast(1.08) brightness(1.02)',
-          }}
-        />
-
-        {/* Minimal Non-Obtrusive Edge Vignettes (No heavy radial blackouts) */}
-        {/* Top edge gradient for clean section blend */}
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: { xs: '20%', md: '26%' },
-            background:
-              'linear-gradient(to bottom, #070709 0%, rgba(7, 7, 9, 0.45) 45%, transparent 100%)',
-          }}
-        />
-
-        {/* Bottom edge gradient for hardware dock grounding */}
-        <Box
-          sx={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: { xs: '28%', md: '36%' },
-            background:
-              'linear-gradient(to top, #070709 0%, rgba(7, 7, 9, 0.65) 50%, transparent 100%)',
-          }}
-        />
-      </Box>
-
-      {/* 2. PORSCHE-STYLE MONUMENTAL HEADLINE (CHOREOGRAPHED KINETIC REVEAL) */}
-      <Box
-        ref={headlineBoxRef}
-        sx={{
-          position: 'absolute',
-          top: { xs: 32, sm: 48, lg: '12%' },
-          left: 0,
-          right: 0,
-          zIndex: 10,
-          textAlign: 'center',
-          maxWidth: '1200px',
-          mx: 'auto',
-          px: { xs: 3, md: 6 },
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: { xs: 1.2, md: 1.6 },
-          pointerEvents: 'none',
-        }}
-      >
-        {/* Pulsing Status Pill */}
-        <Box
-          className="apex-pill"
-          sx={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 1.2,
-            px: 2.2,
-            py: 0.6,
-            borderRadius: '100px',
-            backgroundColor: 'rgba(7, 7, 9, 0.75)',
-            backdropFilter: 'blur(12px)',
-            border: '1px solid #FF6700',
-            boxShadow: '0 0 20px rgba(255, 103, 0, 0.35)',
+            zIndex: 1,
+            overflow: 'hidden',
+            pointerEvents: 'none',
+            // Minimal Alpha Feathering: dissolves only the top 6% edge, leaving 94% of the video crisp and bright
+            maskImage:
+              'linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.45) 2%, black 6%, black 100%)',
+            WebkitMaskImage:
+              'linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.45) 2%, black 6%, black 100%)',
           }}
         >
           <Box
+            component="video"
+            src="/videos/1390-wheelie.mp4"
+            autoPlay
+            muted
+            loop
+            playsInline
             sx={{
-              width: 6,
-              height: 6,
-              borderRadius: '50%',
-              backgroundColor: '#FF6700',
-              boxShadow: '0 0 10px #FF6700',
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              objectPosition: { xs: 'center 40%', md: 'center 46%' },
+              opacity: 0.94, // Vivid & luminous
+              filter: 'contrast(1.08) brightness(1.02)',
             }}
           />
-          <Typography
+
+          {/* Minimal Top Feather (Only top 10%, softly blending into #070709 without darkening the wheelie) */}
+          <Box
             sx={{
-              fontFamily: 'var(--font-mono, monospace)',
-              fontSize: { xs: '0.66rem', md: '0.72rem' },
-              fontWeight: 800,
-              color: '#FF6700',
-              letterSpacing: '0.18em',
-              textTransform: 'uppercase',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '10%',
+              background:
+                'linear-gradient(to bottom, #070709 0%, rgba(7, 7, 9, 0.45) 40%, transparent 100%)',
+              pointerEvents: 'none',
+            }}
+          />
+
+          {/* Bottom edge gradient for hardware dock grounding */}
+          <Box
+            sx={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: { xs: '28%', md: '36%' },
+              background:
+                'linear-gradient(to top, #070709 0%, rgba(7, 7, 9, 0.65) 50%, transparent 100%)',
+            }}
+          />
+        </Box>
+
+        {/* 2. PORSCHE-STYLE MONUMENTAL HEADLINE (CHOREOGRAPHED KINETIC REVEAL) */}
+        <Box
+          ref={headlineBoxRef}
+          sx={{
+            position: 'absolute',
+            top: { xs: 32, sm: 48, lg: '12%' },
+            left: 0,
+            right: 0,
+            zIndex: 10,
+            textAlign: 'center',
+            maxWidth: '1200px',
+            mx: 'auto',
+            px: { xs: 3, md: 6 },
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: { xs: 1.2, md: 1.6 },
+            pointerEvents: 'none',
+          }}
+        >
+          {/* Pulsing Status Pill */}
+          <Box
+            className="apex-pill"
+            sx={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 1.2,
+              px: 2.2,
+              py: 0.6,
+              borderRadius: '100px',
+              backgroundColor: 'rgba(7, 7, 9, 0.75)',
+              backdropFilter: 'blur(12px)',
+              border: '1px solid #FF6700',
+              boxShadow: '0 0 20px rgba(255, 103, 0, 0.35)',
             }}
           >
-            ACT III • RACING PROTOCOLS
+            <Box
+              sx={{
+                width: 6,
+                height: 6,
+                borderRadius: '50%',
+                backgroundColor: '#FF6700',
+                boxShadow: '0 0 10px #FF6700',
+              }}
+            />
+            <Typography
+              sx={{
+                fontFamily: 'var(--font-mono, monospace)',
+                fontSize: { xs: '0.66rem', md: '0.72rem' },
+                fontWeight: 800,
+                color: '#FF6700',
+                letterSpacing: '0.18em',
+                textTransform: 'uppercase',
+              }}
+            >
+              ACT III • RACING PROTOCOLS
+            </Typography>
+          </Box>
+
+          {/* Colossal Statement Headline (Scaled for balanced hierarchy, leaving center wheelie clear) */}
+          <Typography
+            variant="h2"
+            sx={{
+              fontFamily: 'var(--font-display, "Outfit", sans-serif)',
+              fontSize: { xs: '2.0rem', sm: '2.8rem', md: '3.6rem', lg: '4.4rem' },
+              fontWeight: 950,
+              lineHeight: 1.02,
+              letterSpacing: '-0.035em',
+              color: '#FFFFFF',
+              textTransform: 'uppercase',
+              textShadow: '0 4px 30px rgba(0,0,0,0.95), 0 0 45px rgba(255, 255, 255, 0.15)',
+            }}
+          >
+            <Box component="span" className="apex-headline-word-1" sx={{ display: 'inline-block' }}>
+              BRED ON TRACK.{' '}
+            </Box>
+            <Box
+              component="span"
+              className="apex-headline-word-2"
+              sx={{
+                display: 'inline-block',
+                color: '#FF6700',
+                textShadow:
+                  '0 4px 40px rgba(0,0,0,0.95), 0 0 45px rgba(255, 103, 0, 0.80), 0 0 80px rgba(255, 103, 0, 0.40)',
+              }}
+            >
+              UNLEASHED ON ASPHALT.
+            </Box>
+          </Typography>
+
+          {/* Subhead Narrative */}
+          <Typography
+            className="apex-subhead-narrative"
+            sx={{
+              fontFamily: 'var(--font-body, "Inter", sans-serif)',
+              fontSize: { xs: '0.84rem', md: '0.98rem' },
+              color: '#D4D4D8',
+              letterSpacing: '0.04em',
+              maxWidth: '640px',
+              textShadow: '0 2px 14px rgba(0,0,0,0.9)',
+            }}
+          >
+            Born from 18 Dakar Championships and Grand Prix prototype telemetry. Every millimeter engineered for
+            pure unhinged acceleration.
           </Typography>
         </Box>
 
-        {/* Colossal Statement Headline (Scaled for balanced hierarchy, leaving center wheelie clear) */}
-        <Typography
-          variant="h2"
+        {/* 3. HARDWARE-ACCELERATED DOCKED TELEMETRY MARQUEE (PORSCHE STYLE BOTTOM TIER) */}
+        <Box
+          ref={marqueeBoxRef}
           sx={{
-            fontFamily: 'var(--font-display, "Outfit", sans-serif)',
-            fontSize: { xs: '2.0rem', sm: '2.8rem', md: '3.6rem', lg: '4.4rem' },
-            fontWeight: 950,
-            lineHeight: 1.02,
-            letterSpacing: '-0.035em',
-            color: '#FFFFFF',
-            textTransform: 'uppercase',
-            textShadow: '0 4px 30px rgba(0,0,0,0.95), 0 0 45px rgba(255, 255, 255, 0.15)',
+            position: { xs: 'relative', lg: 'absolute' },
+            bottom: { lg: 32, xl: 40 },
+            left: 0,
+            right: 0,
+            zIndex: 15,
+            width: '100%',
+            mt: { xs: 6, lg: 0 },
+            overflow: 'hidden',
+            maskImage:
+              'linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)',
+            WebkitMaskImage:
+              'linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)',
+            '&:hover .marquee-track': {
+              animationPlayState: 'paused',
+            },
           }}
         >
-          <Box component="span" className="apex-headline-word-1" sx={{ display: 'inline-block' }}>
-            BRED ON TRACK.{' '}
-          </Box>
           <Box
-            component="span"
-            className="apex-headline-word-2"
+            className="marquee-track"
             sx={{
-              display: 'inline-block',
-              color: '#FF6700',
-              textShadow:
-                '0 4px 40px rgba(0,0,0,0.95), 0 0 45px rgba(255, 103, 0, 0.80), 0 0 80px rgba(255, 103, 0, 0.40)',
+              display: 'flex',
+              gap: { xs: 2, lg: 2.8 },
+              width: 'max-content',
+              animation: 'apexMarqueeScroll 48s linear infinite',
+              willChange: 'transform',
+              py: 1,
+              '@keyframes apexMarqueeScroll': {
+                '0%': { transform: 'translate3d(0, 0, 0)' },
+                '100%': { transform: 'translate3d(-50%, 0, 0)' },
+              },
+              '@media (prefers-reduced-motion: reduce)': {
+                animation: 'none',
+              },
             }}
           >
-            UNLEASHED ON ASPHALT.
+            {/* TRACK SET 1 */}
+            {renderHeroCard(HERO_CARDS[0], 'set1')}
+            {renderDualStack(STACK_PAIR_1, 'set1')}
+            {renderHeroCard(HERO_CARDS[1], 'set1')}
+            {renderDualStack(STACK_PAIR_2, 'set1')}
+            {renderHeroCard(HERO_CARDS[2], 'set1')}
+
+            {/* TRACK SET 2 (IDENTICAL DUPLICATE FOR SEAMLESS INFINITE LOOP) */}
+            {renderHeroCard(HERO_CARDS[0], 'set2')}
+            {renderDualStack(STACK_PAIR_1, 'set2')}
+            {renderHeroCard(HERO_CARDS[1], 'set2')}
+            {renderDualStack(STACK_PAIR_2, 'set2')}
+            {renderHeroCard(HERO_CARDS[2], 'set2')}
           </Box>
-        </Typography>
+        </Box>
 
-        {/* Subhead Narrative */}
-        <Typography
-          className="apex-subhead-narrative"
-          sx={{
-            fontFamily: 'var(--font-body, "Inter", sans-serif)',
-            fontSize: { xs: '0.84rem', md: '0.98rem' },
-            color: '#D4D4D8',
-            letterSpacing: '0.04em',
-            maxWidth: '640px',
-            textShadow: '0 2px 14px rgba(0,0,0,0.9)',
-          }}
-        >
-          Born from 18 Dakar Championships and Grand Prix prototype telemetry. Every millimeter engineered for
-          pure unhinged acceleration.
-        </Typography>
-      </Box>
-
-      {/* 3. HARDWARE-ACCELERATED DOCKED TELEMETRY MARQUEE (PORSCHE STYLE BOTTOM TIER) */}
-      <Box
-        ref={marqueeBoxRef}
-        sx={{
-          position: { xs: 'relative', lg: 'absolute' },
-          bottom: { lg: 32, xl: 40 },
-          left: 0,
-          right: 0,
-          zIndex: 15,
-          width: '100%',
-          mt: { xs: 6, lg: 0 },
-          overflow: 'hidden',
-          maskImage:
-            'linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)',
-          WebkitMaskImage:
-            'linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)',
-          '&:hover .marquee-track': {
-            animationPlayState: 'paused',
-          },
-        }}
-      >
-        <Box
-          className="marquee-track"
+        {/* 4. MODAL DETAIL PREVIEW LIGHTBOX */}
+        <Modal
+          open={Boolean(selectedCard)}
+          onClose={() => setSelectedCard(null)}
+          closeAfterTransition
           sx={{
             display: 'flex',
-            gap: { xs: 2, lg: 2.8 },
-            width: 'max-content',
-            animation: 'apexMarqueeScroll 48s linear infinite',
-            willChange: 'transform',
-            py: 1,
-            '@keyframes apexMarqueeScroll': {
-              '0%': { transform: 'translate3d(0, 0, 0)' },
-              '100%': { transform: 'translate3d(-50%, 0, 0)' },
-            },
-            '@media (prefers-reduced-motion: reduce)': {
-              animation: 'none',
-            },
+            alignItems: 'center',
+            justifyContent: 'center',
+            backdropFilter: 'blur(20px)',
+            backgroundColor: 'rgba(7, 7, 9, 0.88)',
+            p: { xs: 2, md: 4 },
           }}
         >
-          {/* TRACK SET 1 */}
-          {renderHeroCard(HERO_CARDS[0], 'set1')}
-          {renderDualStack(STACK_PAIR_1, 'set1')}
-          {renderHeroCard(HERO_CARDS[1], 'set1')}
-          {renderDualStack(STACK_PAIR_2, 'set1')}
-          {renderHeroCard(HERO_CARDS[2], 'set1')}
-
-          {/* TRACK SET 2 (IDENTICAL DUPLICATE FOR SEAMLESS INFINITE LOOP) */}
-          {renderHeroCard(HERO_CARDS[0], 'set2')}
-          {renderDualStack(STACK_PAIR_1, 'set2')}
-          {renderHeroCard(HERO_CARDS[1], 'set2')}
-          {renderDualStack(STACK_PAIR_2, 'set2')}
-          {renderHeroCard(HERO_CARDS[2], 'set2')}
-        </Box>
-      </Box>
-
-      {/* 4. MODAL DETAIL PREVIEW LIGHTBOX */}
-      <Modal
-        open={Boolean(selectedCard)}
-        onClose={() => setSelectedCard(null)}
-        closeAfterTransition
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          backdropFilter: 'blur(20px)',
-          backgroundColor: 'rgba(7, 7, 9, 0.88)',
-          p: { xs: 2, md: 4 },
-        }}
-      >
-        <Box sx={{ outline: 'none', width: '100%', maxWidth: '850px' }}>
-          {selectedCard ? (
-            <Box
-              sx={{
-                position: 'relative',
-                width: '100%',
-                backgroundColor: '#0F0F16',
-                border: '1px solid #FF6700',
-                borderRadius: '16px',
-                overflow: 'hidden',
-                boxShadow: '0 30px 80px rgba(0,0,0,0.95), 0 0 60px rgba(255, 103, 0, 0.35)',
-                display: 'grid',
-                gridTemplateColumns: { xs: '1fr', md: '1.1fr 1fr' },
-              }}
-            >
-              {/* Close Button */}
-              <IconButton
-                onClick={() => setSelectedCard(null)}
-                sx={{
-                  position: 'absolute',
-                  top: 16,
-                  right: 16,
-                  color: '#A1A1AA',
-                  backgroundColor: 'rgba(0,0,0,0.6)',
-                  zIndex: 20,
-                  '&:hover': {
-                    color: '#FFFFFF',
-                    backgroundColor: '#FF6700',
-                  },
-                }}
-              >
-                <CloseIcon />
-              </IconButton>
-
-              {/* Media side */}
+          <Box sx={{ outline: 'none', width: '100%', maxWidth: '850px' }}>
+            {selectedCard ? (
               <Box
                 sx={{
                   position: 'relative',
-                  height: { xs: '260px', md: '100%' },
-                  backgroundColor: selectedCard.isTransparent ? '#070709' : 'transparent',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  p: selectedCard.isTransparent ? 4 : 0,
+                  width: '100%',
+                  backgroundColor: '#0F0F16',
+                  border: '1px solid #FF6700',
+                  borderRadius: '16px',
+                  overflow: 'hidden',
+                  boxShadow: '0 30px 80px rgba(0,0,0,0.95), 0 0 60px rgba(255, 103, 0, 0.35)',
+                  display: 'grid',
+                  gridTemplateColumns: { xs: '1fr', md: '1.1fr 1fr' },
                 }}
               >
-                <Box
-                  component="img"
-                  src={selectedCard.image}
-                  alt={selectedCard.title}
+                {/* Close Button */}
+                <IconButton
+                  onClick={() => setSelectedCard(null)}
                   sx={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: selectedCard.isTransparent ? 'contain' : 'cover',
-                    filter: selectedCard.isTransparent
-                      ? 'drop-shadow(0 0 30px rgba(255, 103, 0, 0.5))'
-                      : 'none',
-                  }}
-                />
-              </Box>
-
-              {/* Content side */}
-              <Box sx={{ p: { xs: 3, md: 5 }, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <Box
-                  sx={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 1,
-                    px: 1.4,
-                    py: 0.4,
-                    borderRadius: '100px',
-                    backgroundColor: 'rgba(255, 103, 0, 0.12)',
-                    border: '1px solid #FF6700',
-                    alignSelf: 'flex-start',
-                  }}
-                >
-                  <Typography
-                    sx={{
-                      fontFamily: 'var(--font-mono, monospace)',
-                      fontSize: '0.64rem',
-                      fontWeight: 800,
-                      color: '#FF6700',
-                      letterSpacing: '0.12em',
-                    }}
-                  >
-                    {selectedCard.tag}
-                  </Typography>
-                </Box>
-
-                <Typography
-                  sx={{
-                    fontFamily: 'var(--font-display, "Outfit", sans-serif)',
-                    fontSize: { xs: '1.8rem', md: '2.4rem' },
-                    fontWeight: 900,
-                    color: '#FFFFFF',
-                    lineHeight: 1.05,
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  {selectedCard.title}
-                </Typography>
-
-                <Typography
-                  sx={{
-                    fontFamily: 'var(--font-body, "Inter", sans-serif)',
-                    fontSize: '0.94rem',
-                    lineHeight: 1.7,
+                    position: 'absolute',
+                    top: 16,
+                    right: 16,
                     color: '#A1A1AA',
+                    backgroundColor: 'rgba(0,0,0,0.6)',
+                    zIndex: 20,
+                    '&:hover': {
+                      color: '#FFFFFF',
+                      backgroundColor: '#FF6700',
+                    },
                   }}
                 >
-                  {selectedCard.description}
-                </Typography>
+                  <CloseIcon />
+                </IconButton>
 
+                {/* Media side */}
                 <Box
                   sx={{
-                    mt: 'auto',
-                    p: 2,
-                    borderRadius: '8px',
-                    backgroundColor: 'rgba(255, 255, 255, 0.03)',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    position: 'relative',
+                    height: { xs: '260px', md: '100%' },
+                    backgroundColor: selectedCard.isTransparent ? '#070709' : 'transparent',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    p: selectedCard.isTransparent ? 4 : 0,
                   }}
                 >
-                  <Typography
+                  <Box
+                    component="img"
+                    src={selectedCard.image}
+                    alt={selectedCard.title}
                     sx={{
-                      fontFamily: 'var(--font-mono, monospace)',
-                      fontSize: '0.62rem',
-                      color: '#71717A',
-                      letterSpacing: '0.1em',
-                      textTransform: 'uppercase',
-                      mb: 0.4,
+                      width: '100%',
+                      height: '100%',
+                      objectFit: selectedCard.isTransparent ? 'contain' : 'cover',
+                      filter: selectedCard.isTransparent
+                        ? 'drop-shadow(0 0 30px rgba(255, 103, 0, 0.5))'
+                        : 'none',
+                    }}
+                  />
+                </Box>
+
+                {/* Content side */}
+                <Box sx={{ p: { xs: 3, md: 5 }, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <Box
+                    sx={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      px: 1.4,
+                      py: 0.4,
+                      borderRadius: '100px',
+                      backgroundColor: 'rgba(255, 103, 0, 0.12)',
+                      border: '1px solid #FF6700',
+                      alignSelf: 'flex-start',
                     }}
                   >
-                    TELEMETRY BENCHMARK
-                  </Typography>
+                    <Typography
+                      sx={{
+                        fontFamily: 'var(--font-mono, monospace)',
+                        fontSize: '0.64rem',
+                        fontWeight: 800,
+                        color: '#FF6700',
+                        letterSpacing: '0.12em',
+                      }}
+                    >
+                      {selectedCard.tag}
+                    </Typography>
+                  </Box>
+
                   <Typography
                     sx={{
-                      fontFamily: 'var(--font-mono, monospace)',
-                      fontSize: '1.15rem',
+                      fontFamily: 'var(--font-display, "Outfit", sans-serif)',
+                      fontSize: { xs: '1.8rem', md: '2.4rem' },
                       fontWeight: 900,
-                      color: '#FF6700',
+                      color: '#FFFFFF',
+                      lineHeight: 1.05,
+                      textTransform: 'uppercase',
                     }}
                   >
-                    {selectedCard.metric}
+                    {selectedCard.title}
                   </Typography>
+
+                  <Typography
+                    sx={{
+                      fontFamily: 'var(--font-body, "Inter", sans-serif)',
+                      fontSize: '0.94rem',
+                      lineHeight: 1.7,
+                      color: '#A1A1AA',
+                    }}
+                  >
+                    {selectedCard.description}
+                  </Typography>
+
+                  <Box
+                    sx={{
+                      mt: 'auto',
+                      p: 2,
+                      borderRadius: '8px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.03)',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                    }}
+                  >
+                    <Typography
+                      sx={{
+                        fontFamily: 'var(--font-mono, monospace)',
+                        fontSize: '0.62rem',
+                        color: '#71717A',
+                        letterSpacing: '0.1em',
+                        textTransform: 'uppercase',
+                        mb: 0.4,
+                      }}
+                    >
+                      TELEMETRY BENCHMARK
+                    </Typography>
+                    <Typography
+                      sx={{
+                        fontFamily: 'var(--font-mono, monospace)',
+                        fontSize: '1.15rem',
+                        fontWeight: 900,
+                        color: '#FF6700',
+                      }}
+                    >
+                      {selectedCard.metric}
+                    </Typography>
+                  </Box>
                 </Box>
               </Box>
-            </Box>
-          ) : null}
-        </Box>
-      </Modal>
+            ) : null}
+          </Box>
+        </Modal>
+      </Box>
     </Box>
   );
 };
