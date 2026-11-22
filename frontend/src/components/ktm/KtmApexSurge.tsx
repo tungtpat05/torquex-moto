@@ -6,8 +6,8 @@ import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 import wheelieActionImg from '@/assets/images/ktm/models/1390_wheelie_action.jpg';
-import apexActionImg from '@/assets/images/ktm/models/1390_apex_action.jpg';
-import rc8cActionImg from '@/assets/images/ktm/models/rc8c_action_1.jpg';
+import apexLean4kImg from '@/assets/images/ktm/models/1390_apex_lean_4k.jpg';
+import forkImg from '@/assets/images/ktm/anatomy/1390_fork.png';
 import tankImg from '@/assets/images/ktm/anatomy/1390_tank.png';
 import headlightImg from '@/assets/images/ktm/anatomy/1390_headlight.png';
 import engineImg from '@/assets/images/ktm/anatomy/1390_engine.png';
@@ -42,17 +42,18 @@ const HERO_CARDS: CardItem[] = [
     title: '52° APEX LEAN ANGLE',
     metric: 'MAX LATERAL GRIP • 1.52 G',
     description:
-      'ChroMo steel trellis architecture provides razor-sharp lateral rigidity. Knee pucks scrape asphalt as the rider locks into the apex with zero deflection.',
-    image: apexActionImg,
+      'Ultra-rigid ChroMo steel trellis architecture enables extreme 52-degree apex lean angles with total front-end feedback, locking into the asphalt at high speed.',
+    image: apexLean4kImg,
   },
   {
-    id: 'rc8c',
-    tag: 'MOTO2 BLOODLINE',
-    title: 'RC 8C TRACK WEAPON',
-    metric: 'DRY WEIGHT • 142 KG',
+    id: 'wp-sat',
+    tag: 'SUSPENSION TECH',
+    title: 'WP APEX SEMI-ACTIVE (SAT)',
+    metric: 'GEN 3 MAGNETIC VALVES',
     description:
-      'Purpose-built racing prototype crafted alongside Grand Prix engineers. Hand-assembled Bespoke WP APEX PRO suspension and aerodynamic wing package.',
-    image: rc8cActionImg,
+      'Next-generation WP Semi-Active Technology with variable electromagnetic valves adjusts damping in milliseconds based on 6-axis lean angle sensors and stroke telemetry.',
+    image: forkImg,
+    isTransparent: true,
   },
 ];
 
@@ -130,7 +131,7 @@ export const KtmApexSurge: React.FC = () => {
         onEnter: () => {
           const vid = videoRef.current;
           if (vid && !vid.ended) {
-            vid.play().catch(() => {});
+            vid.play().catch(() => { });
           }
         },
         onLeaveBack: () => {
@@ -173,108 +174,104 @@ export const KtmApexSurge: React.FC = () => {
           scrollTrigger: {
             trigger: sectionRef.current,
             start: 'top top',
-            end: '+=220%', // 2.2 viewport heights scrub distance
+            end: '+=200%', // 2.0 viewport heights scrub distance for responsive control
             pin: true,
-            scrub: 0.8,
+            scrub: 1.0, // Buttery soft inertia damping
             anticipatePin: 1,
           },
         });
 
-        // BEAT 1: PURE FULL-WIDTH RACETRACK VIDEO HOLD (0% -> 22%)
-        // The video is 100% full-bleed from moment 1 (no zoom-in, no rounded inset).
-        // Initial states: headline and marquee dock are hidden so the power wheelie
-        // is observed clean and unobstructed as it slides over Act II.
+        // Initial setup at scroll position 0
         masterTl.set(
           headlineBoxRef.current,
-          { opacity: 0, y: 45, filter: 'blur(14px)' },
+          { opacity: 0, y: 36, filter: 'blur(8px)' },
           0
         );
         masterTl.set(
           marqueeBoxRef.current,
-          { opacity: 0, y: 140, pointerEvents: 'none' },
+          { opacity: 0, y: 120, pointerEvents: 'none' },
           0
         );
 
-        // BEAT 2: THE "RACEBORN" STATEMENT REVEAL (22% -> 50%)
-        // After observing the raw power wheelie action, the kinetic headline enters
+        // BEAT 1: KINETIC TELEMETRY & HEADLINE AWAKENING (0% -> 24%)
         masterTl.to(
           headlineBoxRef.current,
           {
             opacity: 1,
             y: 0,
             filter: 'blur(0px)',
-            duration: 26,
+            duration: 20,
             ease: 'power3.out',
           },
-          22
+          4
         );
 
         masterTl.fromTo(
-          '.apex-pill',
-          { opacity: 0, scale: 0.85, y: -15 },
-          { opacity: 1, scale: 1, y: 0, duration: 16, ease: 'back.out(1.5)' },
-          22
+          '.apex-telemetry-strip',
+          { opacity: 0, scale: 0.92, y: -10 },
+          { opacity: 1, scale: 1, y: 0, duration: 16, ease: 'back.out(1.4)' },
+          5
         );
 
         masterTl.fromTo(
           '.apex-headline-word-1',
-          { y: 40, opacity: 0 },
-          { y: 0, opacity: 1, duration: 20, ease: 'power2.out' },
-          24
+          { y: 30, opacity: 0 },
+          { y: 0, opacity: 1, duration: 16, ease: 'power2.out' },
+          8
         );
 
         masterTl.fromTo(
           '.apex-headline-word-2',
-          { y: 40, opacity: 0 },
-          { y: 0, opacity: 1, duration: 20, ease: 'power2.out' },
-          27
+          { y: 30, opacity: 0 },
+          { y: 0, opacity: 1, duration: 16, ease: 'power2.out' },
+          12
         );
 
         masterTl.fromTo(
           '.apex-subhead-narrative',
-          { y: 25, opacity: 0 },
-          { y: 0, opacity: 1, duration: 18, ease: 'power2.out' },
-          30
+          { y: 20, opacity: 0 },
+          { y: 0, opacity: 1, duration: 16, ease: 'power2.out' },
+          16
         );
 
-        // BEAT 3: READABLE HOLD (50% -> 70%)
-        // Steady pause allowing full statement reading while motorcycle wheelie plays underneath
-        masterTl.to({}, { duration: 20 }, 50);
+        // BEAT 2: READING WINDOW & WHEELIE APEX (24% -> 44%)
+        // High visibility reading hold while video wheelie crests
+        masterTl.to({}, { duration: 20 }, 24);
 
-        // BEAT 4: HARDWARE MARQUEE DOCK SLIDES UP (70% -> 95%)
-        // Headline ascends slightly with subtle scale to clear middle viewing corridor
+        // BEAT 3: SMOOTH DOCK ASCENT & HEADLINE TOP-HUD GLIDE (44% -> 84%)
+        // Headline ascends into top HUD position
         masterTl.to(
           headlineBoxRef.current,
           {
             y: -36,
-            scale: 0.95,
-            opacity: 0.88,
-            duration: 25,
+            scale: 0.94,
+            opacity: 0.92,
+            duration: 38,
             ease: 'power2.inOut',
           },
-          70
+          44
         );
 
-        // Marquee cards slide smoothly up into lower third dock
+        // Marquee cards slide smoothly up into lower third dock with springy ease
         masterTl.fromTo(
           marqueeBoxRef.current,
           {
             opacity: 0,
-            y: 140,
+            y: 120,
             pointerEvents: 'none',
           },
           {
             opacity: 1,
             y: 0,
             pointerEvents: 'auto',
-            duration: 25,
+            duration: 38,
             ease: 'power3.out',
           },
-          70
+          46
         );
 
-        // BEAT 5: Final cushion into Act IV Pedigree (95% -> 100%)
-        masterTl.to({}, { duration: 5 }, 95);
+        // BEAT 4: Smooth settling cushion into Act IV Pedigree (84% -> 100%)
+        masterTl.to({}, { duration: 16 }, 84);
       }
     }, sectionRef);
 
@@ -326,7 +323,11 @@ export const KtmApexSurge: React.FC = () => {
           inset: 0,
           width: '100%',
           height: '100%',
-          objectFit: 'cover',
+          objectFit: card.isTransparent ? 'contain' : 'cover',
+          p: card.isTransparent ? { xs: 3, lg: 4 } : 0,
+          filter: card.isTransparent
+            ? 'drop-shadow(0 0 25px rgba(255, 103, 0, 0.50))'
+            : 'none',
           transition: 'transform 0.7s cubic-bezier(0.16, 1, 0.3, 1)',
         }}
       />
@@ -691,7 +692,7 @@ export const KtmApexSurge: React.FC = () => {
           ref={headlineBoxRef}
           sx={{
             position: 'absolute',
-            top: { xs: 32, sm: 48, lg: '12%' },
+            top: { xs: 32, sm: 48, lg: '11%' },
             left: 0,
             right: 0,
             zIndex: 10,
@@ -706,42 +707,47 @@ export const KtmApexSurge: React.FC = () => {
             pointerEvents: 'none',
           }}
         >
-          {/* Pulsing Status Pill */}
+          {/* Telemetry Status Strip (1390 Super Duke R EVO Telemetry Focus) */}
           <Box
-            className="apex-pill"
+            className="apex-telemetry-strip"
             sx={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: 1.2,
-              px: 2.2,
+              gap: { xs: 1, md: 1.5 },
+              px: { xs: 1.8, md: 2.4 },
               py: 0.6,
               borderRadius: '100px',
-              backgroundColor: 'rgba(7, 7, 9, 0.75)',
-              backdropFilter: 'blur(12px)',
-              border: '1px solid #FF6700',
-              boxShadow: '0 0 20px rgba(255, 103, 0, 0.35)',
+              backgroundColor: 'rgba(7, 7, 9, 0.85)',
+              backdropFilter: 'blur(16px)',
+              border: '1px solid rgba(255, 103, 0, 0.45)',
+              boxShadow: '0 0 25px rgba(255, 103, 0, 0.25)',
             }}
           >
             <Box
               sx={{
-                width: 6,
-                height: 6,
+                width: 7,
+                height: 7,
                 borderRadius: '50%',
                 backgroundColor: '#FF6700',
                 boxShadow: '0 0 10px #FF6700',
+                animation: 'apexPulseDot 2s ease-in-out infinite',
+                '@keyframes apexPulseDot': {
+                  '0%, 100%': { transform: 'scale(1)', opacity: 1 },
+                  '50%': { transform: 'scale(1.4)', opacity: 0.6 },
+                },
               }}
             />
             <Typography
               sx={{
                 fontFamily: 'var(--font-mono, monospace)',
-                fontSize: { xs: '0.66rem', md: '0.72rem' },
+                fontSize: { xs: '0.62rem', md: '0.72rem' },
                 fontWeight: 800,
                 color: '#FF6700',
-                letterSpacing: '0.18em',
+                letterSpacing: '0.14em',
                 textTransform: 'uppercase',
               }}
             >
-              ACT III • RACING PROTOCOLS
+              1,350 CC • 190 HP • 145 NM
             </Typography>
           </Box>
 
@@ -760,7 +766,7 @@ export const KtmApexSurge: React.FC = () => {
             }}
           >
             <Box component="span" className="apex-headline-word-1" sx={{ display: 'inline-block' }}>
-              BRED ON TRACK.{' '}
+              THE BEAST EVOLVED.{' '}
             </Box>
             <Box
               component="span"
@@ -772,7 +778,7 @@ export const KtmApexSurge: React.FC = () => {
                   '0 4px 40px rgba(0,0,0,0.95), 0 0 45px rgba(255, 103, 0, 0.80), 0 0 80px rgba(255, 103, 0, 0.40)',
               }}
             >
-              UNLEASHED ON ASPHALT.
+              UNCOMPROMISING APEX POWER.
             </Box>
           </Typography>
 
@@ -783,13 +789,14 @@ export const KtmApexSurge: React.FC = () => {
               fontFamily: 'var(--font-body, "Inter", sans-serif)',
               fontSize: { xs: '0.84rem', md: '0.98rem' },
               color: '#D4D4D8',
-              letterSpacing: '0.04em',
-              maxWidth: '640px',
+              letterSpacing: '0.03em',
+              maxWidth: '720px',
+              lineHeight: 1.6,
               textShadow: '0 2px 14px rgba(0,0,0,0.9)',
             }}
           >
-            Born from 18 Dakar Championships and Grand Prix prototype telemetry. Every millimeter engineered for
-            pure unhinged acceleration.
+            Re-engineered from crank to winglet. Featuring next-generation CamShift variable valve timing,
+            integrated aerodynamic winglets producing +3.5 kg downforce, and Gen 3 WP Semi-Active electronic suspension.
           </Typography>
         </Box>
 
@@ -805,6 +812,7 @@ export const KtmApexSurge: React.FC = () => {
             width: '100%',
             mt: { xs: 6, lg: 0 },
             overflow: 'hidden',
+            willChange: 'transform, opacity',
             maskImage:
               'linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)',
             WebkitMaskImage:
@@ -820,8 +828,11 @@ export const KtmApexSurge: React.FC = () => {
               display: 'flex',
               gap: { xs: 2, lg: 2.8 },
               width: 'max-content',
-              animation: 'apexMarqueeScroll 48s linear infinite',
+              animation: 'apexMarqueeScroll 50s linear infinite',
               willChange: 'transform',
+              transform: 'translate3d(0, 0, 0)',
+              backfaceVisibility: 'hidden',
+              perspective: 1000,
               py: 1,
               '@keyframes apexMarqueeScroll': {
                 '0%': { transform: 'translate3d(0, 0, 0)' },
