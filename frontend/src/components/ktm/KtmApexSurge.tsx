@@ -105,6 +105,7 @@ export const KtmApexSurge: React.FC = () => {
   const sectionRef = useRef<HTMLDivElement>(null);
   const compressionRef = useRef<HTMLDivElement>(null);
   const videoWrapperRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const headlineBoxRef = useRef<HTMLDivElement>(null);
   const marqueeBoxRef = useRef<HTMLDivElement>(null);
 
@@ -112,7 +113,39 @@ export const KtmApexSurge: React.FC = () => {
     // Check prefers-reduced-motion
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+    // Enforce muted property on native video element for rock-solid browser autoplay policy compliance
+    if (videoRef.current) {
+      videoRef.current.muted = true;
+    }
+
     const ctx = gsap.context(() => {
+      // VIDEO PLAYBACK CHOREOGRAPHY (All Screen Sizes)
+      // 1. Starts playing when section enters from bottom of viewport (start: 'top bottom')
+      // 2. Holds on last frame when finished (no loop)
+      // 3. Rewinds to first frame (currentTime = 0) when user scrolls up and section exits below viewport
+      ScrollTrigger.create({
+        trigger: sectionRef.current,
+        start: 'top bottom',
+        end: 'bottom top',
+        onEnter: () => {
+          const vid = videoRef.current;
+          if (vid && !vid.ended) {
+            vid.play().catch(() => {});
+          }
+        },
+        onLeaveBack: () => {
+          const vid = videoRef.current;
+          if (vid) {
+            vid.pause();
+            try {
+              vid.currentTime = 0;
+            } catch {
+              // Ignore if metadata is pending
+            }
+          }
+        },
+      });
+
       // PORSCHE MOTORSPORT CINEMATIC SCROLL CHOREOGRAPHY (Desktop only)
       if (window.innerWidth >= 1024 && !prefersReducedMotion) {
         // ELASTIC ACCORDION COMPRESSION TWEEN (Between Part 2 and Part 3)
@@ -605,11 +638,16 @@ export const KtmApexSurge: React.FC = () => {
         >
           <Box
             component="video"
+            ref={videoRef as any}
             src="/videos/1390-wheelie.mp4"
-            autoPlay
             muted
-            loop
             playsInline
+            preload="auto"
+            onEnded={() => {
+              if (videoRef.current) {
+                videoRef.current.pause();
+              }
+            }}
             sx={{
               width: '100%',
               height: '100%',
