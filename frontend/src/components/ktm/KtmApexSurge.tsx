@@ -569,6 +569,10 @@ export const KtmApexSurge: React.FC = () => {
         backgroundColor: '#070709',
         overflow: 'hidden',
         py: { xs: 8, lg: 0 },
+        marginTop: '-4px', // Physical 4px overlap to eliminate any subpixel gap
+        zIndex: 2,
+        border: 'none',
+        outline: 'none',
       }}
     >
       {/* Elastic compression stage: pulls up by 180px during entrance to shrink gap from 10 -> 4 */}

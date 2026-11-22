@@ -65,6 +65,7 @@ const ANATOMY_STAGES: AnatomyStage[] = [
 export const KtmHeroAwakening: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const bgRef = useRef<HTMLDivElement>(null);
+  const softGradientsRef = useRef<HTMLDivElement>(null);
   const leftBoxRef = useRef<HTMLDivElement>(null);
   const rightBoxRef = useRef<HTMLDivElement>(null);
 
@@ -196,27 +197,39 @@ export const KtmHeroAwakening: React.FC = () => {
             opacity: 0,
             width: '58%',
             height: '20%',
+            bottom: 0,
             borderTopLeftRadius: 32,
             borderTopRightRadius: 32,
             borderBottomLeftRadius: 0,
             borderBottomRightRadius: 0,
-            borderColor: 'rgba(255, 103, 0, 0.55)',
+            border: 'none',
+            outline: 'none',
             boxShadow: '0 -20px 80px rgba(0, 0, 0, 0.95), 0 0 60px rgba(255, 103, 0, 0.35)',
             pointerEvents: 'none',
           },
           {
             opacity: 1,
             width: '100%',
-            height: '100%',
+            height: 'calc(100% + 8px)',
+            bottom: -4,
             borderTopLeftRadius: 0,
             borderTopRightRadius: 0,
-            borderColor: 'rgba(255, 255, 255, 0.04)',
+            border: 'none',
+            outline: 'none',
             boxShadow: 'none',
             pointerEvents: 'auto',
             duration: 16,
             ease: 'power2.out',
           },
           38
+        );
+
+        // Once Portal Card expands to 100% viewport, fade out Hero Background & Soft Gradients completely (52% -> 56%)
+        // Eliminates ANY possibility of asphalt background pixels leaking through at bottom/side seams!
+        masterTl.to(
+          [bgRef.current, softGradientsRef.current],
+          { opacity: 0, duration: 4, ease: 'power1.out' },
+          52
         );
 
         // KINETIC MASKED TEXT REVEAL (Colossal Scale, Two-Line Split Entrance, Laser Glow) (38% -> 49%)
@@ -365,6 +378,7 @@ export const KtmHeroAwakening: React.FC = () => {
 
       {/* 2. Soft Edge Gradients for Hero contrast */}
       <Box
+        ref={softGradientsRef}
         sx={{
           position: 'absolute',
           inset: 0,
@@ -670,7 +684,7 @@ export const KtmHeroAwakening: React.FC = () => {
           transform: 'translateX(-50%)',
           width: { xs: '100%', lg: '58%' },
           height: { xs: '100%', lg: '20%' },
-          backgroundColor: '#0c0c12',
+          backgroundColor: '#070709',
           overflow: 'hidden',
           zIndex: 25,
           opacity: { xs: 1, lg: 0 },
@@ -682,10 +696,13 @@ export const KtmHeroAwakening: React.FC = () => {
           borderTopRightRadius: { xs: 0, lg: '32px' },
           borderBottomLeftRadius: 0,
           borderBottomRightRadius: 0,
+          border: 'none',
+          outline: 'none',
+          boxShadow: 'none',
           willChange: 'width, height, border-radius, box-shadow, opacity',
         }}
       >
-        {/* Subtle CAD Blueprint Grid Texture inside the card */}
+        {/* Subtle CAD Blueprint Grid Texture: dissolves smoothly before reaching bottom edge */}
         <Box
           sx={{
             position: 'absolute',
@@ -695,6 +712,8 @@ export const KtmHeroAwakening: React.FC = () => {
               'linear-gradient(rgba(255, 255, 255, 0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.4) 1px, transparent 1px)',
             backgroundSize: '40px 40px',
             pointerEvents: 'none',
+            maskImage: 'linear-gradient(to bottom, black 0%, black 70%, transparent 95%)',
+            WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 70%, transparent 95%)',
           }}
         />
 
@@ -709,17 +728,18 @@ export const KtmHeroAwakening: React.FC = () => {
           }}
         />
 
-        {/* Subtle Bottom Atmospheric Fade: melts CAD grid and #0c0c12 into #070709 void */}
+        {/* Seamless Black Bridge: dissolves bottom edge of Part 2 completely into #070709 void */}
         <Box
           sx={{
             position: 'absolute',
-            bottom: 0,
+            bottom: -6,
             left: 0,
             right: 0,
-            height: '12%',
-            background: 'linear-gradient(to top, #070709 0%, rgba(7, 7, 9, 0.6) 45%, transparent 100%)',
+            height: '24%',
+            background:
+              'linear-gradient(to top, #070709 0%, #070709 35%, rgba(7, 7, 9, 0.90) 70%, transparent 100%)',
             pointerEvents: 'none',
-            zIndex: 28,
+            zIndex: 40,
           }}
         />
 
@@ -1129,6 +1149,20 @@ export const KtmHeroAwakening: React.FC = () => {
           </Box>
         </Box>
       </Box>
+
+      {/* Impervious Bottom Seam Cover: covers the floor of #hero with solid #070709 */}
+      <Box
+        sx={{
+          position: 'absolute',
+          bottom: -4,
+          left: 0,
+          right: 0,
+          height: 16,
+          backgroundColor: '#070709',
+          pointerEvents: 'none',
+          zIndex: 99,
+        }}
+      />
     </Box>
   );
 };
