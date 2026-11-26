@@ -1,450 +1,554 @@
-import React, { useState } from 'react';
-import { Box, Typography, Modal, IconButton } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-import QrCode2Icon from '@mui/icons-material/QrCode2';
-import VerifiedUserOutlinedIcon from '@mui/icons-material/VerifiedUserOutlined';
-import ConstructionOutlinedIcon from '@mui/icons-material/ConstructionOutlined';
+import React, { useEffect, useRef } from 'react';
+import { Box, Typography } from '@mui/material';
+import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
 import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined';
+import BuildOutlinedIcon from '@mui/icons-material/BuildOutlined';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+import factoryCrateImg from '@/assets/images/ktm/handover/ktm_factory_crate.jpg';
+
+gsap.registerPlugin(ScrollTrigger);
+
+interface ShippingStage {
+  step: string;
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+}
+
+const SHIPPING_STAGES: ShippingStage[] = [
+  {
+    step: 'STAGE 01',
+    title: 'FACTORY CRATING & VAPOR SEAL',
+    description:
+      'Anchored onto a reinforced steel skid frame inside kiln-dried ISPM-15 timber slats, sealed in anti-corrosion VCI vapor barrier straight off the Mattighofen line.',
+    icon: <Inventory2OutlinedIcon sx={{ color: '#FF6700', fontSize: '1.35rem' }} />,
+  },
+  {
+    step: 'STAGE 02',
+    title: 'SHOCK-MONITORED GLOBAL TRANSIT',
+    description:
+      'Dispatched via climate-controlled air and sea freight corridors with tamper-evident customs locks and tri-axial 3G shock-watch indicators on every corner post.',
+    icon: <LocalShippingOutlinedIcon sx={{ color: '#FF6700', fontSize: '1.35rem' }} />,
+  },
+  {
+    step: 'STAGE 03',
+    title: 'PADDOCK UNCRATING & TRACKSIDE PDI',
+    description:
+      'Timber housing unbolted upon paddock arrival for dry-shipped battery activation, factory fluid fill, suspension baseline setup, and final fastener torque inspection.',
+    icon: <BuildOutlinedIcon sx={{ color: '#FF6700', fontSize: '1.35rem' }} />,
+  },
+];
+
+const CRATE_SPECS = [
+  { label: 'CRATE STRUCTURE', value: 'ISPM-15', unit: 'TIMBER' },
+  { label: 'BARRIER SEAL', value: 'VCI', unit: 'VAPOR' },
+  { label: 'TRANSIT TELEMETRY', value: '3G', unit: 'SHOCK-WATCH' },
+];
 
 export const KtmCrateHandover: React.FC = () => {
-  const [modalOpen, setModalOpen] = useState(false);
-  const [allocationStep, setAllocationStep] = useState<'qr' | 'success'>('qr');
+  const sectionRef = useRef<HTMLDivElement>(null);
 
-  const handleOpenModal = () => {
-    setAllocationStep('qr');
-    setModalOpen(true);
-  };
+  useEffect(() => {
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion || !sectionRef.current) return;
 
-  const handleCloseModal = () => {
-    setModalOpen(false);
-  };
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        '.crate-header-reveal',
+        { y: 36, opacity: 0 },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.85,
+          ease: 'power3.out',
+          clearProps: 'transform,opacity',
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: 'top 80%',
+            once: true,
+          },
+        }
+      );
+
+      gsap.fromTo(
+        '.crate-visual-frame',
+        { y: 40, opacity: 0, scale: 0.97 },
+        {
+          y: 0,
+          opacity: 1,
+          scale: 1,
+          duration: 0.95,
+          ease: 'power3.out',
+          clearProps: 'transform,opacity',
+          scrollTrigger: {
+            trigger: '.crate-visual-frame',
+            start: 'top 84%',
+            once: true,
+          },
+        }
+      );
+
+      gsap.fromTo(
+        '.crate-visual-img',
+        { scale: 1.07 },
+        {
+          scale: 1,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: '.crate-visual-frame',
+            start: 'top bottom',
+            end: 'bottom top',
+            scrub: 0.6,
+          },
+        }
+      );
+
+      gsap.fromTo(
+        '.crate-stage-card',
+        { y: 28, opacity: 0 },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.75,
+          stagger: 0.14,
+          ease: 'power3.out',
+          clearProps: 'transform,opacity',
+          scrollTrigger: {
+            trigger: '.crate-stages-stack',
+            start: 'top 84%',
+            once: true,
+          },
+        }
+      );
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, []);
 
   return (
     <Box
       id="handover"
+      ref={sectionRef}
       component="section"
       sx={{
         position: 'relative',
         width: '100%',
         backgroundColor: '#070709',
-        py: { xs: 12, md: 20 },
+        py: { xs: 12, md: 18 },
         px: { xs: 3, md: 6, lg: 10 },
         overflow: 'hidden',
-        borderTop: '1px solid rgba(255, 255, 255, 0.05)',
       }}
     >
-      {/* Dramatic Overhead Spotlight Background */}
+      {/* Subtle Top Atmospheric Gradient Seam */}
       <Box
         sx={{
           position: 'absolute',
           top: 0,
           left: '50%',
           transform: 'translateX(-50%)',
-          width: '800px',
-          height: '600px',
-          background: 'radial-gradient(ellipse at 50% 0%, rgba(255, 103, 0, 0.12) 0%, transparent 70%)',
+          width: '100%',
+          maxWidth: '1280px',
+          height: '1px',
+          background:
+            'linear-gradient(90deg, transparent 0%, rgba(255, 103, 0, 0.28) 30%, rgba(255, 255, 255, 0.14) 50%, rgba(255, 103, 0, 0.28) 70%, transparent 100%)',
           pointerEvents: 'none',
         }}
       />
 
-      <Box sx={{ maxWidth: '1280px', mx: 'auto', position: 'relative', zIndex: 10 }}>
+      {/* Dramatic Overhead Spotlight Background */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: '-80px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: '920px',
+          height: '560px',
+          background:
+            'radial-gradient(ellipse at 50% 0%, rgba(255, 103, 0, 0.14) 0%, rgba(255, 103, 0, 0.03) 45%, transparent 72%)',
+          filter: 'blur(40px)',
+          pointerEvents: 'none',
+        }}
+      />
+
+      <Box sx={{ maxWidth: '1320px', mx: 'auto', position: 'relative', zIndex: 10 }}>
         {/* Section Header */}
-        <Box sx={{ textAlign: 'center', mb: { xs: 8, md: 12 } }}>
-          <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
-            <Box sx={{ width: 12, height: 2, backgroundColor: '#FF6700' }} />
+        <Box className="crate-header-reveal" sx={{ textAlign: 'center', mb: { xs: 8, md: 11 } }}>
+          {/* Pulse-Dot Telemetry Eyebrow (Synced with Parts 1-4) */}
+          <Box
+            sx={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 1.4,
+              px: 2.2,
+              py: 0.65,
+              borderRadius: '100px',
+              backgroundColor: 'rgba(15, 15, 20, 0.85)',
+              backdropFilter: 'blur(16px)',
+              border: '1px solid rgba(255, 103, 0, 0.45)',
+              boxShadow: '0 0 24px rgba(255, 103, 0, 0.22)',
+              mb: 3,
+            }}
+          >
+            <Box
+              sx={{
+                width: 7,
+                height: 7,
+                borderRadius: '50%',
+                backgroundColor: '#FF6700',
+                boxShadow: '0 0 10px #FF6700',
+                animation: 'cratePulseDot 2s ease-in-out infinite',
+                '@keyframes cratePulseDot': {
+                  '0%, 100%': { transform: 'scale(1)', opacity: 1 },
+                  '50%': { transform: 'scale(1.45)', opacity: 0.55 },
+                },
+              }}
+            />
             <Typography
               sx={{
                 fontFamily: 'var(--font-mono)',
-                fontSize: '0.72rem',
-                fontWeight: 700,
-                letterSpacing: '0.2em',
+                fontSize: { xs: '0.64rem', md: '0.72rem' },
+                fontWeight: 800,
+                letterSpacing: '0.16em',
                 color: '#FF6700',
+                textTransform: 'uppercase',
               }}
             >
-              ACT V // THE PADDOCK HANDOVER & VIN ALLOCATION
+              MATTIGHOFEN LOGISTICS • EXPORT CRATE PROTOCOL
             </Typography>
-            <Box sx={{ width: 12, height: 2, backgroundColor: '#FF6700' }} />
           </Box>
 
           <Typography
             component="h2"
             sx={{
               fontFamily: 'var(--font-display)',
-              fontWeight: 900,
-              fontSize: { xs: '2.4rem', sm: '3.8rem', md: '5rem' },
-              letterSpacing: '-0.04em',
+              fontWeight: 950,
+              fontSize: { xs: '2.35rem', sm: '3.6rem', md: '4.6rem' },
+              letterSpacing: '-0.035em',
               lineHeight: 0.98,
-              color: '#F4F4F5',
+              color: '#FFFFFF',
               textTransform: 'uppercase',
+              textShadow: '0 4px 30px rgba(0, 0, 0, 0.9)',
               mb: 2.5,
             }}
           >
-            YOUR BEAST AWAITS.
-            <br />
-            <span style={{ color: '#FF6700' }}>DIRECT FROM MATTIGHOFEN.</span>
+            SEALED IN AUSTRIA.
+            <Box
+              component="span"
+              sx={{
+                display: 'block',
+                color: '#FF6700',
+                textShadow: '0 0 42px rgba(255, 103, 0, 0.55)',
+              }}
+            >
+              SHIPPED TO YOUR PADDOCK.
+            </Box>
           </Typography>
 
           <Typography
             sx={{
               fontFamily: 'var(--font-body)',
-              fontSize: { xs: '0.95rem', sm: '1.1rem' },
+              fontSize: { xs: '0.95rem', sm: '1.08rem' },
               color: '#A1A1AA',
-              maxWidth: '680px',
+              maxWidth: '700px',
               mx: 'auto',
               lineHeight: 1.7,
             }}
           >
-            Every machine arrives sealed in an authentic wooden export freight crate from the Austrian factory. Reserve your allocation slot with a refundable 10% deposit.
+            Every machine leaves Mattighofen bolted inside a custom ISPM-15 timber and steel-skid export crate—vapor-sealed against moisture, shock-monitored across freight corridors, and uncrated exclusively for pre-delivery inspection.
           </Typography>
         </Box>
 
-        {/* 2-Column Split: Wooden Crate Visual + VIP Reservation Terminal */}
+        {/* 2-Column Split: Wooden Crate Visual + 3-Stage Crating & Shipping Pipeline */}
         <Box
           sx={{
             display: 'grid',
-            gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' },
-            gap: { xs: 6, lg: 8 },
-            alignItems: 'center',
+            gridTemplateColumns: { xs: '1fr', lg: '1.05fr 1fr' },
+            gap: { xs: 5, lg: 7 },
+            alignItems: 'stretch',
           }}
         >
-          {/* Left: Authentic Factory Wooden Crate Frame */}
+          {/* Left: Authentic Wooden Export Crate Showcase */}
           <Box
+            className="crate-visual-frame"
             sx={{
               position: 'relative',
-              borderRadius: '6px',
+              borderRadius: '16px',
               overflow: 'hidden',
-              backgroundColor: '#0F0F14',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
+              backgroundColor: '#0F0F16',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              borderTop: '1px solid rgba(255, 255, 255, 0.25)',
               boxShadow: '0 30px 80px rgba(0, 0, 0, 0.9)',
-              height: { xs: '360px', sm: '460px', lg: '540px' },
+              minHeight: { xs: '380px', sm: '460px', lg: '560px' },
             }}
           >
             <Box
+              className="crate-visual-img"
               component="img"
-              src="https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=1600&q=85"
-              alt="Mattighofen Factory Crate"
+              src={factoryCrateImg}
+              alt="KTM Mattighofen ISPM-15 Wooden Export Shipping Crate"
               loading="lazy"
               decoding="async"
               sx={{
                 width: '100%',
                 height: '100%',
                 objectFit: 'cover',
-                filter: 'contrast(1.1) brightness(0.85)',
+                objectPosition: 'center',
+                filter: 'contrast(1.06) brightness(0.92)',
               }}
             />
 
-            {/* Crate Stencil & Factory Stamp Graphic Overlay */}
+            {/* Crate Telemetry Gradient Overlay */}
             <Box
               sx={{
                 position: 'absolute',
                 inset: 0,
-                background: 'linear-gradient(to top, rgba(7, 7, 9, 0.92) 0%, rgba(7, 7, 9, 0.3) 50%, rgba(7, 7, 9, 0.8) 100%)',
-                p: 4,
+                background:
+                  'linear-gradient(to top, rgba(7, 7, 9, 0.94) 0%, rgba(7, 7, 9, 0.25) 45%, rgba(7, 7, 9, 0.72) 100%)',
+                p: { xs: 3, sm: 4 },
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
+                pointerEvents: 'none',
               }}
             >
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              {/* Top Stamps */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  gap: 1.5,
+                }}
+              >
                 <Box
                   sx={{
-                    px: 1.5,
-                    py: 0.6,
-                    borderRadius: '2px',
-                    border: '1px solid #FF6700',
-                    backgroundColor: 'rgba(255, 103, 0, 0.15)',
-                    backdropFilter: 'blur(8px)',
+                    px: 1.6,
+                    py: 0.55,
+                    borderRadius: '100px',
+                    border: '1px solid rgba(255, 103, 0, 0.55)',
+                    backgroundColor: 'rgba(7, 7, 9, 0.8)',
+                    backdropFilter: 'blur(12px)',
                   }}
                 >
-                  <Typography sx={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', fontWeight: 700, color: '#FF6700' }}>
-                    EXPORT SEAL: VBKM-2026-AUT
+                  <Typography
+                    sx={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: '0.64rem',
+                      fontWeight: 800,
+                      color: '#FF6700',
+                      letterSpacing: '0.1em',
+                    }}
+                  >
+                    ISPM-15 KILN-DRIED TIMBER
                   </Typography>
                 </Box>
-                <Typography sx={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', fontWeight: 600, color: '#D4D4D8', letterSpacing: '0.1em' }}>
-                  MATTIGHOFEN PADDOCK VAULT
+
+                <Typography
+                  sx={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '0.66rem',
+                    fontWeight: 700,
+                    color: '#D4D4D8',
+                    letterSpacing: '0.12em',
+                  }}
+                >
+                  ORIGIN: MATTIGHOFEN, AUT
                 </Typography>
               </Box>
 
+              {/* Bottom Crate Specification Caption */}
               <Box>
                 <Typography
                   sx={{
                     fontFamily: 'var(--font-mono)',
-                    fontSize: '0.72rem',
+                    fontSize: '0.68rem',
+                    fontWeight: 800,
                     letterSpacing: '0.14em',
                     color: '#FF6700',
-                    mb: 0.5,
+                    mb: 0.6,
                   }}
                 >
-                  VIN ALLOCATION STATUS
+                  FACTORY PACKAGING // EXPORT SEAL VBKM-AUT
                 </Typography>
                 <Typography
                   sx={{
                     fontFamily: 'var(--font-display)',
                     fontWeight: 900,
-                    fontSize: { xs: '1.4rem', sm: '1.8rem' },
-                    color: '#F4F4F5',
+                    fontSize: { xs: '1.35rem', sm: '1.75rem' },
+                    color: '#FFFFFF',
                     letterSpacing: '-0.02em',
+                    textTransform: 'uppercase',
                   }}
                 >
-                  KTM 1290 SUPER DUKE R EVO
+                  VCI VAPOR BARRIER & STEEL SKID FRAME
                 </Typography>
-                <Typography sx={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: '#A1A1AA', mt: 0.5 }}>
-                  CHASSIS NUMBER: #VBK-LC8-0921-2026
+                <Typography
+                  sx={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '0.72rem',
+                    color: '#A1A1AA',
+                    mt: 0.6,
+                    letterSpacing: '0.06em',
+                  }}
+                >
+                  TRI-AXIAL 3G SHOCK-WATCH • HUMIDITY GUARDED TRANSIT
                 </Typography>
               </Box>
             </Box>
           </Box>
 
-          {/* Right: VIP Reservation Terminal & Pricing Breakdown */}
+          {/* Right: 3-Stage Crating & Shipping Pipeline + Crate Engineering Telemetry */}
           <Box
+            className="crate-stages-stack"
             sx={{
-              p: { xs: 3.5, sm: 5 },
-              borderRadius: '6px',
-              backgroundColor: '#0F0F14',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.6)',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              gap: 2.5,
             }}
           >
-            {/* 3 VIP Privileges */}
-            <Typography
+            {SHIPPING_STAGES.map((item) => (
+              <Box
+                key={item.step}
+                className="crate-stage-card"
+                sx={{
+                  p: { xs: 2.8, sm: 3.2 },
+                  borderRadius: '16px',
+                  backgroundColor: 'rgba(15, 15, 20, 0.85)',
+                  backdropFilter: 'blur(16px)',
+                  border: '1px solid rgba(255, 255, 255, 0.10)',
+                  borderTop: '1px solid rgba(255, 255, 255, 0.24)',
+                  boxShadow: '0 14px 36px rgba(0, 0, 0, 0.6)',
+                  display: 'flex',
+                  gap: 2.2,
+                  alignItems: 'flex-start',
+                  transition: 'border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease',
+                  '&:hover': {
+                    borderColor: 'rgba(255, 103, 0, 0.6)',
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 18px 44px rgba(0, 0, 0, 0.8), 0 0 24px rgba(255, 103, 0, 0.18)',
+                  },
+                }}
+              >
+                <Box
+                  sx={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: '10px',
+                    flexShrink: 0,
+                    backgroundColor: 'rgba(255, 103, 0, 0.12)',
+                    border: '1px solid rgba(255, 103, 0, 0.35)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {item.icon}
+                </Box>
+
+                <Box>
+                  <Typography
+                    sx={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: '0.62rem',
+                      fontWeight: 800,
+                      color: '#FF6700',
+                      letterSpacing: '0.14em',
+                      mb: 0.4,
+                    }}
+                  >
+                    {item.step}
+                  </Typography>
+                  <Typography
+                    component="h3"
+                    sx={{
+                      fontFamily: 'var(--font-display)',
+                      fontWeight: 900,
+                      fontSize: { xs: '1.05rem', sm: '1.15rem' },
+                      color: '#FFFFFF',
+                      letterSpacing: '-0.015em',
+                      textTransform: 'uppercase',
+                      mb: 0.6,
+                    }}
+                  >
+                    {item.title}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontFamily: 'var(--font-body)',
+                      fontSize: '0.86rem',
+                      color: '#A1A1AA',
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    {item.description}
+                  </Typography>
+                </Box>
+              </Box>
+            ))}
+
+            {/* 3-Cell Crate Engineering Matrix (Synced with Parts 1-2 Telemetry Cells) */}
+            <Box
+              className="crate-stage-card"
               sx={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: '0.68rem',
-                letterSpacing: '0.14em',
-                color: '#FF6700',
-                mb: 2,
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' },
+                gap: 1.5,
+                p: 2.5,
+                borderRadius: '14px',
+                backgroundColor: 'rgba(255, 255, 255, 0.03)',
+                border: '1px solid rgba(255, 255, 255, 0.10)',
+                borderTop: '1px solid rgba(255, 255, 255, 0.24)',
+                boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.08)',
               }}
             >
-              VIP HANDOVER PRIVILEGES
-            </Typography>
-
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, mb: 4 }}>
-              {[
-                {
-                  icon: <LocalShippingOutlinedIcon sx={{ color: '#FF6700', fontSize: '1.4rem' }} />,
-                  title: 'PRIVATE UNCRATING CEREMONY',
-                  desc: 'Direct factory shipment from Mattighofen. Experience the opening of your sealed crate in our private paddock bay.',
-                },
-                {
-                  icon: <ConstructionOutlinedIcon sx={{ color: '#FF6700', fontSize: '1.4rem' }} />,
-                  title: 'WP SUSPENSION TELEMETRY TUNING',
-                  desc: 'Factory certified suspension technicians dial in preload and damping curves tailored specifically to your body weight.',
-                },
-                {
-                  icon: <VerifiedUserOutlinedIcon sx={{ color: '#FF6700', fontSize: '1.4rem' }} />,
-                  title: '3-YEAR FACTORY WARRANTY & PIT ACCESS',
-                  desc: 'Full factory warranty coverage, including VIP pit-lane access to KTM trackday sessions across Southeast Asia.',
-                },
-              ].map((item) => (
-                <Box key={item.title} sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
-                  <Box sx={{ mt: 0.3 }}>{item.icon}</Box>
-                  <Box>
-                    <Typography sx={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '0.88rem', color: '#F4F4F5', mb: 0.3 }}>
-                      {item.title}
+              {CRATE_SPECS.map((spec) => (
+                <Box key={spec.label}>
+                  <Typography
+                    sx={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: '0.60rem',
+                      fontWeight: 700,
+                      color: '#A1A1AA',
+                      letterSpacing: '0.1em',
+                      mb: 0.5,
+                    }}
+                  >
+                    {spec.label}
+                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.7 }}>
+                    <Typography
+                      className="tabular-nums"
+                      sx={{
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: '1.2rem',
+                        fontWeight: 900,
+                        color: '#FFFFFF',
+                      }}
+                    >
+                      {spec.value}
                     </Typography>
-                    <Typography sx={{ fontFamily: 'var(--font-body)', fontSize: '0.8rem', color: '#A1A1AA', lineHeight: 1.5 }}>
-                      {item.desc}
+                    <Typography
+                      sx={{
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: '0.68rem',
+                        fontWeight: 800,
+                        color: '#FF6700',
+                      }}
+                    >
+                      {spec.unit}
                     </Typography>
                   </Box>
                 </Box>
               ))}
             </Box>
-
-            {/* Financial Ledger (10% Deposit Matrix) */}
-            <Box
-              sx={{
-                p: 3,
-                borderRadius: '4px',
-                backgroundColor: 'rgba(255, 255, 255, 0.03)',
-                border: '1px solid rgba(255, 255, 255, 0.12)',
-                borderTop: '1px solid rgba(255, 255, 255, 0.25)',
-                boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.1)',
-                mb: 4,
-              }}
-            >
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
-                <Typography sx={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 600, color: '#D4D4D8' }}>
-                  Total Vehicle MSRP
-                </Typography>
-                <Typography className="tabular-nums" sx={{ fontFamily: 'var(--font-mono)', fontSize: '0.88rem', fontWeight: 700, color: '#FFFFFF' }}>
-                  $19,799 (~502,000,000 VND)
-                </Typography>
-              </Box>
-
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
-                <Typography sx={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: '#FF6700', fontWeight: 700 }}>
-                  10% Deposit to Lock VIN (PayOS)
-                </Typography>
-                <Typography className="tabular-nums" sx={{ fontFamily: 'var(--font-mono)', fontSize: '1rem', fontWeight: 800, color: '#FF6700' }}>
-                  $1,979 (~50,200,000 VND)
-                </Typography>
-              </Box>
-
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', pt: 1.5, borderTop: '1px dashed rgba(255, 255, 255, 0.14)' }}>
-                <Typography sx={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 600, color: '#A1A1AA' }}>
-                  90% Balance Due Upon Paddock Handover
-                </Typography>
-                <Typography className="tabular-nums" sx={{ fontFamily: 'var(--font-mono)', fontSize: '0.88rem', fontWeight: 600, color: '#E4E4E7' }}>
-                  $17,820 (~451,800,000 VND)
-                </Typography>
-              </Box>
-            </Box>
-
-            {/* Action CTA: Lock Allocation */}
-            <Box
-              onClick={handleOpenModal}
-              sx={{
-                backgroundColor: '#FF6700',
-                color: '#070709',
-                fontFamily: 'var(--font-display)',
-                fontWeight: 900,
-                fontSize: '0.88rem',
-                letterSpacing: '0.08em',
-                py: 1.8,
-                borderRadius: '2px',
-                textAlign: 'center',
-                cursor: 'pointer',
-                boxShadow: '0 0 35px rgba(255, 103, 0, 0.4)',
-                transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-                userSelect: 'none',
-                '&:hover': {
-                  backgroundColor: '#FFA040',
-                  boxShadow: '0 0 50px rgba(255, 103, 0, 0.7)',
-                  transform: 'translateY(-2px)',
-                },
-              }}
-            >
-              LOCK ALLOCATION WITH PAYOS VIETQR
-            </Box>
           </Box>
         </Box>
       </Box>
-
-      {/* PayOS VietQR Modal */}
-      <Modal
-        open={modalOpen}
-        onClose={handleCloseModal}
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          p: 2,
-          backdropFilter: 'blur(16px)',
-        }}
-      >
-        <Box
-          sx={{
-            width: '100%',
-            maxWidth: 480,
-            backgroundColor: '#0F0F14',
-            border: '1px solid rgba(255, 103, 0, 0.3)',
-            borderRadius: '6px',
-            p: 4,
-            boxShadow: '0 30px 90px rgba(0, 0, 0, 0.95)',
-            position: 'relative',
-          }}
-        >
-          <IconButton
-            onClick={handleCloseModal}
-            sx={{ position: 'absolute', top: 16, right: 16, color: '#A1A1AA' }}
-          >
-            <CloseIcon />
-          </IconButton>
-
-          {allocationStep === 'qr' ? (
-            <Box sx={{ textAlign: 'center' }}>
-              <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                <QrCode2Icon sx={{ color: '#FF6700', fontSize: '1.5rem' }} />
-                <Typography sx={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: '#FF6700', fontWeight: 700 }}>
-                  PAYOS VIETQR GATEWAY
-                </Typography>
-              </Box>
-
-              <Typography sx={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: '1.4rem', color: '#F4F4F5', mb: 1 }}>
-                KTM 1290 SUPER DUKE R EVO
-              </Typography>
-              <Typography sx={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 600, color: '#D4D4D8', mb: 3 }}>
-                DEPOSIT AMOUNT: 50,200,000 VND ($1,979 USD)
-              </Typography>
-
-              {/* Realistic QR Code Box */}
-              <Box
-                sx={{
-                  width: '220px',
-                  height: '220px',
-                  mx: 'auto',
-                  p: 2,
-                  backgroundColor: '#FFFFFF',
-                  borderRadius: '4px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  mb: 3,
-                }}
-              >
-                <Box
-                  component="img"
-                  src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=PAYOS-TORQUEX-KTM-1290-ALLOCATION-50200000VND"
-                  alt="PayOS VietQR Code"
-                  sx={{ width: '100%', height: '100%' }}
-                />
-              </Box>
-
-              <Typography sx={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: '#A1A1AA', mb: 3 }}>
-                Scan using any banking app supporting VietQR (Vietcombank, Techcombank, MB, ACB, etc.).
-              </Typography>
-
-              <Box
-                onClick={() => setAllocationStep('success')}
-                sx={{
-                  backgroundColor: '#FF6700',
-                  color: '#070709',
-                  fontFamily: 'var(--font-display)',
-                  fontWeight: 800,
-                  fontSize: '0.8rem',
-                  py: 1.4,
-                  borderRadius: '2px',
-                  cursor: 'pointer',
-                  '&:hover': { backgroundColor: '#FFA040' },
-                }}
-              >
-                SIMULATE CONFIRMATION
-              </Box>
-            </Box>
-          ) : (
-            <Box sx={{ textAlign: 'center', py: 2 }}>
-              <CheckCircleOutlineIcon sx={{ color: '#10B981', fontSize: '3.5rem', mb: 2 }} />
-              <Typography sx={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: '1.6rem', color: '#F4F4F5', mb: 1 }}>
-                ALLOCATION VIN LOCKED
-              </Typography>
-              <Typography sx={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: '#10B981', mb: 2 }}>
-                CHASSIS #VBK-LC8-0921-2026 CONFIRMED
-              </Typography>
-              <Typography sx={{ fontFamily: 'var(--font-body)', fontSize: '0.88rem', color: '#A1A1AA', lineHeight: 1.6, mb: 4 }}>
-                Your 10% allocation deposit has been verified via PayOS. A TorqueX Paddock Concierge will reach out within 2 hours to confirm your private uncrating schedule.
-              </Typography>
-
-              <Box
-                onClick={handleCloseModal}
-                sx={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                  color: '#F4F4F5',
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '0.8rem',
-                  fontWeight: 700,
-                  py: 1.4,
-                  borderRadius: '2px',
-                  cursor: 'pointer',
-                  '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.15)' },
-                }}
-              >
-                RETURN TO PADDOCK
-              </Box>
-            </Box>
-          )}
-        </Box>
-      </Modal>
     </Box>
   );
 };
