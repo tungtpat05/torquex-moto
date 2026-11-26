@@ -270,8 +270,17 @@ export const KtmApexSurge: React.FC = () => {
           46
         );
 
-        // BEAT 4: Smooth settling cushion into Act IV Pedigree (84% -> 100%)
-        masterTl.to({}, { duration: 16 }, 84);
+        // BEAT 4: Smooth settling cushion & dissolve into Act IV Pedigree (84% -> 100%)
+        masterTl.to(
+          marqueeBoxRef.current,
+          { opacity: 0, y: 40, duration: 14, ease: 'power2.inOut' },
+          86
+        );
+        masterTl.to(
+          headlineBoxRef.current,
+          { opacity: 0, y: -50, duration: 14, ease: 'power2.inOut' },
+          86
+        );
       }
     }, sectionRef);
 
