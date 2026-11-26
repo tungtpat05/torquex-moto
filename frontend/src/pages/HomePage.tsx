@@ -1,43 +1,45 @@
-import { Box } from "@mui/material";
-import HomeHero from "@/components/home/HomeHero";
-import HomeStats from "@/components/home/HomeStats";
-import CategorySection from "@/components/category/CategorySection";
-import BrandSection from "@/components/brand/BrandSection";
-import HomePromise from "@/components/home/HomePromise";
-import NewArrivalsSection from "@/components/home/NewArrivalsSection";
-import HomeCommunity from "@/components/home/HomeCommunity";
-import HomeReviews from "@/components/home/HomeReviews";
-import HomeNewsletter from "@/components/home/HomeNewsletter";
+import React, { useEffect } from 'react';
+import { Box } from '@mui/material';
+import { initSmoothScroll, destroySmoothScroll } from '@/lib/smoothScroll';
+import KtmHeroAwakening from '@/components/ktm/KtmHeroAwakening';
+import KtmApexSurge from '@/components/ktm/KtmApexSurge';
+import KtmPedigreeHeritage from '@/components/ktm/KtmPedigreeHeritage';
+import KtmBloodlineFleet from '@/components/ktm/KtmBloodlineFleet';
+import KtmCrateHandover from '@/components/ktm/KtmCrateHandover';
 
-const HomePage = () => {
+const HomePage: React.FC = () => {
+  useEffect(() => {
+    initSmoothScroll();
+
+    return () => {
+      destroySmoothScroll();
+    };
+  }, []);
+
   return (
-    <Box sx={{ width: "100%", backgroundColor: "#09090b", minHeight: "100vh" }}>
-      {/* 1. Hero / Search section */}
-      <HomeHero />
+    <Box
+      sx={{
+        width: '100%',
+        backgroundColor: '#070709',
+        color: '#F4F4F5',
+        minHeight: '100vh',
+        overflowX: 'hidden',
+      }}
+    >
+      {/* Act I & Act II: The Awakening & The Anatomy of Fury (Unified Porsche-Style Seamless Master Experience) */}
+      <KtmHeroAwakening />
 
-      {/* 2. Stat summary banner */}
-      <HomeStats />
+      {/* Act III: The Apex Surge (High-Velocity Editorial Action Cascade) */}
+      <KtmApexSurge />
 
-      {/* 3. Browse by Category */}
-      <CategorySection />
+      {/* Act IV Part A: The Pedigree (18 Dakar Titles & MotoGP Heritage) */}
+      <KtmPedigreeHeritage />
 
-      {/* 4. World's Greatest Brands */}
-      <BrandSection />
+      {/* Act IV Part B: The Bloodline Fleet (Curated 6 KTM Weapons Showroom) */}
+      <KtmBloodlineFleet />
 
-      {/* 5. New Arrivals (4 cards per view, 8 total) */}
-      <NewArrivalsSection />
-
-      {/* 6. Why Choose MotoVault Promise */}
-      <HomePromise />
-
-      {/* 7. More than a Marketplace Banner */}
-      <HomeCommunity />
-
-      {/* 8. Trusted by Riders Reviews */}
-      <HomeReviews />
-
-      {/* 9. Stay Connected newsletter signup */}
-      <HomeNewsletter />
+      {/* Act V: The Crate Handover Ceremony & VIN Allocation Lock */}
+      <KtmCrateHandover />
     </Box>
   );
 };
