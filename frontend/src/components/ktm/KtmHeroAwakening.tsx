@@ -728,16 +728,16 @@ export const KtmHeroAwakening: React.FC = () => {
           }}
         />
 
-        {/* Seamless Black Bridge: dissolves bottom edge of Part 2 completely into #070709 void */}
+        {/* Seamless Black Bridge: subtle bottom edge feather into #070709 without covering tires or engine */}
         <Box
           sx={{
             position: 'absolute',
-            bottom: -6,
+            bottom: -4,
             left: 0,
             right: 0,
-            height: '24%',
+            height: '25%',
             background:
-              'linear-gradient(to top, #070709 0%, #070709 35%, rgba(7, 7, 9, 0.90) 70%, transparent 100%)',
+              'linear-gradient(to top, #070709 0%, rgba(7, 7, 9, 0.6) 45%, transparent 100%)',
             pointerEvents: 'none',
             zIndex: 40,
           }}

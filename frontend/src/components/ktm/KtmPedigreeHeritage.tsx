@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, Typography, ButtonBase } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { getLenis } from '@/lib/smoothScroll';
 
 import ktmVintageRacerImg from '@/assets/images/ktm/heritage/ktm_vintage_racer.jpg';
 import dakarRallyComaImg from '@/assets/images/ktm/heritage/dakar_rally_coma.jpg';
@@ -76,7 +75,6 @@ export const KtmPedigreeHeritage: React.FC = () => {
 
   const sectionRef = useRef<HTMLDivElement>(null);
   const activeStageRef = useRef<number>(0);
-  const scrollTriggerInstanceRef = useRef<ScrollTrigger | null>(null);
 
   useEffect(() => {
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -110,19 +108,9 @@ export const KtmPedigreeHeritage: React.FC = () => {
               activeStageRef.current = nextStage;
               setActiveStage(nextStage);
             }
-
-            // Direct GPU-accelerated laser scale update
-            gsap.set('.brand-laser-line', {
-              scaleX: Math.min(1, Math.max(0, p)),
-            });
           },
         },
       });
-
-      scrollTriggerInstanceRef.current = tl.scrollTrigger || null;
-
-      // Initial state setup at scroll position 0
-      tl.set('.brand-bottom-hud', { opacity: 0, y: 20 }, 0);
 
       // Plates initially hidden
       tl.set('.pillar-plate-0', { opacity: 0, scale: 1.06 }, 0);
@@ -181,9 +169,6 @@ export const KtmPedigreeHeritage: React.FC = () => {
       tl.to('.bridge-text-line-2', { opacity: 0, y: -45, duration: 5, ease: 'power2.in' }, 18);
       tl.to('.bridge-subtext', { opacity: 0, y: -30, duration: 5, ease: 'power2.in' }, 19);
 
-      // Fade in bottom timeline HUD
-      tl.to('.brand-bottom-hud', { opacity: 1, y: 0, duration: 6, ease: 'power3.out' }, 22);
-
       // =========================================================================
       // BEAT 1: READY TO RACE (22% -> 48%) - STAGGERED PHRASE REVEAL
       // =========================================================================
@@ -236,35 +221,11 @@ export const KtmPedigreeHeritage: React.FC = () => {
       // Camera drift on Brad Binder RC16
       tl.to('.pillar-plate-2', { scale: 1.03, duration: 18, ease: 'none' }, 76);
 
-      // Handoff prompt to Part 5 (Fleet Showroom)
-      tl.to(
-        '.brand-handoff-prompt',
-        { opacity: 1, y: 0, duration: 8, ease: 'power2.out' },
-        88
-      );
-
       tl.to({}, { duration: 12 }, 88);
     }, sectionRef);
 
     return () => ctx.revert();
   }, []);
-
-  // Jump to specific pillar
-  const handleJumpToPillar = (index: number) => {
-    const st = scrollTriggerInstanceRef.current;
-    if (st) {
-      const targetRatios = [0.34, 0.60, 0.86];
-      const targetProgress = targetRatios[index];
-      const targetScroll = st.start + (st.end - st.start) * targetProgress;
-
-      const lenis = getLenis();
-      if (lenis) {
-        lenis.scrollTo(targetScroll, { duration: 1.2 });
-      } else {
-        window.scrollTo({ top: targetScroll, behavior: 'smooth' });
-      }
-    }
-  };
 
   return (
     <Box
@@ -610,149 +571,6 @@ export const KtmPedigreeHeritage: React.FC = () => {
               </Box>
             </Box>
           ))}
-        </Box>
-
-        {/* Handoff prompt to Part 5 (Fleet Showroom) */}
-        <Box
-          className="brand-handoff-prompt"
-          sx={{
-            position: 'absolute',
-            bottom: '9vh',
-            right: { xs: 3, md: 6, lg: 8 },
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1.5,
-            opacity: 0,
-            transform: 'translateY(10px)',
-            pointerEvents: 'none',
-          }}
-        >
-          <Typography
-            sx={{
-              fontFamily: 'var(--font-mono, monospace)',
-              fontSize: '0.72rem',
-              fontWeight: 800,
-              color: '#FF6700',
-              letterSpacing: '0.16em',
-              textTransform: 'uppercase',
-            }}
-          >
-            THE BLOODLINE EXTENDS // CHOOSE YOUR WEAPON &darr;
-          </Typography>
-        </Box>
-      </Box>
-
-      {/* ===================================================================== */}
-      {/* 3. MINIMALIST BOTTOM SCRUBBER (CLEAN LASER PROGRESS LINE)            */}
-      {/* ===================================================================== */}
-      <Box
-        className="brand-bottom-hud"
-        sx={{
-          position: { xs: 'relative', lg: 'absolute' },
-          bottom: 0,
-          left: 0,
-          right: 0,
-          width: '100%',
-          backgroundColor: { xs: 'rgba(7, 7, 9, 0.98)', lg: 'rgba(7, 7, 9, 0.6)' },
-          backdropFilter: 'blur(16px)',
-          borderTop: '1px solid rgba(255, 255, 255, 0.06)',
-          zIndex: 10,
-        }}
-      >
-        {/* Continuous Active Neon Laser Line (GPU transform scaleX) */}
-        <Box
-          sx={{
-            position: 'absolute',
-            top: -1,
-            left: 0,
-            width: '100%',
-            height: '2px',
-            backgroundColor: 'rgba(255, 255, 255, 0.08)',
-          }}
-        >
-          <Box
-            className="brand-laser-line"
-            sx={{
-              height: '100%',
-              width: '100%',
-              backgroundColor: '#FF6700',
-              boxShadow: '0 0 10px #FF6700, 0 0 20px rgba(255, 103, 0, 0.5)',
-              transform: 'scaleX(0)',
-              transformOrigin: 'left center',
-              willChange: 'transform',
-            }}
-          />
-        </Box>
-
-        {/* Minimalist Pillar Markers (Clean, No Indeces) */}
-        <Box
-          sx={{
-            px: { xs: 3, md: 6, lg: 8 },
-            py: 2,
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
-          {/* Pillar Selectors */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 3, md: 6 } }}>
-            {BRAND_PILLARS.map((pillar, index) => {
-              const isActive = activeStage === index + 1;
-              return (
-                <ButtonBase
-                  key={`btn-pillar-${pillar.id}`}
-                  onClick={() => handleJumpToPillar(index)}
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1.2,
-                    py: 0.5,
-                    opacity: isActive ? 1 : 0.45,
-                    transition: 'all 0.25s ease',
-                    '&:hover': {
-                      opacity: 1,
-                    },
-                  }}
-                >
-                  <Box
-                    sx={{
-                      width: 5,
-                      height: 5,
-                      borderRadius: '50%',
-                      backgroundColor: isActive ? '#FF6700' : 'rgba(255, 255, 255, 0.35)',
-                      boxShadow: isActive ? '0 0 8px #FF6700' : 'none',
-                    }}
-                  />
-                  <Typography
-                    sx={{
-                      fontFamily: 'var(--font-mono, monospace)',
-                      fontSize: { xs: '0.68rem', md: '0.74rem' },
-                      fontWeight: 800,
-                      color: isActive ? '#FFFFFF' : '#A1A1AA',
-                      letterSpacing: '0.12em',
-                      textTransform: 'uppercase',
-                    }}
-                  >
-                    {pillar.scrubberLabel}
-                  </Typography>
-                </ButtonBase>
-              );
-            })}
-          </Box>
-
-          {/* Minimalist Brand Label */}
-          <Typography
-            sx={{
-              display: { xs: 'none', sm: 'block' },
-              fontFamily: 'var(--font-mono, monospace)',
-              fontSize: '0.64rem',
-              color: '#71717A',
-              letterSpacing: '0.14em',
-              textTransform: 'uppercase',
-            }}
-          >
-            MATTIGHOFEN • AUSTRIA
-          </Typography>
         </Box>
       </Box>
 
