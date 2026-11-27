@@ -2,13 +2,14 @@ import { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { Box, CircularProgress } from "@mui/material";
 import { useAuth } from "../context";
+import { hasAnyRole } from "../utils/role";
 
 interface ProtectedRouteProps {
   children: ReactNode;
-  requireAdmin?: boolean;
+  allowedRoles?: string[];
 }
 
-const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps) => {
+const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
   const { isLogin, user, loading } = useAuth();
   const location = useLocation();
 
@@ -32,12 +33,8 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (requireAdmin) {
-    const userRole = user.role?.toUpperCase() || "";
-    const isAdmin = userRole === "ADMIN" || userRole === "ROLE_ADMIN";
-    if (!isAdmin) {
-      return <Navigate to="/" replace />;
-    }
+  if (allowedRoles && allowedRoles.length > 0 && !hasAnyRole(user.role, allowedRoles)) {
+    return <Navigate to="/" replace />;
   }
 
   return <>{children}</>;

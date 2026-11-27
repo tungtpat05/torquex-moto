@@ -10,7 +10,7 @@ export interface ProductCreateRequest {
   summary: string;
   description: string;
   basePrice: number;
-  discountPrice: number;
+  discountPrice?: number | null;
   thumbnail: string;
   thumbnailPublicId: string;
   weightGram?: number;
@@ -28,7 +28,7 @@ export interface ProductUpdateRequest {
   summary: string;
   description: string;
   basePrice: number;
-  discountPrice: number;
+  discountPrice?: number | null;
   thumbnail: string;
   thumbnailPublicId: string;
   weightGram?: number;

@@ -5,25 +5,23 @@ import {
   RouterProvider,
 } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
+import StaffLayout from "../layouts/StaffLayout";
 import NotFoundPage from "../pages/NotFoundPage";
 import HomePage from "../pages/HomePage";
-import ProductPage from "../pages/ProductPage";
 import ProductDetailPage from "../pages/ProductDetailPage";
-import SignInPage from "../pages/auth/SignInPage.tsx";
-import AuthSuccessPage from "../pages/auth/AuthSuccessPage.tsx";
-import SignUpPage from "../pages/auth/SignUpPage.tsx";
+import SignInPage from "../pages/auth/SignInPage";
+import AuthSuccessPage from "../pages/auth/AuthSuccessPage";
+import SignUpPage from "../pages/auth/SignUpPage";
 import CartPage from "../pages/CartPage";
-import ProfilePage from "../pages/auth/ProfilePage.tsx";
+import ProfilePage from "../pages/auth/ProfilePage";
 
-// Admin Imports
-import AdminLayout from "../layouts/AdminLayout";
-import AdminDashboardPage from "../pages/admin/AdminDashboardPage";
-import AdminProductsPage from "../pages/admin/AdminProductsPage";
-import AdminProductFormPage from "../pages/admin/AdminProductFormPage";
-import AdminCategoriesPage from "../pages/admin/AdminCategoriesPage";
-import AdminBrandsPage from "../pages/admin/AdminBrandsPage";
-import AdminBrandFormPage from "../pages/admin/AdminBrandFormPage";
-import AdminCategoryFormPage from "../pages/admin/AdminCategoryFormPage";
+import DashboardPage from "../pages/staff/DashboardPage";
+import ProductsPage from "../pages/staff/ProductsPage";
+import ProductFormPage from "../pages/staff/ProductFormPage";
+import CategoriesPage from "../pages/staff/CategoriesPage";
+import CategoryFormPage from "../pages/staff/CategoryFormPage";
+import BrandsPage from "../pages/staff/BrandsPage";
+import BrandFormPage from "../pages/staff/BrandFormPage";
 
 import ProtectedRoute from "./ProtectedRoute";
 
@@ -35,31 +33,30 @@ const AppRoutes = () => {
         <Route path="/register" element={<SignUpPage />} />
         <Route path="/auth/success" element={<AuthSuccessPage />} />
 
-        {/* Admin Routes */}
+        {/* Store Operations Staff Portal */}
         <Route
-          path="/admin"
+          path="/staff"
           element={
-            <ProtectedRoute requireAdmin={true}>
-              <AdminLayout />
+            <ProtectedRoute allowedRoles={["STAFF"]}>
+              <StaffLayout />
             </ProtectedRoute>
           }
         >
-          <Route index element={<AdminDashboardPage />} />
-          <Route path="dashboard" element={<AdminDashboardPage />} />
-          <Route path="products" element={<AdminProductsPage />} />
-          <Route path="products/add" element={<AdminProductFormPage mode="add" />} />
-          <Route path="products/edit/:id" element={<AdminProductFormPage mode="edit" />} />
-          <Route path="categories" element={<AdminCategoriesPage />} />
-          <Route path="categories/add" element={<AdminCategoryFormPage mode="add" />} />
-          <Route path="categories/edit/:id" element={<AdminCategoryFormPage mode="edit" />} />
-          <Route path="brands" element={<AdminBrandsPage />} />
-          <Route path="brands/add" element={<AdminBrandFormPage mode="add" />} />
-          <Route path="brands/edit/:id" element={<AdminBrandFormPage mode="edit" />} />
+          <Route index element={<DashboardPage />} />
+          <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="products" element={<ProductsPage />} />
+          <Route path="products/add" element={<ProductFormPage mode="add" />} />
+          <Route path="products/edit/:id" element={<ProductFormPage mode="edit" />} />
+          <Route path="categories" element={<CategoriesPage />} />
+          <Route path="categories/add" element={<CategoryFormPage mode="add" />} />
+          <Route path="categories/edit/:id" element={<CategoryFormPage mode="edit" />} />
+          <Route path="brands" element={<BrandsPage />} />
+          <Route path="brands/add" element={<BrandFormPage mode="add" />} />
+          <Route path="brands/edit/:id" element={<BrandFormPage mode="edit" />} />
         </Route>
 
         <Route path="/" element={<MainLayout />}>
           <Route index element={<HomePage />} />
-          <Route path="/products" element={<ProductPage />} />
           <Route path="/products/:id" element={<ProductDetailPage />} />
           <Route
             path="/cart"

@@ -1,17 +1,16 @@
-import { Box, Typography, Button, InputBase, Divider } from "@mui/material";
-import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import { useState } from "react";
+import { Box, Typography, Button, Divider, Alert } from "@mui/material";
 import KeyboardBackspaceIcon from "@mui/icons-material/KeyboardBackspace";
 import { Link } from "react-router-dom";
 
 interface CartSummaryProps {
   subtotal: number;
-  deliveryFee: number;
-  tax: number;
   total: number;
 }
 
+const CartSummary = ({ subtotal, total }: CartSummaryProps) => {
+  const [checkoutInfoVisible, setCheckoutInfoVisible] = useState(false);
 
-const CartSummary = ({ subtotal, deliveryFee, tax, total }: CartSummaryProps) => {
   return (
     <Box
       sx={{
@@ -28,7 +27,6 @@ const CartSummary = ({ subtotal, deliveryFee, tax, total }: CartSummaryProps) =>
         },
       }}
     >
-      {/* Title */}
       <Typography
         variant="h5"
         sx={{
@@ -42,7 +40,6 @@ const CartSummary = ({ subtotal, deliveryFee, tax, total }: CartSummaryProps) =>
         Order Summary
       </Typography>
 
-      {/* Calculations */}
       <Box sx={{ display: "flex", flexDirection: "column", gap: 2.2, mb: 4 }}>
         <Box sx={{ display: "flex", justifyContent: "space-between" }}>
           <Typography sx={{ color: "rgba(255, 255, 255, 0.45)", fontSize: "0.9rem" }}>
@@ -52,20 +49,13 @@ const CartSummary = ({ subtotal, deliveryFee, tax, total }: CartSummaryProps) =>
             ${subtotal.toLocaleString()}
           </Typography>
         </Box>
+
         <Box sx={{ display: "flex", justifyContent: "space-between" }}>
           <Typography sx={{ color: "rgba(255, 255, 255, 0.45)", fontSize: "0.9rem" }}>
-            Delivery Fee
+            Shipping &amp; Taxes
           </Typography>
-          <Typography sx={{ color: "#ffffff", fontWeight: 700, fontSize: "0.95rem" }}>
-            {deliveryFee > 0 ? `$${deliveryFee.toLocaleString()}` : "Free"}
-          </Typography>
-        </Box>
-        <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-          <Typography sx={{ color: "rgba(255, 255, 255, 0.45)", fontSize: "0.9rem" }}>
-            Estimated Tax
-          </Typography>
-          <Typography sx={{ color: "#ffffff", fontWeight: 700, fontSize: "0.95rem" }}>
-            ${tax.toLocaleString()}
+          <Typography sx={{ color: "rgba(255, 255, 255, 0.55)", fontSize: "0.82rem", fontStyle: "italic" }}>
+            Calculated at checkout
           </Typography>
         </Box>
 
@@ -89,62 +79,26 @@ const CartSummary = ({ subtotal, deliveryFee, tax, total }: CartSummaryProps) =>
         </Box>
       </Box>
 
-      {/* Promo Code box */}
-      <Box
-        sx={{
-          display: "flex",
-          border: "1px solid rgba(255, 255, 255, 0.08)",
-          borderRadius: "100px",
-          backgroundColor: "rgba(255, 255, 255, 0.02)",
-          pl: 2.5,
-          pr: 0.8,
-          py: 0.8,
-          mb: 4,
-          alignItems: "center",
-          transition: "border-color 0.2s",
-          "&:focus-within": {
-            borderColor: "#e28a3a",
-          },
-        }}
-      >
-        <InputBase
-          placeholder="Promo code"
+      {checkoutInfoVisible && (
+        <Alert
+          severity="info"
+          onClose={() => setCheckoutInfoVisible(false)}
           sx={{
-            color: "#ffffff",
-            fontSize: "0.85rem",
-            flex: 1,
-            "& input::placeholder": {
-              color: "rgba(255, 255, 255, 0.3)",
-              opacity: 1,
-            },
-          }}
-        />
-        <Button
-          variant="contained"
-          sx={{
-            backgroundColor: "rgba(255, 255, 255, 0.05)",
-            color: "#ffffff",
-            fontWeight: 700,
-            fontSize: "0.8rem",
-            borderRadius: "100px",
-            px: 3,
-            py: 0.8,
-            textTransform: "none",
-            "&:hover": {
-              backgroundColor: "rgba(255, 255, 255, 0.15)",
-              color: "#ffffff",
-            },
+            mb: 3,
+            backgroundColor: "rgba(255, 103, 0, 0.1)",
+            color: "#F4F4F5",
+            border: "1px solid rgba(255, 103, 0, 0.3)",
+            fontSize: "0.82rem",
           }}
         >
-          Apply
-        </Button>
-      </Box>
+          Order allocation &amp; 10% PayOS deposit checkout will unlock in Phase 5.
+        </Alert>
+      )}
 
-      {/* Action Buttons */}
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mb: 4.5 }}>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
         <Button
           variant="contained"
-          endIcon={<ArrowForwardIcon />}
+          onClick={() => setCheckoutInfoVisible(true)}
           sx={{
             backgroundColor: "#e28a3a",
             color: "#000000",
@@ -163,7 +117,7 @@ const CartSummary = ({ subtotal, deliveryFee, tax, total }: CartSummaryProps) =>
         </Button>
         <Button
           component={Link}
-          to="/products"
+          to="/#fleet"
           variant="text"
           startIcon={<KeyboardBackspaceIcon sx={{ fontSize: "1.1rem" }} />}
           sx={{

@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import {
   Box,
@@ -10,16 +11,19 @@ import {
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import { useProductDetail } from "@/hooks/useProductDetail";
-import ProductGallery from "@/components/product/ProductGallery";
+import ProductGallery, { GalleryFocusTrigger } from "@/components/product/ProductGallery";
 import ProductInfo from "@/components/product/ProductInfo";
 import SpecStrip from "@/components/product/SpecStrip";
 import TabbedDetails from "@/components/product/TabbedDetails";
-import CustomerReviews from "@/components/product/CustomerReviews";
-import RelatedProducts from "@/components/product/RelatedProducts";
 
 const ProductDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const { product, loading, error } = useProductDetail(id);
+  const [variantFocus, setVariantFocus] = useState<GalleryFocusTrigger | null>(null);
+
+  useEffect(() => {
+    setVariantFocus(null);
+  }, [id]);
 
   if (loading) {
     return (
@@ -63,7 +67,7 @@ const ProductDetailPage = () => {
         </Typography>
         <Button
           component={Link}
-          to="/products"
+          to="/#fleet"
           variant="contained"
           sx={{
             backgroundColor: "#e28a3a",
@@ -73,7 +77,7 @@ const ProductDetailPage = () => {
             "&:hover": { backgroundColor: "#f0a256" },
           }}
         >
-          Return to Catalog
+          Back to Fleet
         </Button>
       </Box>
     );
@@ -93,24 +97,26 @@ const ProductDetailPage = () => {
               Home
             </Typography>
           </Link>
-          <Link to="/products" style={{ textDecoration: "none" }}>
+          <Link to="/#fleet" style={{ textDecoration: "none" }}>
             <Typography variant="caption" sx={{ color: "rgba(255, 255, 255, 0.4)", fontWeight: 700 }}>
-              Products
+              Lineup
             </Typography>
           </Link>
-          <Typography variant="caption" sx={{ color: "rgba(255, 255, 255, 0.4)", fontWeight: 700 }}>
-            {product.brand?.brandName || "Honda"}
-          </Typography>
+          {product.brand?.brandName && (
+            <Typography variant="caption" sx={{ color: "rgba(255, 255, 255, 0.4)", fontWeight: 700 }}>
+              {product.brand.brandName}
+            </Typography>
+          )}
           <Typography variant="caption" sx={{ color: "#e28a3a", fontWeight: 800 }}>
             {product.slug || product.productName}
           </Typography>
         </Breadcrumbs>
 
         {/* Back Link */}
-        <Link to="/products" style={{ textDecoration: "none" }}>
+        <Link to="/#fleet" style={{ textDecoration: "none" }}>
           <Box
             sx={{
-              display: "flex",
+              display: "inline-flex",
               alignItems: "center",
               gap: 1,
               color: "rgba(255, 255, 255, 0.5)",
@@ -120,7 +126,7 @@ const ProductDetailPage = () => {
           >
             <ArrowBackIcon sx={{ fontSize: "1rem" }} />
             <Typography variant="body2" sx={{ fontWeight: 700 }}>
-              Back to listing
+              Back to Fleet
             </Typography>
           </Box>
         </Link>
@@ -129,19 +135,29 @@ const ProductDetailPage = () => {
       {/* Main Showroom Section */}
       <Box sx={{ px: { xs: 2, md: 6 }, mb: 6 }}>
         <Grid container spacing={{ xs: 4, md: 6 }}>
-          {/* Left Column: Image Showroom */}
           <Grid size={{ xs: 12, md: 6.5 }}>
             <ProductGallery
+              productId={product.id}
               thumbnailUrl={product.thumbnail}
               productName={product.productName}
               images={product.images}
               variants={product.variants}
+              focusImageTrigger={variantFocus}
             />
           </Grid>
 
-          {/* Right Column: Information Panel */}
           <Grid size={{ xs: 12, md: 5.5 }}>
-            <ProductInfo product={product} />
+            <ProductInfo
+              product={product}
+              onVariantSelect={(variant) => {
+                if (variant.variantImage) {
+                  setVariantFocus((prev) => ({
+                    imageUrl: variant.variantImage,
+                    seq: (prev?.seq || 0) + 1,
+                  }));
+                }
+              }}
+            />
           </Grid>
         </Grid>
       </Box>
@@ -151,15 +167,9 @@ const ProductDetailPage = () => {
         <SpecStrip product={product} />
       </Box>
 
-      {/* Detailed specs, features and description block */}
+      {/* Detailed specs and description block */}
       <Box sx={{ px: { xs: 2, md: 6 } }}>
         <TabbedDetails product={product} />
-        
-        {/* Customer Reviews Section */}
-        <CustomerReviews />
-
-        {/* Similar models recommendation grid */}
-        <RelatedProducts currentProductId={product.id} />
       </Box>
     </Box>
   );

@@ -2,7 +2,7 @@ import { Box, Typography, IconButton, Button } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
-import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
+import { Link } from "react-router-dom";
 import { CartItemResponse } from "@/types/cart";
 
 interface CartItemCardProps {
@@ -13,8 +13,8 @@ interface CartItemCardProps {
 }
 
 const CartItemCard = ({ item, onIncrease, onDecrease, onRemove }: CartItemCardProps) => {
-  const { variantId, productName, thumbnail, variantImage, color, unitPrice, quantity, lineTotal } = item;
-  
+  const { productId, variantId, productName, thumbnail, variantImage, color, unitPrice, quantity, lineTotal } = item;
+
   const displayImage = variantImage || thumbnail;
   const colorName = color?.colorName || "Standard";
 
@@ -38,10 +38,10 @@ const CartItemCard = ({ item, onIncrease, onDecrease, onRemove }: CartItemCardPr
         },
       }}
     >
-      {/* Product Image & Info Group */}
       <Box sx={{ display: "flex", gap: 2.5, flex: 1, width: "100%", alignItems: "center" }}>
-        {/* Thumbnail Image */}
         <Box
+          component={Link}
+          to={`/products/${productId}`}
           sx={{
             width: { xs: "100px", sm: "140px" },
             height: { xs: "80px", sm: "110px" },
@@ -69,7 +69,6 @@ const CartItemCard = ({ item, onIncrease, onDecrease, onRemove }: CartItemCardPr
           />
         </Box>
 
-        {/* Info Column */}
         <Box sx={{ flex: 1 }}>
           <Typography
             variant="caption"
@@ -87,6 +86,8 @@ const CartItemCard = ({ item, onIncrease, onDecrease, onRemove }: CartItemCardPr
           </Typography>
 
           <Typography
+            component={Link}
+            to={`/products/${productId}`}
             variant="h6"
             sx={{
               color: "#ffffff",
@@ -95,31 +96,15 @@ const CartItemCard = ({ item, onIncrease, onDecrease, onRemove }: CartItemCardPr
               mb: 0.8,
               lineHeight: 1.25,
               fontFamily: "'Outfit', sans-serif",
+              textDecoration: "none",
+              display: "inline-block",
+              "&:hover": { color: "#FF6700" },
             }}
           >
             {productName}
           </Typography>
 
-          {/* Action Links */}
           <Box sx={{ display: "flex", gap: 3, mt: 1 }}>
-            <Button
-              variant="text"
-              startIcon={<FavoriteBorderIcon sx={{ fontSize: "1rem" }} />}
-              sx={{
-                color: "rgba(255, 255, 255, 0.45)",
-                fontSize: "0.78rem",
-                fontWeight: 600,
-                textTransform: "none",
-                p: 0,
-                minWidth: 0,
-                "&:hover": {
-                  backgroundColor: "transparent",
-                  color: "#ffffff",
-                },
-              }}
-            >
-              Save for later
-            </Button>
             <Button
               variant="text"
               onClick={() => onRemove(variantId)}
@@ -143,7 +128,6 @@ const CartItemCard = ({ item, onIncrease, onDecrease, onRemove }: CartItemCardPr
         </Box>
       </Box>
 
-      {/* Selector & Price Group */}
       <Box
         sx={{
           display: "flex",
@@ -153,7 +137,6 @@ const CartItemCard = ({ item, onIncrease, onDecrease, onRemove }: CartItemCardPr
           gap: { xs: 2, sm: 4 },
         }}
       >
-        {/* Quantity selector UI */}
         <Box
           sx={{
             display: "flex",
@@ -192,10 +175,9 @@ const CartItemCard = ({ item, onIncrease, onDecrease, onRemove }: CartItemCardPr
           </IconButton>
         </Box>
 
-        {/* Pricing columns */}
         <Box sx={{ textAlign: "right", minWidth: { xs: "auto", sm: "110px" } }}>
           <Typography variant="h6" sx={{ color: "#ffffff", fontWeight: 800, fontSize: "1.15rem" }}>
-            ${(lineTotal || unitPrice * quantity).toLocaleString()}
+            ${Number(lineTotal).toLocaleString()}
           </Typography>
           {quantity > 1 && (
             <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.35)", fontSize: "0.75rem", display: "block", mt: 0.2 }}>

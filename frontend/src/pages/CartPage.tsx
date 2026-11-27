@@ -5,30 +5,24 @@ import { useCart } from "@/context";
 import CartItemCard from "@/components/cart/CartItemCard";
 import CartSummary from "@/components/cart/CartSummary";
 import EmptyCart from "@/components/cart/EmptyCart";
-import RelatedProducts from "@/components/product/RelatedProducts";
 
 const CartPage = () => {
   const { cart, loading, increaseCartItem, decreaseCartItem, removeCartItem } = useCart();
 
   const cartItems = cart?.items || [];
-  const totalQuantity = cart?.totalQuantity ?? cartItems.reduce((acc, item) => acc + item.quantity, 0);
-
-  // Calculations
-  const subtotal = cart?.totalPrice ?? cartItems.reduce((acc, item) => acc + (item.lineTotal || item.unitPrice * item.quantity), 0);
-  const deliveryFee = subtotal === 0 ? 0 : subtotal > 20000 ? 0 : 250;
-  const tax = Math.round(subtotal * 0.05);
-  const total = subtotal + deliveryFee + tax;
+  const totalQuantity = cart?.totalQuantity ?? 0;
+  const subtotal = cart?.totalPrice ?? 0;
 
   const handleIncrease = (variantId: number) => {
-    increaseCartItem(variantId, 1);
+    void increaseCartItem(variantId, 1);
   };
 
   const handleDecrease = (variantId: number) => {
-    decreaseCartItem(variantId, 1);
+    void decreaseCartItem(variantId, 1);
   };
 
   const handleRemove = (variantId: number) => {
-    removeCartItem(variantId);
+    void removeCartItem(variantId);
   };
 
   if (loading && !cart) {
@@ -50,7 +44,6 @@ const CartPage = () => {
   return (
     <Box sx={{ backgroundColor: "#09090b", minHeight: "100vh", pt: 4, pb: 12 }}>
       <Container maxWidth={false} sx={{ px: { xs: 2, md: 6 } }}>
-        {/* Breadcrumb Navigation */}
         <Breadcrumbs
           separator={<NavigateNextIcon sx={{ fontSize: "0.95rem", color: "rgba(255, 255, 255, 0.25)" }} />}
           sx={{ mb: 4 }}
@@ -73,7 +66,6 @@ const CartPage = () => {
           </Typography>
         </Breadcrumbs>
 
-        {/* Cart Title */}
         <Box sx={{ mb: 5 }}>
           <Typography
             variant="h3"
@@ -112,7 +104,6 @@ const CartPage = () => {
           <EmptyCart />
         ) : (
           <Grid container spacing={5}>
-            {/* Left side: List of Items */}
             <Grid size={{ xs: 12, lg: 8 }}>
               <Box>
                 {cartItems.map((item) => (
@@ -127,22 +118,11 @@ const CartPage = () => {
               </Box>
             </Grid>
 
-            {/* Right side: Summary Block */}
             <Grid size={{ xs: 12, lg: 4 }}>
-              <CartSummary
-                subtotal={subtotal}
-                deliveryFee={deliveryFee}
-                tax={tax}
-                total={total}
-              />
+              <CartSummary subtotal={subtotal} total={subtotal} />
             </Grid>
           </Grid>
         )}
-
-        {/* You May Also Like Recommendations Block */}
-        <Box sx={{ mt: 6 }}>
-          <RelatedProducts currentProductId={cartItems[0]?.productId || 1} />
-        </Box>
       </Container>
     </Box>
   );

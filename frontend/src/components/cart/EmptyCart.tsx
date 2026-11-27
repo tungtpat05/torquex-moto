@@ -22,7 +22,6 @@ const EmptyCart = () => {
         my: 4,
       }}
     >
-      {/* Gold Circular Icon Cover */}
       <Box
         sx={{
           backgroundColor: "rgba(226, 138, 58, 0.08)",
@@ -40,7 +39,6 @@ const EmptyCart = () => {
         <ShoppingBagOutlinedIcon sx={{ fontSize: "2.8rem", color: "#e28a3a" }} />
       </Box>
 
-      {/* Message Title */}
       <Typography
         variant="h4"
         sx={{
@@ -54,25 +52,23 @@ const EmptyCart = () => {
         Your Cart is Empty
       </Typography>
 
-      {/* Description */}
       <Typography
         variant="body1"
         sx={{
           color: "rgba(255, 255, 255, 0.45)",
-          maxWidth: "460px",
+          maxWidth: "440px",
           mx: "auto",
           lineHeight: 1.6,
           mb: 5,
           fontSize: { xs: "0.95rem", md: "1.05rem" },
         }}
       >
-        Explore our curated collection of premium motorcycles and find your next ride. Simple financing and nationwide delivery available.
+        Select your next READY TO RACE machine from our official KTM flagship lineup.
       </Typography>
 
-      {/* Action CTA */}
       <Button
         component={Link}
-        to="/products"
+        to="/#fleet"
         variant="contained"
         endIcon={<ArrowForwardIcon />}
         sx={{
@@ -90,7 +86,7 @@ const EmptyCart = () => {
           },
         }}
       >
-        Browse Motorcycles
+        Explore Lineup
       </Button>
     </Box>
   );

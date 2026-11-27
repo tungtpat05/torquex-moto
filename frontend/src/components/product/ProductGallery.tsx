@@ -1,44 +1,73 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Box, IconButton, Typography } from "@mui/material";
 import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import { ProductImage, ProductVariant } from "@/types/product";
 
+export interface GalleryFocusTrigger {
+  imageUrl?: string;
+  seq: number;
+}
+
 interface ProductGalleryProps {
+  productId?: number;
   thumbnailUrl?: string;
   productName?: string;
   images?: ProductImage[];
   variants?: ProductVariant[];
+  focusImageTrigger?: GalleryFocusTrigger | null;
 }
 
-const ProductGallery = ({ thumbnailUrl, productName, images: apiImages, variants: apiVariants }: ProductGalleryProps) => {
-  // Construct gallery list in order: 1. Thumbnail, 2. Product images, 3. Variant images
-  const galleryList: string[] = [];
+const ProductGallery = ({
+  productId,
+  thumbnailUrl,
+  productName,
+  images: apiImages,
+  variants: apiVariants,
+  focusImageTrigger,
+}: ProductGalleryProps) => {
+  const galleryList = useMemo(() => {
+    const list: string[] = [];
 
-  // 1. Thumbnail product image
-  if (thumbnailUrl && thumbnailUrl.trim()) {
-    galleryList.push(thumbnailUrl.trim());
-  }
+    if (thumbnailUrl && thumbnailUrl.trim()) {
+      list.push(thumbnailUrl.trim());
+    }
 
-  // 2. List of product images
-  if (apiImages && apiImages.length > 0) {
-    apiImages.forEach((img) => {
-      if (img.imageUrl && img.imageUrl.trim() && !galleryList.includes(img.imageUrl.trim())) {
-        galleryList.push(img.imageUrl.trim());
-      }
-    });
-  }
+    if (apiImages && apiImages.length > 0) {
+      apiImages.forEach((img) => {
+        const trimmed = img.imageUrl?.trim();
+        if (trimmed && !list.includes(trimmed)) {
+          list.push(trimmed);
+        }
+      });
+    }
 
-  // 3. List of variant images
-  if (apiVariants && apiVariants.length > 0) {
-    apiVariants.forEach((v) => {
-      if (v.variantImage && v.variantImage.trim() && !galleryList.includes(v.variantImage.trim())) {
-        galleryList.push(v.variantImage.trim());
-      }
-    });
-  }
+    if (apiVariants && apiVariants.length > 0) {
+      apiVariants.forEach((v) => {
+        const trimmed = v.variantImage?.trim();
+        if (trimmed && !list.includes(trimmed)) {
+          list.push(trimmed);
+        }
+      });
+    }
+
+    return list;
+  }, [thumbnailUrl, apiImages, apiVariants]);
 
   const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    setActiveIndex(0);
+  }, [productId, thumbnailUrl]);
+
+  useEffect(() => {
+    const targetUrl = focusImageTrigger?.imageUrl?.trim();
+    if (!targetUrl) return;
+    const matchIndex = galleryList.indexOf(targetUrl);
+    if (matchIndex !== -1) {
+      setActiveIndex(matchIndex);
+    }
+  }, [focusImageTrigger, galleryList]);
 
   if (galleryList.length === 0) {
     return (
@@ -56,11 +85,11 @@ const ProductGallery = ({ thumbnailUrl, productName, images: apiImages, variants
           gap: 1,
         }}
       >
-        <Typography variant="h6" sx={{ color: "rgba(255, 255, 255, 0.4)", fontWeight: 700 }}>
-          No data
+        <Typography variant="h6" sx={{ color: "rgba(255, 255, 255, 0.55)", fontWeight: 700 }}>
+          Media Unavailable
         </Typography>
-        <Typography variant="caption" sx={{ color: "rgba(255, 255, 255, 0.25)" }}>
-          No image available for this product
+        <Typography variant="caption" sx={{ color: "rgba(255, 255, 255, 0.35)" }}>
+          No image available for this motorcycle yet.
         </Typography>
       </Box>
     );
@@ -74,11 +103,11 @@ const ProductGallery = ({ thumbnailUrl, productName, images: apiImages, variants
     setActiveIndex((prev) => (prev === galleryList.length - 1 ? 0 : prev + 1));
   };
 
-  const currentImage = galleryList[activeIndex] || galleryList[0];
+  const safeIndex = activeIndex < galleryList.length ? activeIndex : 0;
+  const currentImage = galleryList[safeIndex];
 
   return (
     <Box sx={{ width: "100%" }}>
-      {/* Large Main Image Display */}
       <Box
         sx={{
           position: "relative",
@@ -101,12 +130,12 @@ const ProductGallery = ({ thumbnailUrl, productName, images: apiImages, variants
           sx={{
             width: "100%",
             height: "100%",
-            objectFit: "cover",
+            objectFit: "contain",
+            p: 2,
             transition: "all 0.3s ease-in-out",
           }}
         />
 
-        {/* Floating Indicator (e.g. 1 / 4) */}
         {galleryList.length > 1 && (
           <Box
             sx={{
@@ -126,11 +155,10 @@ const ProductGallery = ({ thumbnailUrl, productName, images: apiImages, variants
               zIndex: 3,
             }}
           >
-            {activeIndex + 1} / {galleryList.length}
+            {safeIndex + 1} / {galleryList.length}
           </Box>
         )}
 
-        {/* Small Dot Carousel Indicators on Image Bottom Center */}
         {galleryList.length > 1 && (
           <Box
             sx={{
@@ -147,10 +175,10 @@ const ProductGallery = ({ thumbnailUrl, productName, images: apiImages, variants
               <Box
                 key={index}
                 sx={{
-                  width: index === activeIndex ? "20px" : "6px",
+                  width: index === safeIndex ? "20px" : "6px",
                   height: "6px",
                   borderRadius: "3px",
-                  backgroundColor: index === activeIndex ? "#e28a3a" : "rgba(255,255,255,0.4)",
+                  backgroundColor: index === safeIndex ? "#e28a3a" : "rgba(255,255,255,0.4)",
                   transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
                 }}
               />
@@ -159,12 +187,11 @@ const ProductGallery = ({ thumbnailUrl, productName, images: apiImages, variants
         )}
       </Box>
 
-      {/* Thumbnails Showcase & Control Bar */}
       {galleryList.length > 1 && (
         <Box sx={{ display: "flex", alignItems: "center", gap: 2, justifyContent: "center" }}>
-          {/* Left Toggle Button */}
           <IconButton
             onClick={prevImage}
+            aria-label="Previous image"
             sx={{
               border: "1px solid rgba(255, 255, 255, 0.1)",
               color: "rgba(255, 255, 255, 0.6)",
@@ -180,26 +207,25 @@ const ProductGallery = ({ thumbnailUrl, productName, images: apiImages, variants
             <KeyboardArrowLeftIcon fontSize="small" />
           </IconButton>
 
-          {/* Grid of Thumbnails */}
           <Box sx={{ display: "flex", gap: 1.5, overflowX: "auto", py: 0.5 }}>
             {galleryList.map((img, idx) => (
               <Box
-                key={idx}
+                key={img}
                 onClick={() => setActiveIndex(idx)}
                 sx={{
                   width: { xs: "50px", sm: "75px", md: "85px" },
                   height: { xs: "38px", sm: "56px", md: "64px" },
                   borderRadius: "12px",
                   border: "2px solid",
-                  borderColor: idx === activeIndex ? "#e28a3a" : "transparent",
+                  borderColor: idx === safeIndex ? "#e28a3a" : "transparent",
                   overflow: "hidden",
                   cursor: "pointer",
                   backgroundColor: "#18181b",
                   transition: "all 0.2s",
-                  opacity: idx === activeIndex ? 1 : 0.45,
+                  opacity: idx === safeIndex ? 1 : 0.45,
                   "&:hover": {
                     opacity: 0.95,
-                    borderColor: idx === activeIndex ? "#e28a3a" : "rgba(255, 255, 255, 0.25)",
+                    borderColor: idx === safeIndex ? "#e28a3a" : "rgba(255, 255, 255, 0.25)",
                   },
                 }}
               >
@@ -217,9 +243,9 @@ const ProductGallery = ({ thumbnailUrl, productName, images: apiImages, variants
             ))}
           </Box>
 
-          {/* Right Toggle Button */}
           <IconButton
             onClick={nextImage}
+            aria-label="Next image"
             sx={{
               border: "1px solid rgba(255, 255, 255, 0.1)",
               color: "rgba(255, 255, 255, 0.6)",
@@ -241,4 +267,3 @@ const ProductGallery = ({ thumbnailUrl, productName, images: apiImages, variants
 };
 
 export default ProductGallery;
-

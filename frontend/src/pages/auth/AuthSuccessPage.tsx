@@ -11,6 +11,7 @@ import {
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import { useAuth } from "../../context";
+import { getDefaultLandingPath } from "../../utils/role";
 
 const AuthSuccessPage = () => {
     const navigate = useNavigate();
@@ -24,13 +25,7 @@ const AuthSuccessPage = () => {
     useEffect(() => {
         if (!loading && isLogin && user) {
             const timer = setTimeout(() => {
-                const userRole = user.role?.toUpperCase() || "";
-                const isAdmin = userRole === "ADMIN" || userRole === "ROLE_ADMIN";
-                if (isAdmin) {
-                    navigate("/admin/dashboard", { replace: true });
-                } else {
-                    navigate("/", { replace: true });
-                }
+                navigate(getDefaultLandingPath(user.role, "/"), { replace: true });
             }, 1200);
             return () => clearTimeout(timer);
         }

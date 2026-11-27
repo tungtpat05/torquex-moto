@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
     Container, Box, Paper, Typography, TextField,
     Button, Divider, Stack, Link, Alert, IconButton, InputAdornment
@@ -8,8 +8,12 @@ import HomeIcon from '@mui/icons-material/Home';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom';
+import { Controller, useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { loginWithEmail } from '../../services/authService';
 import { useAuth } from '../../context';
+import { signInSchema, SignInFormValues } from '../../schemas/authSchema';
+import { getDefaultLandingPath } from '../../utils/role';
 import logo from '@/assets/images/common/logo.png';
 
 const handleGoogleLogin = () => {
@@ -18,47 +22,51 @@ const handleGoogleLogin = () => {
 };
 
 const SignInPage = () => {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
-    const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
     const location = useLocation();
     const { loginSuccess } = useAuth();
 
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        setLoading(true);
+    const {
+        control,
+        handleSubmit,
+        formState: { isSubmitting },
+    } = useForm<SignInFormValues>({
+        resolver: zodResolver(signInSchema),
+        defaultValues: {
+            email: '',
+            password: '',
+        },
+    });
+
+    const onSubmit = async (values: SignInFormValues) => {
         setError(null);
 
         try {
-            const response = await loginWithEmail(email, password);
+            const response = await loginWithEmail(values.email, values.password);
             loginSuccess(response.user);
 
-            const userRole = response.user?.role?.toUpperCase() || "";
-            const isAdmin = userRole === "ADMIN" || userRole === "ROLE_ADMIN";
-
-            if (isAdmin) {
-                navigate('/admin/dashboard', { replace: true });
-            } else {
-                const from = (location.state as any)?.from?.pathname || '/';
-                navigate(from, { replace: true });
-            }
-        } catch (err: any) {
-            console.error("Sign in error:", err);
-            const status = err?.response?.status;
-            const serverMessage = err?.response?.data?.message || (typeof err?.response?.data === 'string' ? err?.response?.data : null);
+            const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname || '/';
+            navigate(getDefaultLandingPath(response.user?.role, from), { replace: true });
+        } catch (err: unknown) {
+            const axiosErr = err as { response?: { status?: number; data?: { message?: string } | string }; message?: string };
+            const status = axiosErr?.response?.status;
+            const rawData = axiosErr?.response?.data;
+            const serverMessage =
+                typeof rawData === 'object' && rawData !== null
+                    ? rawData.message
+                    : typeof rawData === 'string'
+                        ? rawData
+                        : null;
 
             if (status === 401 || status === 403 || status === 400) {
                 setError(serverMessage || 'Incorrect email or password. Please try again.');
             } else if (status === 404) {
                 setError('Login API not found (404 Not Found). Please check the server.');
             } else {
-                setError(serverMessage || err?.message || 'Login failed. Please check your connection.');
+                setError(serverMessage || axiosErr?.message || 'Login failed. Please check your connection.');
             }
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -126,71 +134,89 @@ const SignInPage = () => {
                     )}
 
                     {/* Form */}
-                    <Stack spacing={3} component="form" noValidate onSubmit={handleSubmit}>
-                        <TextField
-                            required
-                            fullWidth
-                            label="Email Address"
+                    <Stack spacing={3} component="form" noValidate onSubmit={handleSubmit(onSubmit)}>
+                        <Controller
                             name="email"
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            disabled={loading}
-                            sx={{
-                                '& label': { color: '#a1a1aa', fontWeight: 500 },
-                                '& label.Mui-focused': { color: '#ff6b35' },
-                                '& .MuiOutlinedInput-root': {
-                                    backgroundColor: '#18181b',
-                                    color: '#ffffff',
-                                    borderRadius: 2,
-                                    '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.15)' },
-                                    '&:hover fieldset': { borderColor: '#ff6b35' },
-                                    '&.Mui-focused fieldset': { borderColor: '#ff6b35' },
-                                },
-                            }}
+                            control={control}
+                            render={({ field, fieldState }) => (
+                                <TextField
+                                    {...field}
+                                    required
+                                    fullWidth
+                                    label="Email Address"
+                                    type="email"
+                                    disabled={isSubmitting}
+                                    error={Boolean(fieldState.error)}
+                                    helperText={fieldState.error?.message}
+                                    FormHelperTextProps={{
+                                        sx: { color: '#ef4444', fontSize: '0.75rem', mt: 0.5 },
+                                    }}
+                                    sx={{
+                                        '& label': { color: '#a1a1aa', fontWeight: 500 },
+                                        '& label.Mui-focused': { color: '#ff6b35' },
+                                        '& .MuiOutlinedInput-root': {
+                                            backgroundColor: '#18181b',
+                                            color: '#ffffff',
+                                            borderRadius: 2,
+                                            '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.15)' },
+                                            '&:hover fieldset': { borderColor: '#ff6b35' },
+                                            '&.Mui-focused fieldset': { borderColor: '#ff6b35' },
+                                        },
+                                    }}
+                                />
+                            )}
                         />
-                        <TextField
-                            required
-                            fullWidth
-                            label="Password"
-                            type={showPassword ? 'text' : 'password'}
+                        <Controller
                             name="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            disabled={loading}
-                            InputProps={{
-                                endAdornment: (
-                                    <InputAdornment position="end">
-                                        <IconButton
-                                            aria-label="toggle password visibility"
-                                            onClick={() => setShowPassword((show) => !show)}
-                                            edge="end"
-                                            sx={{ color: '#a1a1aa' }}
-                                        >
-                                            {showPassword ? <VisibilityOff /> : <Visibility />}
-                                        </IconButton>
-                                    </InputAdornment>
-                                ),
-                            }}
-                            sx={{
-                                '& label': { color: '#a1a1aa', fontWeight: 500 },
-                                '& label.Mui-focused': { color: '#ff6b35' },
-                                '& .MuiOutlinedInput-root': {
-                                    backgroundColor: '#18181b',
-                                    color: '#ffffff',
-                                    borderRadius: 2,
-                                    '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.15)' },
-                                    '&:hover fieldset': { borderColor: '#ff6b35' },
-                                    '&.Mui-focused fieldset': { borderColor: '#ff6b35' },
-                                },
-                            }}
+                            control={control}
+                            render={({ field, fieldState }) => (
+                                <TextField
+                                    {...field}
+                                    required
+                                    fullWidth
+                                    label="Password"
+                                    type={showPassword ? 'text' : 'password'}
+                                    disabled={isSubmitting}
+                                    error={Boolean(fieldState.error)}
+                                    helperText={fieldState.error?.message}
+                                    FormHelperTextProps={{
+                                        sx: { color: '#ef4444', fontSize: '0.75rem', mt: 0.5 },
+                                    }}
+                                    InputProps={{
+                                        endAdornment: (
+                                            <InputAdornment position="end">
+                                                <IconButton
+                                                    aria-label="toggle password visibility"
+                                                    onClick={() => setShowPassword((show) => !show)}
+                                                    edge="end"
+                                                    sx={{ color: '#a1a1aa' }}
+                                                >
+                                                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                                                </IconButton>
+                                            </InputAdornment>
+                                        ),
+                                    }}
+                                    sx={{
+                                        '& label': { color: '#a1a1aa', fontWeight: 500 },
+                                        '& label.Mui-focused': { color: '#ff6b35' },
+                                        '& .MuiOutlinedInput-root': {
+                                            backgroundColor: '#18181b',
+                                            color: '#ffffff',
+                                            borderRadius: 2,
+                                            '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.15)' },
+                                            '&:hover fieldset': { borderColor: '#ff6b35' },
+                                            '&.Mui-focused fieldset': { borderColor: '#ff6b35' },
+                                        },
+                                    }}
+                                />
+                            )}
                         />
                         <Button
                             type="submit"
                             fullWidth
                             variant="contained"
                             size="large"
-                            disabled={loading}
+                            disabled={isSubmitting}
                             sx={{
                                 py: 1.5,
                                 backgroundColor: '#ff6b35',
@@ -206,7 +232,7 @@ const SignInPage = () => {
                                 },
                             }}
                         >
-                            {loading ? 'Signing In...' : 'Sign In'}
+                            {isSubmitting ? 'Signing In...' : 'Sign In'}
                         </Button>
 
                         <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.1)', color: '#71717a', fontSize: '0.85rem' }}>
@@ -218,7 +244,7 @@ const SignInPage = () => {
                             variant="outlined"
                             startIcon={<GoogleIcon sx={{ color: '#ea4335' }} />}
                             onClick={() => handleGoogleLogin()}
-                            disabled={loading}
+                            disabled={isSubmitting}
                             sx={{
                                 py: 1.25,
                                 borderColor: 'rgba(255, 255, 255, 0.2)',

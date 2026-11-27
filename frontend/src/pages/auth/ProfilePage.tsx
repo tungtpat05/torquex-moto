@@ -27,6 +27,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context";
 import { getUser } from "../../services/authService";
 import { User } from "../../types/user";
+import { isStaffRole, normalizeRole } from "../../utils/role";
 
 const ProfilePage = () => {
   const navigate = useNavigate();
@@ -55,8 +56,9 @@ const ProfilePage = () => {
     ? displayUser.fullName.trim().charAt(0).toUpperCase()
     : "U";
 
-  const userRole = displayUser?.role?.toUpperCase() || "";
-  const isAdmin = userRole === "ADMIN" || userRole === "ROLE_ADMIN";
+  const userRole = normalizeRole(displayUser?.role) || "CUSTOMER";
+  const isStaff = isStaffRole(displayUser?.role);
+  const isPrivilegedRole = isStaff || userRole === "ADMIN";
 
   const handleLogout = async () => {
     await logout();
@@ -156,12 +158,12 @@ const ProfilePage = () => {
                       {displayUser?.fullName || "User Profile"}
                     </Typography>
                     <Chip
-                      icon={isAdmin ? <AdminPanelSettingsIcon /> : <ShieldIcon />}
-                      label={userRole || "CUSTOMER"}
+                      icon={isPrivilegedRole ? <AdminPanelSettingsIcon /> : <ShieldIcon />}
+                      label={userRole}
                       sx={{
-                        backgroundColor: isAdmin ? "rgba(255, 107, 53, 0.18)" : "rgba(16, 185, 129, 0.18)",
-                        color: isAdmin ? "#ff6b35" : "#10b981",
-                        border: `1px solid ${isAdmin ? "rgba(255, 107, 53, 0.4)" : "rgba(16, 185, 129, 0.4)"}`,
+                        backgroundColor: isPrivilegedRole ? "rgba(255, 107, 53, 0.18)" : "rgba(16, 185, 129, 0.18)",
+                        color: isPrivilegedRole ? "#ff6b35" : "#10b981",
+                        border: `1px solid ${isPrivilegedRole ? "rgba(255, 107, 53, 0.4)" : "rgba(16, 185, 129, 0.4)"}`,
                         fontWeight: 700,
                         fontSize: "0.8rem",
                       }}
@@ -187,11 +189,11 @@ const ProfilePage = () => {
 
             <Grid size={{ xs: 12, md: "auto" }}>
               <Stack direction={{ xs: "row", sm: "row", md: "column" }} spacing={1.5}>
-                {isAdmin && (
+                {isStaff && (
                   <Button
                     variant="contained"
                     startIcon={<AdminPanelSettingsIcon />}
-                    onClick={() => navigate("/admin/dashboard")}
+                    onClick={() => navigate("/staff/dashboard")}
                     sx={{
                       backgroundColor: "#ff6b35",
                       color: "#ffffff",
@@ -201,7 +203,7 @@ const ProfilePage = () => {
                       "&:hover": { backgroundColor: "#e05a2b" },
                     }}
                   >
-                    Admin Dashboard
+                    Staff Portal
                   </Button>
                 )}
                 <Button
@@ -314,7 +316,7 @@ const ProfilePage = () => {
                     <Typography variant="body2" sx={{ color: "#a1a1aa", display: "flex", alignItems: "center", gap: 1.2, fontWeight: 500 }}>
                       <ShieldIcon sx={{ fontSize: 18, color: "rgba(255, 255, 255, 0.35)" }} /> Access Level
                     </Typography>
-                    <Typography variant="body1" fontWeight={700} sx={{ color: isAdmin ? "#ff6b35" : "#10b981" }}>
+                    <Typography variant="body1" fontWeight={700} sx={{ color: isPrivilegedRole ? "#ff6b35" : "#10b981" }}>
                       {userRole}
                     </Typography>
                   </Box>
@@ -381,7 +383,7 @@ const ProfilePage = () => {
                 <Button
                   variant="outlined"
                   startIcon={<ArrowBackIcon />}
-                  onClick={() => navigate("/products")}
+                  onClick={() => navigate("/#fleet")}
                   sx={{
                     borderColor: "rgba(255, 255, 255, 0.15)",
                     color: "#ffffff",
@@ -392,7 +394,7 @@ const ProfilePage = () => {
                     "&:hover": { borderColor: "#ff6b35", backgroundColor: "rgba(255, 107, 53, 0.1)", color: "#ff6b35" },
                   }}
                 >
-                  Browse Products
+                  Explore Lineup
                 </Button>
               </Stack>
             </Paper>

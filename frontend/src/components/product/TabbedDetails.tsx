@@ -132,7 +132,7 @@ const TabbedDetails = ({ product }: TabbedDetailsProps) => {
             }}
           >
             <Typography variant="body1" sx={{ color: "rgba(255, 255, 255, 0.8)", lineHeight: 1.8 }}>
-              {product.description || "Detailed descriptive info is not available for this model. Enjoy the exceptional craftsmanship, cutting-edge specifications and riding performance that it brings to the street."}
+              {product.description || "No detailed description available for this model yet."}
             </Typography>
           </Box>
         )}

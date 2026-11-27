@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Box,
   Typography,
@@ -7,49 +7,97 @@ import {
   Snackbar,
   Alert,
 } from "@mui/material";
-import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import ShareIcon from "@mui/icons-material/Share";
-import CompareArrowsIcon from "@mui/icons-material/CompareArrows";
 import CheckIcon from "@mui/icons-material/Check";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth, useCart } from "@/context";
-import { Product, ProductVariant } from "@/types/product.ts";
+import { Product, ProductVariant } from "@/types/product";
 
 interface ProductInfoProps {
   product: Product;
+  onVariantSelect?: (variant: ProductVariant) => void;
 }
 
-const ProductInfo = ({ product }: ProductInfoProps) => {
+const formatPrice = (price: number) =>
+  new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(price);
+
+const pickDefaultVariant = (variants: ProductVariant[]): ProductVariant | null =>
+  variants.find((v) => v.isActive && v.stockQuantity > 0) || variants[0] || null;
+
+const ProductInfo = ({ product, onVariantSelect }: ProductInfoProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isLogin, user } = useAuth();
   const { addItemToCart } = useCart();
 
+  const variants = useMemo(() => product.variants || [], [product.variants]);
+  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(() =>
+    pickDefaultVariant(variants)
+  );
+  const [submittingCart, setSubmittingCart] = useState(false);
+
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">("success");
+
+  useEffect(() => {
+    setSelectedVariant(pickDefaultVariant(variants));
+  }, [product.id, variants]);
+
+  const isSelectedVariantBuyable = Boolean(
+    selectedVariant && selectedVariant.isActive !== false && selectedVariant.stockQuantity > 0
+  );
+
+  const effectiveBase =
+    product.discountPrice &&
+    product.basePrice &&
+    product.discountPrice > 0 &&
+    product.discountPrice < product.basePrice
+      ? product.discountPrice
+      : product.basePrice;
+
+  const additionalPrice = selectedVariant?.additionalPrice ?? 0;
+  const displayPrice =
+    effectiveBase !== undefined && effectiveBase !== null && effectiveBase > 0
+      ? Number(effectiveBase) + Number(additionalPrice)
+      : null;
+
+  const totalStock = useMemo(() => {
+    if (variants.length === 0) return null;
+    return variants.reduce((acc, v) => acc + (v.isActive ? v.stockQuantity || 0 : 0), 0);
+  }, [variants]);
+
+  const showToast = (message: string, severity: "success" | "error") => {
+    setSnackbarMessage(message);
+    setSnackbarSeverity(severity);
+    setSnackbarOpen(true);
+  };
 
   const handleAddToCart = async () => {
     if (!isLogin || !user) {
       navigate("/login", { state: { from: location } });
       return;
     }
-    if (selectedVariant?.id) {
-      try {
-        await addItemToCart(selectedVariant.id, 1);
-        setSnackbarMessage(`Added "${product.productName}" to your shopping cart!`);
-        setSnackbarSeverity("success");
-        setSnackbarOpen(true);
-      } catch (err) {
-        console.error("Failed to add product variant to cart:", err);
-        setSnackbarMessage("Failed to add item to cart. Please try again.");
-        setSnackbarSeverity("error");
-        setSnackbarOpen(true);
-      }
-    } else {
-      setSnackbarMessage("The product has no variants or Out of Stock. It cannot be added to the cart.");
-      setSnackbarSeverity("error");
-      setSnackbarOpen(true);
+    if (!selectedVariant?.id || !isSelectedVariantBuyable || displayPrice === null) {
+      showToast("This variant is currently out of stock or unavailable.", "error");
+      return;
+    }
+
+    setSubmittingCart(true);
+    try {
+      await addItemToCart(selectedVariant.id, 1);
+      showToast(`Added "${product.productName}" to your shopping cart!`, "success");
+    } catch (err: any) {
+      console.error("Failed to add product variant to cart:", err);
+      const errMsg = err?.response?.data?.message || "Failed to add item to cart. Please try again.";
+      showToast(errMsg, "error");
+    } finally {
+      setSubmittingCart(false);
     }
   };
 
@@ -58,60 +106,43 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
       navigate("/login", { state: { from: location } });
       return;
     }
-    if (selectedVariant?.id) {
-      try {
-        await addItemToCart(selectedVariant.id, 1);
-        navigate("/cart");
-      } catch (err) {
-        console.error("Failed to add product variant to cart:", err);
-        setSnackbarMessage("Failed to add item to cart. Please try again.");
-        setSnackbarSeverity("error");
-        setSnackbarOpen(true);
-      }
-    } else {
+    if (!selectedVariant?.id || !isSelectedVariantBuyable || displayPrice === null) {
+      showToast("Cannot proceed: selected configuration is unavailable.", "error");
+      return;
+    }
+
+    setSubmittingCart(true);
+    try {
+      await addItemToCart(selectedVariant.id, 1);
       navigate("/cart");
+    } catch (err: any) {
+      console.error("Failed to buy now:", err);
+      const errMsg = err?.response?.data?.message || "Failed to add item to cart. Please try again.";
+      showToast(errMsg, "error");
+    } finally {
+      setSubmittingCart(false);
     }
   };
 
-  const variants = product.variants || [];
-  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(
-    variants.length > 0 ? variants[0] : null
-  );
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(price);
+  const handleShare = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      showToast("Model link copied to clipboard!", "success");
+    } catch {
+      showToast("Copy URL from your browser address bar to share.", "error");
+    }
   };
 
-  const baseOrDiscount = product.discountPrice && product.discountPrice < product.basePrice
-    ? product.discountPrice
-    : product.basePrice;
-
-  const additionalPrice = selectedVariant?.additionalPrice || 0;
-  const displayPrice = (baseOrDiscount || 0) + additionalPrice;
-
-  const categoryName = product.category?.categoryName || "No data";
-  const brandName = product.brand?.brandName || "No data";
-  const yearText = product.createdAt ? new Date(product.createdAt).getFullYear() : "No data";
-
-  // Total stock calculated from variants or fallback
-  const totalStock = useMemo(() => {
-    if (variants.length > 0) {
-      return variants.reduce((acc, v) => acc + (v.stockQuantity || 0), 0);
-    }
-    return null;
-  }, [variants]);
+  const categoryName = product.category?.categoryName;
+  const brandName = product.brand?.brandName;
+  const yearText = product.createdAt ? String(new Date(product.createdAt).getFullYear()) : null;
 
   const getTagColor = (catName: string) => {
     const name = catName.toLowerCase();
     if (name.includes("naked")) return "rgba(168, 85, 247, 0.25)";
     if (name.includes("sport")) return "rgba(239, 68, 68, 0.25)";
     if (name.includes("adventure")) return "rgba(234, 179, 8, 0.25)";
-    if (name.includes("electric")) return "rgba(59, 130, 246, 0.25)";
+    if (name.includes("supermoto")) return "rgba(59, 130, 246, 0.25)";
     return "rgba(226, 138, 58, 0.25)";
   };
 
@@ -120,40 +151,46 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
     if (name.includes("naked")) return "#c084fc";
     if (name.includes("sport")) return "#f87171";
     if (name.includes("adventure")) return "#facc15";
-    if (name.includes("electric")) return "#60a5fa";
+    if (name.includes("supermoto")) return "#60a5fa";
     return "#e28a3a";
   };
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3.5 }}>
-      {/* Category Tag & Brand */}
+      {/* Brand & Category Tag */}
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <Typography
-          variant="subtitle2"
-          sx={{
-            fontWeight: 800,
-            color: "rgba(255, 255, 255, 0.4)",
-            letterSpacing: "0.15em",
-            textTransform: "uppercase",
-          }}
-        >
-          {brandName}
-        </Typography>
-        <Box
-          sx={{
-            backgroundColor: getTagColor(categoryName),
-            color: getTagTextColor(categoryName),
-            px: 2,
-            py: 0.5,
-            borderRadius: "4px",
-            fontSize: "0.75rem",
-            fontWeight: 800,
-            textTransform: "uppercase",
-            letterSpacing: "0.05em",
-          }}
-        >
-          {categoryName}
-        </Box>
+        {brandName ? (
+          <Typography
+            variant="subtitle2"
+            sx={{
+              fontWeight: 800,
+              color: "rgba(255, 255, 255, 0.55)",
+              letterSpacing: "0.15em",
+              textTransform: "uppercase",
+            }}
+          >
+            {brandName}
+          </Typography>
+        ) : (
+          <Box />
+        )}
+        {categoryName && (
+          <Box
+            sx={{
+              backgroundColor: getTagColor(categoryName),
+              color: getTagTextColor(categoryName),
+              px: 2,
+              py: 0.5,
+              borderRadius: "4px",
+              fontSize: "0.75rem",
+              fontWeight: 800,
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+            }}
+          >
+            {categoryName}
+          </Box>
+        )}
       </Box>
 
       {/* Product Title */}
@@ -167,22 +204,11 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
           lineHeight: 1.15,
         }}
       >
-        {product.productName || "No data"}
+        {product.productName}
       </Typography>
 
-      {/* Ratings and Stock State Row */}
+      {/* Stock State Row */}
       <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
-        {/* Rating line showing No data since rating endpoint doesn't exist */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-          <Typography variant="body2" sx={{ fontWeight: 700, color: "rgba(255,255,255,0.4)" }}>
-            Rating: <Box component="span" sx={{ color: "#e28a3a" }}>No data</Box>
-          </Typography>
-        </Box>
-        <Typography variant="body2" sx={{ color: "rgba(255, 255, 255, 0.25)" }}>
-          •
-        </Typography>
-
-        {/* Stock Badge */}
         {totalStock !== null ? (
           totalStock > 0 ? (
             <Chip
@@ -211,16 +237,24 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
           )
         ) : (
           <Chip
-            label="• Stock: No data"
+            label="• No Variants Configured"
             size="small"
             sx={{
-              backgroundColor: "rgba(255, 255, 255, 0.08)",
-              color: "rgba(255, 255, 255, 0.5)",
+              backgroundColor: "rgba(239, 68, 68, 0.12)",
+              color: "#f87171",
               fontWeight: 700,
               fontSize: "0.75rem",
               px: 0.5,
             }}
           />
+        )}
+        {selectedVariant?.sku && (
+          <Typography
+            variant="caption"
+            sx={{ fontFamily: "monospace", color: "rgba(255,255,255,0.45)", fontWeight: 700 }}
+          >
+            SKU: {selectedVariant.sku}
+          </Typography>
         )}
       </Box>
 
@@ -232,12 +266,23 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
           borderRadius: "16px",
           p: 3,
           display: "flex",
-          alignItems: "center",
+          alignItems: "baseline",
+          gap: 2,
         }}
       >
-        <Typography variant="h4" sx={{ fontWeight: 800, color: "white" }}>
-          {displayPrice > 0 ? formatPrice(displayPrice) : "No data"}
+        <Typography variant="h4" sx={{ fontWeight: 800, color: displayPrice !== null ? "white" : "#f87171" }}>
+          {displayPrice !== null ? formatPrice(displayPrice) : "Price Unavailable"}
         </Typography>
+        {product.discountPrice > 0 &&
+          product.discountPrice < product.basePrice &&
+          displayPrice !== null && (
+            <Typography
+              variant="body1"
+              sx={{ color: "rgba(255,255,255,0.35)", textDecoration: "line-through", fontWeight: 600 }}
+            >
+              {formatPrice(product.basePrice + additionalPrice)}
+            </Typography>
+          )}
       </Box>
 
       {/* Color Selection Picker */}
@@ -254,9 +299,11 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
           >
             Color
           </Typography>
-          <Typography variant="body2" sx={{ fontWeight: 700, color: "rgba(255, 255, 255, 0.7)" }}>
-            {selectedVariant?.color?.colorName || "No data"}
-          </Typography>
+          {selectedVariant?.color?.colorName && (
+            <Typography variant="body2" sx={{ fontWeight: 700, color: "rgba(255, 255, 255, 0.75)" }}>
+              {selectedVariant.color.colorName}
+            </Typography>
+          )}
         </Box>
 
         {variants.length > 0 ? (
@@ -267,7 +314,11 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
               return (
                 <Box
                   key={v.id}
-                  onClick={() => setSelectedVariant(v)}
+                  onClick={() => {
+                    setSelectedVariant(v);
+                    onVariantSelect?.(v);
+                  }}
+                  title={`${v.color?.colorName || v.sku} (${v.stockQuantity} in stock)`}
                   sx={{
                     width: 32,
                     height: 32,
@@ -276,6 +327,7 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
                     border: "2px solid",
                     borderColor: isSelected ? "#e28a3a" : "rgba(255,255,255,0.2)",
                     cursor: "pointer",
+                    opacity: v.stockQuantity > 0 && v.isActive ? 1 : 0.45,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -293,57 +345,62 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
           </Box>
         ) : (
           <Typography variant="body2" sx={{ color: "rgba(255, 255, 255, 0.4)", fontStyle: "italic" }}>
-            No data
+            No factory color options configured yet.
           </Typography>
         )}
       </Box>
 
       {/* Model Year Display */}
-      <Box>
-        <Typography
-          variant="caption"
-          sx={{
-            fontWeight: 800,
-            color: "rgba(255, 255, 255, 0.5)",
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
-            display: "block",
-            mb: 1,
-          }}
-        >
-          Model Year
-        </Typography>
-        <Typography variant="body2" sx={{ color: "white", fontWeight: 700 }}>
-          {yearText}
-        </Typography>
-      </Box>
+      {yearText && (
+        <Box>
+          <Typography
+            variant="caption"
+            sx={{
+              fontWeight: 800,
+              color: "rgba(255, 255, 255, 0.5)",
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              display: "block",
+              mb: 1,
+            }}
+          >
+            Model Year
+          </Typography>
+          <Typography variant="body2" sx={{ color: "white", fontWeight: 700 }}>
+            {yearText}
+          </Typography>
+        </Box>
+      )}
 
       {/* Short Summary Section */}
-      <Box
-        sx={{
-          borderLeft: "2px solid #e28a3a",
-          pl: 2.5,
-          py: 0.5,
-        }}
-      >
-        <Typography
-          variant="body1"
+      {product.summary && (
+        <Box
           sx={{
-            color: "rgba(255, 255, 255, 0.7)",
-            fontSize: "0.95rem",
-            lineHeight: 1.6,
-            fontStyle: product.summary ? "italic" : "normal",
+            borderLeft: "2px solid #e28a3a",
+            pl: 2.5,
+            py: 0.5,
           }}
         >
-          {product.summary || "No data"}
-        </Typography>
-      </Box>
+          <Typography
+            variant="body1"
+            sx={{
+              color: "rgba(255, 255, 255, 0.7)",
+              fontSize: "0.95rem",
+              lineHeight: 1.6,
+              fontStyle: "italic",
+            }}
+          >
+            {product.summary}
+          </Typography>
+        </Box>
+      )}
 
       {/* Call to action purchase buttons */}
       <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
         <Button
           variant="contained"
           fullWidth
+          disabled={!isSelectedVariantBuyable || displayPrice === null || submittingCart}
           onClick={handleAddToCart}
           sx={{
             backgroundColor: "#e28a3a",
@@ -356,13 +413,18 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
             "&:hover": {
               backgroundColor: "#f0a256",
             },
+            "&.Mui-disabled": {
+              backgroundColor: "rgba(255,255,255,0.08)",
+              color: "rgba(255,255,255,0.35)",
+            },
           }}
         >
-          Add to Cart
+          {isSelectedVariantBuyable ? "Add to Cart" : "Out of Stock"}
         </Button>
         <Button
           variant="outlined"
           fullWidth
+          disabled={!isSelectedVariantBuyable || displayPrice === null || submittingCart}
           onClick={handleBuyNow}
           sx={{
             borderColor: "#e28a3a",
@@ -376,52 +438,37 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
               borderColor: "#f0a256",
               backgroundColor: "rgba(226, 138, 58, 0.05)",
             },
+            "&.Mui-disabled": {
+              borderColor: "rgba(255,255,255,0.1)",
+              color: "rgba(255,255,255,0.25)",
+            },
           }}
         >
           Buy Now
         </Button>
       </Box>
 
-      {/* Sub-actions row: Wishlist, Share, Compare */}
+      {/* Sub-action: Share */}
       <Box
         sx={{
           display: "flex",
-          justifyContent: "space-between",
+          justifyContent: "flex-start",
           alignItems: "center",
-          gap: 1.5,
           borderBottom: "1px solid rgba(255, 255, 255, 0.05)",
           pb: 3.5,
         }}
       >
         <Button
-          startIcon={<FavoriteBorderIcon />}
-          sx={{
-            color: "rgba(255,255,255,0.6)",
-            fontSize: "0.85rem",
-            fontWeight: 700,
-            textTransform: "none",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
-            borderRadius: "20px",
-            flexGrow: 1,
-            py: 1,
-            "&:hover": {
-              backgroundColor: "rgba(255,255,255,0.05)",
-              color: "white",
-            },
-          }}
-        >
-          Wishlist
-        </Button>
-        <Button
           startIcon={<ShareIcon />}
+          onClick={() => void handleShare()}
           sx={{
-            color: "rgba(255,255,255,0.6)",
+            color: "rgba(255,255,255,0.7)",
             fontSize: "0.85rem",
             fontWeight: 700,
             textTransform: "none",
             border: "1px solid rgba(255, 255, 255, 0.08)",
             borderRadius: "20px",
-            flexGrow: 1,
+            px: 3,
             py: 1,
             "&:hover": {
               backgroundColor: "rgba(255,255,255,0.05)",
@@ -431,28 +478,9 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
         >
           Share
         </Button>
-        <Button
-          startIcon={<CompareArrowsIcon />}
-          sx={{
-            color: "rgba(255,255,255,0.6)",
-            fontSize: "0.85rem",
-            fontWeight: 700,
-            textTransform: "none",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
-            borderRadius: "20px",
-            flexGrow: 1,
-            py: 1,
-            "&:hover": {
-              backgroundColor: "rgba(255,255,255,0.05)",
-              color: "white",
-            },
-          }}
-        >
-          Compare
-        </Button>
       </Box>
 
-      {/* Toast Notification for Add to Cart */}
+      {/* Toast Notification */}
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={3500}

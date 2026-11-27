@@ -31,14 +31,14 @@ public class ColorController {
         return ResponseEntity.ok(response);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('STAFF')")
     @PostMapping
     public ResponseEntity<ColorResponse> create(@Valid @RequestBody ColorCreateRequest request) {
         ColorResponse response = colorService.create(request);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('STAFF')")
     @PutMapping("/{id}")
     public ResponseEntity<ColorResponse> update(@PathVariable Integer id, @Valid @RequestBody ColorUpdateRequest request) {
         ColorResponse response = colorService.update(id, request);

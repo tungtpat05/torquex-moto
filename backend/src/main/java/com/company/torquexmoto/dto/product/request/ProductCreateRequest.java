@@ -3,7 +3,6 @@ package com.company.torquexmoto.dto.product.request;
 import lombok.*;
 import java.math.BigDecimal;
 import jakarta.validation.constraints.*;
-import org.hibernate.validator.constraints.URL;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -42,7 +41,7 @@ public class ProductCreateRequest {
     private BigDecimal discountPrice;
 
     @NotBlank(message = "Thumbnail must not be blank")
-    @URL(message = "Thumbnail URL must be a valid URL")
+    @Pattern(regexp = MediaValidation.MEDIA_PATH_REGEX, message = MediaValidation.MEDIA_PATH_MESSAGE)
     private String thumbnail;
 
     private String thumbnailPublicId;
