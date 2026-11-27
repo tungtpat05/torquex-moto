@@ -433,12 +433,12 @@ const CustomersPage = () => {
       </SectionCard>
 
       <ConfirmDialog
-        open={statusDialogOpen && Boolean(statusTarget)}
+        open={statusDialogOpen}
         title={statusTarget?.isActive ? "Lock customer account?" : "Unlock customer account?"}
         description={
           statusTarget?.isActive
             ? `Locking ${statusTarget.email}: This customer will be signed out immediately and blocked from logging in until unlocked.`
-            : `Unlocking ${statusTarget?.email ?? ""} will allow this customer to sign in again.`
+            : `Unlocking ${statusTarget?.email} will allow this customer to sign in again.`
         }
         confirmLabel={statusTarget?.isActive ? "Lock Account" : "Unlock Account"}
         cancelLabel="Cancel"

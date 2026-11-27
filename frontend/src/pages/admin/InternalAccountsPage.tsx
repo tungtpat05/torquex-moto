@@ -571,12 +571,12 @@ const InternalAccountsPage = () => {
       />
 
       <ConfirmDialog
-        open={statusDialogOpen && Boolean(statusTarget)}
+        open={statusDialogOpen}
         title={statusTarget?.isActive ? "Lock staff account?" : "Unlock staff account?"}
         description={
           statusTarget?.isActive
             ? `Locking ${statusTarget.email} will revoke their active session immediately and block Staff Portal access until unlocked.`
-            : `Unlocking ${statusTarget?.email ?? ""} restores their ability to sign in to the Staff Portal.`
+            : `Unlocking ${statusTarget?.email} restores their ability to sign in to the Staff Portal.`
         }
         confirmLabel={statusTarget?.isActive ? "Lock Account" : "Unlock Account"}
         cancelLabel="Cancel"
