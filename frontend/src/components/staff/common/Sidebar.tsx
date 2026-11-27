@@ -1,4 +1,4 @@
-import { Box, List, ListItemButton, ListItemIcon, ListItemText, Typography, Divider } from "@mui/material";
+import { Box, List, ListItemButton, ListItemIcon, ListItemText, Divider } from "@mui/material";
 import { Link, useLocation } from "react-router-dom";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import TwoWheelerIcon from "@mui/icons-material/TwoWheeler";
@@ -6,7 +6,7 @@ import CategoryIcon from "@mui/icons-material/Category";
 import LabelIcon from "@mui/icons-material/Label";
 import MenuOpenIcon from "@mui/icons-material/MenuOpen";
 import StorefrontIcon from "@mui/icons-material/Storefront";
-import logo from "@/assets/images/common/logo.png";
+import { TorqueXMark, TorqueXKtmLockup } from "@/components/common/BrandMark";
 
 interface SidebarProps {
   collapsed?: boolean;
@@ -59,40 +59,12 @@ const Sidebar = ({
           px: collapsed ? 0 : 2.5,
           justifyContent: collapsed ? "center" : "flex-start",
           borderBottom: "1px solid rgba(255, 255, 255, 0.05)",
-          gap: 1.5,
         }}
       >
-        <img
-          src={logo}
-          alt="TorqueX Logo"
-          style={{ width: 32, height: 32 }}
-        />
-        {!collapsed && (
-          <Typography
-            variant="h6"
-            sx={{
-              fontWeight: 800,
-              letterSpacing: "0.15em",
-              fontFamily: "monospace",
-              color: "#ffffff",
-              whiteSpace: "nowrap",
-            }}
-          >
-            TORQUE<span style={{ color: "#ff6b35" }}>X</span>
-            <Typography
-              component="span"
-              sx={{
-                fontSize: 10,
-                color: "#a1a1aa",
-                letterSpacing: 2,
-                ml: 1,
-                verticalAlign: "super",
-                fontWeight: 600,
-              }}
-            >
-              STAFF
-            </Typography>
-          </Typography>
+        {collapsed ? (
+          <TorqueXMark size={32} decorative={false} label="TorqueX Staff" />
+        ) : (
+          <TorqueXKtmLockup markSize={32} textSize="1.15rem" badgeText="STAFF" />
         )}
       </Box>
 
@@ -113,15 +85,15 @@ const Sidebar = ({
                   px: collapsed ? 0 : 2,
                   justifyContent: collapsed ? "center" : "flex-start",
                   borderRadius: 2,
-                  backgroundColor: isActive ? "rgba(226, 138, 58, 0.08)" : "transparent",
-                  color: isActive ? "#e28a3a" : "#a1a1aa",
-                  borderLeft: isActive ? "3px solid #e28a3a" : "3px solid transparent",
+                  backgroundColor: isActive ? "rgba(255, 103, 0, 0.1)" : "transparent",
+                  color: isActive ? "#FF6700" : "#a1a1aa",
+                  borderLeft: isActive ? "3px solid #FF6700" : "3px solid transparent",
                   transition: "all 0.2s ease",
                   "&:hover": {
-                    backgroundColor: isActive ? "rgba(226, 138, 58, 0.12)" : "rgba(255, 255, 255, 0.03)",
-                    color: isActive ? "#e28a3a" : "#ffffff",
+                    backgroundColor: isActive ? "rgba(255, 103, 0, 0.15)" : "rgba(255, 255, 255, 0.03)",
+                    color: isActive ? "#FF6700" : "#ffffff",
                     "& .MuiListItemIcon-root": {
-                      color: isActive ? "#e28a3a" : "#ffffff",
+                      color: isActive ? "#FF6700" : "#ffffff",
                     },
                   },
                 }}
@@ -129,7 +101,7 @@ const Sidebar = ({
                 <ListItemIcon
                   sx={{
                     minWidth: collapsed ? 0 : 36,
-                    color: isActive ? "#e28a3a" : "#71717a",
+                    color: isActive ? "#FF6700" : "#71717a",
                     justifyContent: "center",
                     transition: "color 0.2s ease",
                   }}

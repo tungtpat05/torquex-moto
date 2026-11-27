@@ -193,14 +193,17 @@ const BrandForm = ({ mode, brandId, initialData }: BrandFormProps) => {
               <Avatar
                 variant="rounded"
                 src={logoUrl?.trim() || undefined}
+                alt={brandName || "Brand logo preview"}
                 sx={{
                   width: 140,
                   height: 140,
+                  p: 1.5,
                   border: "1px solid rgba(255, 255, 255, 0.08)",
-                  backgroundColor: "#27272a",
+                  backgroundColor: "#0f0f14",
                   fontSize: "2.5rem",
                   fontWeight: 600,
-                  color: "#ff6b35",
+                  color: "#FF6700",
+                  "& img": { objectFit: "contain" },
                 }}
               >
                 {!logoUrl?.trim() && (brandName ? brandName.charAt(0).toUpperCase() : "?")}

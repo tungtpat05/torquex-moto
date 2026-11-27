@@ -91,7 +91,15 @@ const BrandsTable = ({ brands }: BrandsTableProps) => {
                     <Avatar
                       variant="rounded"
                       src={brand.logoUrl}
-                      sx={{ width: 44, height: 44, border: "1px solid rgba(255, 255, 255, 0.05)", backgroundColor: "#27272a" }}
+                      alt={brand.brandName}
+                      sx={{
+                        width: 44,
+                        height: 44,
+                        p: 0.5,
+                        border: "1px solid rgba(255, 255, 255, 0.08)",
+                        backgroundColor: "#0f0f14",
+                        "& img": { objectFit: "contain" },
+                      }}
                     />
                   </TableCell>
                   <TableCell>

@@ -14,7 +14,7 @@ import { loginWithEmail } from '../../services/authService';
 import { useAuth } from '../../context';
 import { signInSchema, SignInFormValues } from '../../schemas/authSchema';
 import { getDefaultLandingPath } from '../../utils/role';
-import logo from '@/assets/images/common/logo.png';
+import { TorqueXKtmLockup } from '@/components/common/BrandMark';
 
 const handleGoogleLogin = () => {
     const backendUrl = import.meta.env.VITE_BACKEND_URL || "";
@@ -75,7 +75,7 @@ const SignInPage = () => {
             sx={{
                 minHeight: '100vh',
                 backgroundColor: '#09090b',
-                backgroundImage: 'radial-gradient(ellipse at top, rgba(255, 107, 53, 0.18), transparent 70%)',
+                backgroundImage: 'radial-gradient(ellipse at top, rgba(255, 103, 0, 0.16), transparent 70%)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -98,197 +98,190 @@ const SignInPage = () => {
                 >
                     {/* Header with Logo */}
                     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 4 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
-                            <img src={logo} alt="TORQUE X Logo" style={{ width: 44, height: 44 }} />
-                            <Typography
-                                variant="h4"
-                                component="h1"
-                                sx={{
-                                    fontFamily: 'monospace',
-                                    fontWeight: 900,
-                                    letterSpacing: '.25rem',
-                                    color: '#ffffff',
-                                }}
-                            >
-                                TORQUE<span style={{ color: '#ff6b35' }}>X</span>
+                            <Box sx={{ mb: 1.5 }}>
+                                <TorqueXKtmLockup
+                                    markSize={34}
+                                    textSize={{ xs: '1.45rem', sm: '1.65rem' }}
+                                    badgeText="KTM"
+                                    asHeading
+                                />
+                            </Box>
+                            <Typography variant="body2" sx={{ color: '#a1a1aa', fontWeight: 550, textTransform: 'uppercase', letterSpacing: '1px' }}>
+                                Access Your Account
                             </Typography>
                         </Box>
-                        <Typography variant="body2" sx={{ color: '#a1a1aa', fontWeight: 550, textTransform: 'uppercase', letterSpacing: '1px' }}>
-                            Access Your Account
-                        </Typography>
-                    </Box>
 
-                    {error && (
-                        <Alert
-                            severity="error"
-                            sx={{
-                                mb: 3,
-                                backgroundColor: 'rgba(239, 68, 68, 0.15)',
-                                color: '#fca5a5',
-                                border: '1px solid rgba(239, 68, 68, 0.3)',
-                                borderRadius: 2,
-                            }}
-                        >
-                            {error}
-                        </Alert>
-                    )}
-
-                    {/* Form */}
-                    <Stack spacing={3} component="form" noValidate onSubmit={handleSubmit(onSubmit)}>
-                        <Controller
-                            name="email"
-                            control={control}
-                            render={({ field, fieldState }) => (
-                                <TextField
-                                    {...field}
-                                    required
-                                    fullWidth
-                                    label="Email Address"
-                                    type="email"
-                                    disabled={isSubmitting}
-                                    error={Boolean(fieldState.error)}
-                                    helperText={fieldState.error?.message}
-                                    FormHelperTextProps={{
-                                        sx: { color: '#ef4444', fontSize: '0.75rem', mt: 0.5 },
-                                    }}
-                                    sx={{
-                                        '& label': { color: '#a1a1aa', fontWeight: 500 },
-                                        '& label.Mui-focused': { color: '#ff6b35' },
-                                        '& .MuiOutlinedInput-root': {
-                                            backgroundColor: '#18181b',
-                                            color: '#ffffff',
-                                            borderRadius: 2,
-                                            '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.15)' },
-                                            '&:hover fieldset': { borderColor: '#ff6b35' },
-                                            '&.Mui-focused fieldset': { borderColor: '#ff6b35' },
-                                        },
-                                    }}
-                                />
-                            )}
-                        />
-                        <Controller
-                            name="password"
-                            control={control}
-                            render={({ field, fieldState }) => (
-                                <TextField
-                                    {...field}
-                                    required
-                                    fullWidth
-                                    label="Password"
-                                    type={showPassword ? 'text' : 'password'}
-                                    disabled={isSubmitting}
-                                    error={Boolean(fieldState.error)}
-                                    helperText={fieldState.error?.message}
-                                    FormHelperTextProps={{
-                                        sx: { color: '#ef4444', fontSize: '0.75rem', mt: 0.5 },
-                                    }}
-                                    InputProps={{
-                                        endAdornment: (
-                                            <InputAdornment position="end">
-                                                <IconButton
-                                                    aria-label="toggle password visibility"
-                                                    onClick={() => setShowPassword((show) => !show)}
-                                                    edge="end"
-                                                    sx={{ color: '#a1a1aa' }}
-                                                >
-                                                    {showPassword ? <VisibilityOff /> : <Visibility />}
-                                                </IconButton>
-                                            </InputAdornment>
-                                        ),
-                                    }}
-                                    sx={{
-                                        '& label': { color: '#a1a1aa', fontWeight: 500 },
-                                        '& label.Mui-focused': { color: '#ff6b35' },
-                                        '& .MuiOutlinedInput-root': {
-                                            backgroundColor: '#18181b',
-                                            color: '#ffffff',
-                                            borderRadius: 2,
-                                            '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.15)' },
-                                            '&:hover fieldset': { borderColor: '#ff6b35' },
-                                            '&.Mui-focused fieldset': { borderColor: '#ff6b35' },
-                                        },
-                                    }}
-                                />
-                            )}
-                        />
-                        <Button
-                            type="submit"
-                            fullWidth
-                            variant="contained"
-                            size="large"
-                            disabled={isSubmitting}
-                            sx={{
-                                py: 1.5,
-                                backgroundColor: '#ff6b35',
-                                color: '#ffffff',
-                                fontWeight: 800,
-                                fontSize: '1rem',
-                                borderRadius: 2,
-                                textTransform: 'none',
-                                boxShadow: '0 8px 20px rgba(255, 107, 53, 0.25)',
-                                '&:hover': {
-                                    backgroundColor: '#e05a2b',
-                                    boxShadow: '0 12px 24px rgba(255, 107, 53, 0.35)',
-                                },
-                            }}
-                        >
-                            {isSubmitting ? 'Signing In...' : 'Sign In'}
-                        </Button>
-
-                        <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.1)', color: '#71717a', fontSize: '0.85rem' }}>
-                            OR CONTINUE WITH
-                        </Divider>
-
-                        <Button
-                            fullWidth
-                            variant="outlined"
-                            startIcon={<GoogleIcon sx={{ color: '#ea4335' }} />}
-                            onClick={() => handleGoogleLogin()}
-                            disabled={isSubmitting}
-                            sx={{
-                                py: 1.25,
-                                borderColor: 'rgba(255, 255, 255, 0.2)',
-                                color: '#ffffff',
-                                fontWeight: 600,
-                                borderRadius: 2,
-                                textTransform: 'none',
-                                '&:hover': {
-                                    borderColor: '#ff6b35',
-                                    backgroundColor: 'rgba(255, 107, 53, 0.08)',
-                                },
-                            }}
-                        >
-                            Sign In With Google
-                        </Button>
-                    </Stack>
-
-                    {/* Footer Actions */}
-                    <Stack spacing={2} sx={{ mt: 4 }}>
-                        <Typography variant="body2" align="center" sx={{ color: '#a1a1aa' }}>
-                            Don't have an account?{' '}
-                            <Link
-                                component={RouterLink}
-                                to="/register"
-                                underline="hover"
-                                sx={{ color: '#ff6b35', fontWeight: 700 }}
+                        {error && (
+                            <Alert
+                                severity="error"
+                                sx={{
+                                    mb: 3,
+                                    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                                    color: '#fca5a5',
+                                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                                    borderRadius: 2,
+                                }}
                             >
-                                Sign Up
-                            </Link>
-                        </Typography>
+                                {error}
+                            </Alert>
+                        )}
 
-                        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                        {/* Form */}
+                        <Stack spacing={3} component="form" noValidate onSubmit={handleSubmit(onSubmit)}>
+                            <Controller
+                                name="email"
+                                control={control}
+                                render={({ field, fieldState }) => (
+                                    <TextField
+                                        {...field}
+                                        required
+                                        fullWidth
+                                        label="Email Address"
+                                        type="email"
+                                        disabled={isSubmitting}
+                                        error={Boolean(fieldState.error)}
+                                        helperText={fieldState.error?.message}
+                                        FormHelperTextProps={{
+                                            sx: { color: '#ef4444', fontSize: '0.75rem', mt: 0.5 },
+                                        }}
+                                        sx={{
+                                            '& label': { color: '#a1a1aa', fontWeight: 500 },
+                                            '& label.Mui-focused': { color: '#ff6b35' },
+                                            '& .MuiOutlinedInput-root': {
+                                                backgroundColor: '#18181b',
+                                                color: '#ffffff',
+                                                borderRadius: 2,
+                                                '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.15)' },
+                                                '&:hover fieldset': { borderColor: '#ff6b35' },
+                                                '&.Mui-focused fieldset': { borderColor: '#ff6b35' },
+                                            },
+                                        }}
+                                    />
+                                )}
+                            />
+                            <Controller
+                                name="password"
+                                control={control}
+                                render={({ field, fieldState }) => (
+                                    <TextField
+                                        {...field}
+                                        required
+                                        fullWidth
+                                        label="Password"
+                                        type={showPassword ? 'text' : 'password'}
+                                        disabled={isSubmitting}
+                                        error={Boolean(fieldState.error)}
+                                        helperText={fieldState.error?.message}
+                                        FormHelperTextProps={{
+                                            sx: { color: '#ef4444', fontSize: '0.75rem', mt: 0.5 },
+                                        }}
+                                        InputProps={{
+                                            endAdornment: (
+                                                <InputAdornment position="end">
+                                                    <IconButton
+                                                        aria-label="toggle password visibility"
+                                                        onClick={() => setShowPassword((show) => !show)}
+                                                        edge="end"
+                                                        sx={{ color: '#a1a1aa' }}
+                                                    >
+                                                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                                                    </IconButton>
+                                                </InputAdornment>
+                                            ),
+                                        }}
+                                        sx={{
+                                            '& label': { color: '#a1a1aa', fontWeight: 500 },
+                                            '& label.Mui-focused': { color: '#ff6b35' },
+                                            '& .MuiOutlinedInput-root': {
+                                                backgroundColor: '#18181b',
+                                                color: '#ffffff',
+                                                borderRadius: 2,
+                                                '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.15)' },
+                                                '&:hover fieldset': { borderColor: '#ff6b35' },
+                                                '&.Mui-focused fieldset': { borderColor: '#ff6b35' },
+                                            },
+                                        }}
+                                    />
+                                )}
+                            />
                             <Button
-                                startIcon={<HomeIcon />}
-                                component={RouterLink}
-                                to="/"
-                                variant="text"
-                                size="small"
-                                sx={{ color: '#71717a', '&:hover': { color: '#ffffff' } }}
+                                type="submit"
+                                fullWidth
+                                variant="contained"
+                                size="large"
+                                disabled={isSubmitting}
+                                sx={{
+                                    py: 1.5,
+                                    backgroundColor: '#ff6b35',
+                                    color: '#ffffff',
+                                    fontWeight: 800,
+                                    fontSize: '1rem',
+                                    borderRadius: 2,
+                                    textTransform: 'none',
+                                    boxShadow: '0 8px 20px rgba(255, 107, 53, 0.25)',
+                                    '&:hover': {
+                                        backgroundColor: '#e05a2b',
+                                        boxShadow: '0 12px 24px rgba(255, 107, 53, 0.35)',
+                                    },
+                                }}
                             >
-                                Back to Store
+                                {isSubmitting ? 'Signing In...' : 'Sign In'}
                             </Button>
-                        </Box>
-                    </Stack>
+
+                            <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.1)', color: '#71717a', fontSize: '0.85rem' }}>
+                                OR CONTINUE WITH
+                            </Divider>
+
+                            <Button
+                                fullWidth
+                                variant="outlined"
+                                startIcon={<GoogleIcon sx={{ color: '#ea4335' }} />}
+                                onClick={() => handleGoogleLogin()}
+                                disabled={isSubmitting}
+                                sx={{
+                                    py: 1.25,
+                                    borderColor: 'rgba(255, 255, 255, 0.2)',
+                                    color: '#ffffff',
+                                    fontWeight: 600,
+                                    borderRadius: 2,
+                                    textTransform: 'none',
+                                    '&:hover': {
+                                        borderColor: '#ff6b35',
+                                        backgroundColor: 'rgba(255, 107, 53, 0.08)',
+                                    },
+                                }}
+                            >
+                                Sign In With Google
+                            </Button>
+                        </Stack>
+
+                        {/* Footer Actions */}
+                        <Stack spacing={2} sx={{ mt: 4 }}>
+                            <Typography variant="body2" align="center" sx={{ color: '#a1a1aa' }}>
+                                Don't have an account?{' '}
+                                <Link
+                                    component={RouterLink}
+                                    to="/register"
+                                    underline="hover"
+                                    sx={{ color: '#ff6b35', fontWeight: 700 }}
+                                >
+                                    Sign Up
+                                </Link>
+                            </Typography>
+
+                            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                                <Button
+                                    startIcon={<HomeIcon />}
+                                    component={RouterLink}
+                                    to="/"
+                                    variant="text"
+                                    size="small"
+                                    sx={{ color: '#71717a', '&:hover': { color: '#ffffff' } }}
+                                >
+                                    Back to Store
+                                </Button>
+                            </Box>
+                        </Stack>
                 </Paper>
             </Container>
         </Box>

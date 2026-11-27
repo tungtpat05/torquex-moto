@@ -15,7 +15,7 @@ import { ApiErrorResponse } from '../../types/apiError';
 import { applyServerValidationErrors } from '../../schemas/common';
 import { signUpSchema, SignUpFormValues } from '../../schemas/authSchema';
 import { getDefaultLandingPath } from '../../utils/role';
-import logo from '@/assets/images/common/logo.png';
+import { TorqueXKtmLockup } from '@/components/common/BrandMark';
 
 const SignUpPage = () => {
     const [showPassword, setShowPassword] = useState(false);
@@ -76,7 +76,7 @@ const SignUpPage = () => {
             sx={{
                 minHeight: '100vh',
                 backgroundColor: '#09090b',
-                backgroundImage: 'radial-gradient(ellipse at top, rgba(255, 107, 53, 0.18), transparent 70%)',
+                backgroundImage: 'radial-gradient(ellipse at top, rgba(255, 103, 0, 0.16), transparent 70%)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -99,20 +99,13 @@ const SignUpPage = () => {
                 >
                     {/* Header with Logo */}
                     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 4 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
-                            <img src={logo} alt="TORQUE X Logo" style={{ width: 44, height: 44 }} />
-                            <Typography
-                                variant="h4"
-                                component="h1"
-                                sx={{
-                                    fontFamily: 'monospace',
-                                    fontWeight: 900,
-                                    letterSpacing: '.25rem',
-                                    color: '#ffffff',
-                                }}
-                            >
-                                TORQUE<span style={{ color: '#ff6b35' }}>X</span>
-                            </Typography>
+                        <Box sx={{ mb: 1.5 }}>
+                            <TorqueXKtmLockup
+                                markSize={34}
+                                textSize={{ xs: '1.45rem', sm: '1.65rem' }}
+                                badgeText="KTM"
+                                asHeading
+                            />
                         </Box>
                         <Typography variant="body2" sx={{ color: '#a1a1aa', fontWeight: 550, textTransform: 'uppercase', letterSpacing: '1px' }}>
                             Join The Revolution
