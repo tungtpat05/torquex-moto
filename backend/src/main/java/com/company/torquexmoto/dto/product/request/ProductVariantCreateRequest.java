@@ -25,6 +25,7 @@ public class ProductVariantCreateRequest {
     private Integer stockQuantity;
 
     @NotBlank(message = "Variant image must not be blank")
+    @Pattern(regexp = MediaValidation.MEDIA_PATH_REGEX, message = MediaValidation.MEDIA_PATH_MESSAGE)
     private String variantImage;
 
     private String variantImagePublicId;

@@ -1,55 +1,109 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Box,
   Typography,
-  Chip,
   Button,
+  ButtonBase,
+  CircularProgress,
   Snackbar,
   Alert,
 } from "@mui/material";
-import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import ShareIcon from "@mui/icons-material/Share";
-import CompareArrowsIcon from "@mui/icons-material/CompareArrows";
 import CheckIcon from "@mui/icons-material/Check";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth, useCart } from "@/context";
-import { Product, ProductVariant } from "@/types/product.ts";
+import { Product, ProductVariant } from "@/types/product";
 
 interface ProductInfoProps {
   product: Product;
+  onVariantSelect?: (variant: ProductVariant) => void;
 }
 
-const ProductInfo = ({ product }: ProductInfoProps) => {
+const formatPrice = (price: number) =>
+  new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(price);
+
+const pickDefaultVariant = (variants: ProductVariant[]): ProductVariant | null =>
+  variants.find((v) => v.isActive && v.stockQuantity > 0) || variants[0] || null;
+
+const isLightHexColor = (hexColor: string): boolean => {
+  const clean = hexColor.replace("#", "").trim();
+  if (!/^[0-9A-Fa-f]{6}$/.test(clean)) return false;
+  const r = parseInt(clean.slice(0, 2), 16);
+  const g = parseInt(clean.slice(2, 4), 16);
+  const b = parseInt(clean.slice(4, 6), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.65;
+};
+
+const ProductInfo = ({ product, onVariantSelect }: ProductInfoProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isLogin, user } = useAuth();
   const { addItemToCart } = useCart();
 
+  const variants = useMemo(() => product.variants || [], [product.variants]);
+  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(() =>
+    pickDefaultVariant(variants)
+  );
+  const [submittingCart, setSubmittingCart] = useState(false);
+
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">("success");
+
+  useEffect(() => {
+    setSelectedVariant(pickDefaultVariant(variants));
+  }, [product.id, variants]);
+
+  const isSelectedVariantBuyable = Boolean(
+    selectedVariant && selectedVariant.isActive !== false && selectedVariant.stockQuantity > 0
+  );
+
+  const effectiveBase =
+    product.discountPrice &&
+    product.basePrice &&
+    product.discountPrice > 0 &&
+    product.discountPrice < product.basePrice
+      ? product.discountPrice
+      : product.basePrice;
+
+  const additionalPrice = Number(selectedVariant?.additionalPrice ?? 0);
+  const displayPrice =
+    effectiveBase !== undefined && effectiveBase !== null && effectiveBase > 0
+      ? Number(effectiveBase) + additionalPrice
+      : null;
+
+  const showToast = (message: string, severity: "success" | "error") => {
+    setSnackbarMessage(message);
+    setSnackbarSeverity(severity);
+    setSnackbarOpen(true);
+  };
 
   const handleAddToCart = async () => {
     if (!isLogin || !user) {
       navigate("/login", { state: { from: location } });
       return;
     }
-    if (selectedVariant?.id) {
-      try {
-        await addItemToCart(selectedVariant.id, 1);
-        setSnackbarMessage(`Added "${product.productName}" to your shopping cart!`);
-        setSnackbarSeverity("success");
-        setSnackbarOpen(true);
-      } catch (err) {
-        console.error("Failed to add product variant to cart:", err);
-        setSnackbarMessage("Failed to add item to cart. Please try again.");
-        setSnackbarSeverity("error");
-        setSnackbarOpen(true);
-      }
-    } else {
-      setSnackbarMessage("The product has no variants or Out of Stock. It cannot be added to the cart.");
-      setSnackbarSeverity("error");
-      setSnackbarOpen(true);
+    if (!selectedVariant?.id || !isSelectedVariantBuyable || displayPrice === null) {
+      showToast("This configuration is currently out of stock or unavailable.", "error");
+      return;
+    }
+
+    setSubmittingCart(true);
+    try {
+      await addItemToCart(selectedVariant.id, 1);
+      showToast(`Added "${product.productName}" to your shopping cart!`, "success");
+    } catch (err: any) {
+      console.error("Failed to add product variant to cart:", err);
+      const errMsg = err?.response?.data?.message || "Failed to add item to cart. Please try again.";
+      showToast(errMsg, "error");
+    } finally {
+      setSubmittingCart(false);
     }
   };
 
@@ -58,406 +112,456 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
       navigate("/login", { state: { from: location } });
       return;
     }
-    if (selectedVariant?.id) {
-      try {
-        await addItemToCart(selectedVariant.id, 1);
-        navigate("/cart");
-      } catch (err) {
-        console.error("Failed to add product variant to cart:", err);
-        setSnackbarMessage("Failed to add item to cart. Please try again.");
-        setSnackbarSeverity("error");
-        setSnackbarOpen(true);
-      }
-    } else {
+    if (!selectedVariant?.id || !isSelectedVariantBuyable || displayPrice === null) {
+      showToast("Cannot proceed: selected configuration is unavailable.", "error");
+      return;
+    }
+
+    setSubmittingCart(true);
+    try {
+      await addItemToCart(selectedVariant.id, 1);
       navigate("/cart");
+    } catch (err: any) {
+      console.error("Failed to buy now:", err);
+      const errMsg = err?.response?.data?.message || "Failed to add item to cart. Please try again.";
+      showToast(errMsg, "error");
+    } finally {
+      setSubmittingCart(false);
     }
   };
 
-  const variants = product.variants || [];
-  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(
-    variants.length > 0 ? variants[0] : null
-  );
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(price);
-  };
-
-  const baseOrDiscount = product.discountPrice && product.discountPrice < product.basePrice
-    ? product.discountPrice
-    : product.basePrice;
-
-  const additionalPrice = selectedVariant?.additionalPrice || 0;
-  const displayPrice = (baseOrDiscount || 0) + additionalPrice;
-
-  const categoryName = product.category?.categoryName || "No data";
-  const brandName = product.brand?.brandName || "No data";
-  const yearText = product.createdAt ? new Date(product.createdAt).getFullYear() : "No data";
-
-  // Total stock calculated from variants or fallback
-  const totalStock = useMemo(() => {
-    if (variants.length > 0) {
-      return variants.reduce((acc, v) => acc + (v.stockQuantity || 0), 0);
+  const handleShare = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      showToast("Model link copied to clipboard!", "success");
+    } catch {
+      showToast("Copy URL from your browser address bar to share.", "error");
     }
-    return null;
-  }, [variants]);
-
-  const getTagColor = (catName: string) => {
-    const name = catName.toLowerCase();
-    if (name.includes("naked")) return "rgba(168, 85, 247, 0.25)";
-    if (name.includes("sport")) return "rgba(239, 68, 68, 0.25)";
-    if (name.includes("adventure")) return "rgba(234, 179, 8, 0.25)";
-    if (name.includes("electric")) return "rgba(59, 130, 246, 0.25)";
-    return "rgba(226, 138, 58, 0.25)";
   };
 
-  const getTagTextColor = (catName: string) => {
-    const name = catName.toLowerCase();
-    if (name.includes("naked")) return "#c084fc";
-    if (name.includes("sport")) return "#f87171";
-    if (name.includes("adventure")) return "#facc15";
-    if (name.includes("electric")) return "#60a5fa";
-    return "#e28a3a";
-  };
+  const categoryName = product.category?.categoryName?.toUpperCase();
+  const brandName = product.brand?.brandName?.toUpperCase();
+  const disciplineLabel = [brandName, categoryName].filter(Boolean).join(" • ");
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 3.5 }}>
-      {/* Category Tag & Brand */}
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <Typography
-          variant="subtitle2"
-          sx={{
-            fontWeight: 800,
-            color: "rgba(255, 255, 255, 0.4)",
-            letterSpacing: "0.15em",
-            textTransform: "uppercase",
-          }}
-        >
-          {brandName}
-        </Typography>
-        <Box
-          sx={{
-            backgroundColor: getTagColor(categoryName),
-            color: getTagTextColor(categoryName),
-            px: 2,
-            py: 0.5,
-            borderRadius: "4px",
-            fontSize: "0.75rem",
-            fontWeight: 800,
-            textTransform: "uppercase",
-            letterSpacing: "0.05em",
-          }}
-        >
-          {categoryName}
-        </Box>
-      </Box>
-
-      {/* Product Title */}
-      <Typography
-        variant="h3"
-        sx={{
-          fontWeight: 800,
-          color: "white",
-          fontFamily: "'Outfit', 'Inter', sans-serif",
-          fontSize: { xs: "2rem", md: "2.5rem" },
-          lineHeight: 1.15,
-        }}
-      >
-        {product.productName || "No data"}
-      </Typography>
-
-      {/* Ratings and Stock State Row */}
-      <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
-        {/* Rating line showing No data since rating endpoint doesn't exist */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-          <Typography variant="body2" sx={{ fontWeight: 700, color: "rgba(255,255,255,0.4)" }}>
-            Rating: <Box component="span" sx={{ color: "#e28a3a" }}>No data</Box>
-          </Typography>
-        </Box>
-        <Typography variant="body2" sx={{ color: "rgba(255, 255, 255, 0.25)" }}>
-          •
-        </Typography>
-
-        {/* Stock Badge */}
-        {totalStock !== null ? (
-          totalStock > 0 ? (
-            <Chip
-              label={`• In Stock (${totalStock} available)`}
-              size="small"
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      {/* Discipline & Flagship Telemetry Pills (Monochrome + #FF6700 matching HomePage) */}
+      {(disciplineLabel || product.isFeatured) && (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.2, flexWrap: "wrap" }}>
+          {disciplineLabel && (
+            <Box
               sx={{
-                backgroundColor: "rgba(46, 125, 50, 0.15)",
-                color: "#4caf50",
-                fontWeight: 700,
-                fontSize: "0.75rem",
-                px: 0.5,
+                px: 1.5,
+                py: 0.45,
+                borderRadius: "100px",
+                backgroundColor: "rgba(15, 15, 20, 0.85)",
+                border: "1px solid rgba(255, 255, 255, 0.14)",
+              }}
+            >
+              <Typography
+                sx={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "0.64rem",
+                  fontWeight: 800,
+                  color: "#D4D4D8",
+                  letterSpacing: "0.12em",
+                }}
+              >
+                {disciplineLabel}
+              </Typography>
+            </Box>
+          )}
+          {product.isFeatured && (
+            <Box
+              sx={{
+                px: 1.4,
+                py: 0.45,
+                borderRadius: "100px",
+                backgroundColor: "#FF6700",
+                color: "#070709",
+                fontFamily: "var(--font-mono)",
+                fontSize: "0.62rem",
+                fontWeight: 800,
+                letterSpacing: "0.1em",
+                boxShadow: "0 0 18px rgba(255, 103, 0, 0.40)",
+              }}
+            >
+              FACTORY FLAGSHIP
+            </Box>
+          )}
+        </Box>
+      )}
+
+      {/* Eyebrow Summary + Product H1 */}
+      <Box>
+        {product.summary && (
+          <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1.2, mb: 1 }}>
+            <Box
+              sx={{
+                width: 6,
+                height: 6,
+                borderRadius: "50%",
+                backgroundColor: "#FF6700",
+                boxShadow: "0 0 8px #FF6700",
+                flexShrink: 0,
               }}
             />
-          ) : (
-            <Chip
-              label="• Out of Stock"
-              size="small"
+            <Box sx={{ width: 20, height: "2px", backgroundColor: "#FF6700", flexShrink: 0 }} />
+            <Typography
               sx={{
-                backgroundColor: "rgba(239, 68, 68, 0.15)",
-                color: "#ef4444",
-                fontWeight: 700,
-                fontSize: "0.75rem",
-                px: 0.5,
+                fontFamily: "var(--font-mono)",
+                fontSize: "0.72rem",
+                fontWeight: 800,
+                letterSpacing: "0.14em",
+                color: "#FF6700",
+                textTransform: "uppercase",
               }}
-            />
-          )
-        ) : (
-          <Chip
-            label="• Stock: No data"
-            size="small"
-            sx={{
-              backgroundColor: "rgba(255, 255, 255, 0.08)",
-              color: "rgba(255, 255, 255, 0.5)",
-              fontWeight: 700,
-              fontSize: "0.75rem",
-              px: 0.5,
-            }}
-          />
+            >
+              {product.summary}
+            </Typography>
+          </Box>
         )}
+
+        <Typography
+          component="h1"
+          sx={{
+            fontFamily: "var(--font-display)",
+            fontWeight: 950,
+            fontSize: { xs: "2rem", sm: "2.45rem", lg: "2.85rem" },
+            lineHeight: 1.04,
+            letterSpacing: "-0.03em",
+            color: "#FFFFFF",
+            textTransform: "uppercase",
+          }}
+        >
+          {product.productName}
+        </Typography>
       </Box>
 
-      {/* Pricing Information Panel */}
+      {/* Paddock Glass MSRP Panel */}
       <Box
         sx={{
-          backgroundColor: "#121214",
-          border: "1px solid rgba(255, 255, 255, 0.05)",
+          backgroundColor: "rgba(15, 15, 20, 0.90)",
+          backdropFilter: "blur(20px)",
+          border: "1px solid rgba(255, 255, 255, 0.10)",
+          borderTop: "1px solid rgba(255, 255, 255, 0.25)",
           borderRadius: "16px",
+          boxShadow: "0 18px 42px rgba(0, 0, 0, 0.60)",
           p: 3,
           display: "flex",
-          alignItems: "center",
+          flexDirection: "column",
+          gap: 0.75,
         }}
       >
-        <Typography variant="h4" sx={{ fontWeight: 800, color: "white" }}>
-          {displayPrice > 0 ? formatPrice(displayPrice) : "No data"}
-        </Typography>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <Typography
+            sx={{
+              fontFamily: "var(--font-mono)",
+              fontSize: "0.64rem",
+              fontWeight: 700,
+              letterSpacing: "0.14em",
+              color: "#A1A1AA",
+            }}
+          >
+            SHOWROOM MSRP
+          </Typography>
+          {additionalPrice > 0 && (
+            <Typography
+              className="tabular-nums"
+              sx={{
+                fontFamily: "var(--font-mono)",
+                fontSize: "0.66rem",
+                fontWeight: 800,
+                letterSpacing: "0.08em",
+                color: "#FF6700",
+              }}
+            >
+              +{formatPrice(additionalPrice)} FINISH OPTION
+            </Typography>
+          )}
+        </Box>
+
+        <Box sx={{ display: "flex", alignItems: "baseline", gap: 2, flexWrap: "wrap" }}>
+          <Typography
+            className="tabular-nums"
+            sx={{
+              fontFamily: "var(--font-mono)",
+              fontWeight: 900,
+              fontSize: { xs: "1.8rem", md: "2.1rem" },
+              lineHeight: 1.1,
+              color: displayPrice !== null ? "#FFFFFF" : "#F87171",
+            }}
+          >
+            {displayPrice !== null ? formatPrice(displayPrice) : "Price Unavailable"}
+          </Typography>
+          {product.discountPrice > 0 &&
+            product.discountPrice < product.basePrice &&
+            displayPrice !== null && (
+              <Typography
+                className="tabular-nums"
+                sx={{
+                  fontFamily: "var(--font-mono)",
+                  color: "#71717A",
+                  textDecoration: "line-through",
+                  fontWeight: 700,
+                  fontSize: "0.95rem",
+                }}
+              >
+                {formatPrice(Number(product.basePrice) + additionalPrice)}
+              </Typography>
+            )}
+        </Box>
       </Box>
 
-      {/* Color Selection Picker */}
+      {/* Colorway Picker */}
       <Box>
-        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1.5 }}>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
           <Typography
-            variant="caption"
             sx={{
+              fontFamily: "var(--font-mono)",
+              fontSize: "0.68rem",
               fontWeight: 800,
-              color: "rgba(255, 255, 255, 0.5)",
-              letterSpacing: "0.1em",
+              color: "#A1A1AA",
+              letterSpacing: "0.12em",
               textTransform: "uppercase",
             }}
           >
-            Color
+            Colorway
           </Typography>
-          <Typography variant="body2" sx={{ fontWeight: 700, color: "rgba(255, 255, 255, 0.7)" }}>
-            {selectedVariant?.color?.colorName || "No data"}
-          </Typography>
+          {selectedVariant?.color?.colorName && (
+            <Typography
+              sx={{
+                fontFamily: "var(--font-display)",
+                fontWeight: 700,
+                fontSize: "0.92rem",
+                color: "#F4F4F5",
+              }}
+            >
+              {selectedVariant.color.colorName}
+              {additionalPrice > 0 ? ` (+${formatPrice(additionalPrice)})` : ""}
+            </Typography>
+          )}
         </Box>
 
         {variants.length > 0 ? (
           <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
             {variants.map((v) => {
               const isSelected = selectedVariant?.id === v.id;
+              const isBuyable = v.isActive !== false && v.stockQuantity > 0;
               const colorValue = v.color?.colorCode || "#333333";
+              const colorLabel = v.color?.colorName || "Factory Finish";
+              const checkColor = isLightHexColor(colorValue) ? "#070709" : "#FFFFFF";
+
               return (
-                <Box
+                <ButtonBase
                   key={v.id}
-                  onClick={() => setSelectedVariant(v)}
+                  onClick={() => {
+                    setSelectedVariant(v);
+                    onVariantSelect?.(v);
+                  }}
+                  aria-label={isBuyable ? colorLabel : `${colorLabel} (Out of Stock)`}
+                  aria-pressed={isSelected}
+                  title={isBuyable ? colorLabel : `${colorLabel} (Out of Stock)`}
                   sx={{
-                    width: 32,
-                    height: 32,
+                    position: "relative",
+                    width: 44,
+                    height: 44,
                     borderRadius: "50%",
                     backgroundColor: colorValue,
                     border: "2px solid",
-                    borderColor: isSelected ? "#e28a3a" : "rgba(255,255,255,0.2)",
-                    cursor: "pointer",
+                    borderColor: isSelected ? "#FF6700" : "rgba(255, 255, 255, 0.22)",
+                    outline: isSelected ? "2px solid rgba(255, 103, 0, 0.45)" : "none",
+                    outlineOffset: "2px",
+                    opacity: isBuyable ? 1 : 0.42,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    transition: "all 0.15s",
-                    boxShadow: "inset 0px 0px 4px rgba(0,0,0,0.5)",
+                    transition: "all 0.2s ease",
+                    boxShadow: isSelected
+                      ? "0 0 16px rgba(255, 103, 0, 0.45), inset 0 0 4px rgba(0, 0, 0, 0.45)"
+                      : "inset 0 0 4px rgba(0, 0, 0, 0.45)",
+                    overflow: "hidden",
                     "&:hover": {
-                      transform: "scale(1.1)",
+                      transform: "scale(1.06)",
+                      borderColor: "#FF6700",
                     },
                   }}
                 >
-                  {isSelected && <CheckIcon sx={{ fontSize: 16, color: "white" }} />}
-                </Box>
+                  {!isBuyable && (
+                    <Box
+                      aria-hidden="true"
+                      sx={{
+                        position: "absolute",
+                        inset: 0,
+                        background:
+                          "linear-gradient(135deg, transparent 46%, rgba(255, 255, 255, 0.72) 48%, rgba(255, 255, 255, 0.72) 52%, transparent 54%)",
+                        pointerEvents: "none",
+                      }}
+                    />
+                  )}
+                  {isSelected && (
+                    <CheckIcon
+                      sx={{
+                        position: "relative",
+                        zIndex: 1,
+                        fontSize: 18,
+                        color: checkColor,
+                      }}
+                    />
+                  )}
+                </ButtonBase>
               );
             })}
           </Box>
         ) : (
-          <Typography variant="body2" sx={{ color: "rgba(255, 255, 255, 0.4)", fontStyle: "italic" }}>
-            No data
+          <Typography sx={{ color: "#A1A1AA", fontSize: "0.86rem", fontStyle: "italic" }}>
+            No factory color options configured yet.
           </Typography>
         )}
       </Box>
 
-      {/* Model Year Display */}
-      <Box>
-        <Typography
-          variant="caption"
+      {/* Out of Stock Minimalist Telemetry Notice (no green/red pill badges) */}
+      {(!isSelectedVariantBuyable || displayPrice === null) && (
+        <Box
+          role="status"
           sx={{
-            fontWeight: 800,
-            color: "rgba(255, 255, 255, 0.5)",
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
-            display: "block",
-            mb: 1,
-          }}
-        >
-          Model Year
-        </Typography>
-        <Typography variant="body2" sx={{ color: "white", fontWeight: 700 }}>
-          {yearText}
-        </Typography>
-      </Box>
-
-      {/* Short Summary Section */}
-      <Box
-        sx={{
-          borderLeft: "2px solid #e28a3a",
-          pl: 2.5,
-          py: 0.5,
-        }}
-      >
-        <Typography
-          variant="body1"
-          sx={{
-            color: "rgba(255, 255, 255, 0.7)",
-            fontSize: "0.95rem",
-            lineHeight: 1.6,
-            fontStyle: product.summary ? "italic" : "normal",
-          }}
-        >
-          {product.summary || "No data"}
-        </Typography>
-      </Box>
-
-      {/* Call to action purchase buttons */}
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-        <Button
-          variant="contained"
-          fullWidth
-          onClick={handleAddToCart}
-          sx={{
-            backgroundColor: "#e28a3a",
-            color: "#000000",
-            py: 2,
+            backgroundColor: "rgba(15, 15, 20, 0.90)",
+            border: "1px solid rgba(255, 255, 255, 0.12)",
+            borderLeft: "2px solid #FF6700",
             borderRadius: "8px",
-            fontWeight: 800,
-            textTransform: "none",
-            fontSize: "0.95rem",
-            "&:hover": {
-              backgroundColor: "#f0a256",
-            },
+            px: 2,
+            py: 1.5,
           }}
         >
-          Add to Cart
-        </Button>
+          <Typography
+            sx={{
+              fontFamily: "var(--font-mono)",
+              fontSize: "0.72rem",
+              fontWeight: 700,
+              letterSpacing: "0.08em",
+              color: "#D4D4D8",
+              lineHeight: 1.5,
+            }}
+          >
+            {variants.length === 0
+              ? "NO FACTORY CONFIGURATIONS AVAILABLE FOR THIS MODEL YET."
+              : "THIS CONFIGURATION IS CURRENTLY OUT OF STOCK — SELECT ANOTHER COLORWAY."}
+          </Typography>
+        </Box>
+      )}
+
+      {/* Action CTAs matching BloodlineFleet language */}
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1.15fr" }, gap: 1.5 }}>
         <Button
           variant="outlined"
           fullWidth
-          onClick={handleBuyNow}
+          disabled={!isSelectedVariantBuyable || displayPrice === null || submittingCart}
+          onClick={handleAddToCart}
           sx={{
-            borderColor: "#e28a3a",
-            color: "#e28a3a",
-            py: 2,
+            py: 1.65,
+            px: 2,
             borderRadius: "8px",
+            border: "1px solid rgba(255, 255, 255, 0.16)",
+            backgroundColor: "rgba(255, 255, 255, 0.03)",
+            color: "#F4F4F5",
+            fontFamily: "var(--font-mono)",
             fontWeight: 800,
-            textTransform: "none",
-            fontSize: "0.95rem",
+            fontSize: "0.78rem",
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+            gap: 1,
             "&:hover": {
-              borderColor: "#f0a256",
-              backgroundColor: "rgba(226, 138, 58, 0.05)",
+              borderColor: "#FF6700",
+              backgroundColor: "rgba(255, 103, 0, 0.10)",
+              color: "#FFFFFF",
+            },
+            "&.Mui-disabled": {
+              borderColor: "rgba(255, 255, 255, 0.08)",
+              backgroundColor: "rgba(255, 255, 255, 0.02)",
+              color: "#71717A",
             },
           }}
         >
+          {submittingCart && <CircularProgress size={16} sx={{ color: "#FF6700" }} />}
+          {isSelectedVariantBuyable ? "Add to Cart" : "Out of Stock"}
+        </Button>
+
+        <Button
+          variant="contained"
+          fullWidth
+          disabled={!isSelectedVariantBuyable || displayPrice === null || submittingCart}
+          onClick={handleBuyNow}
+          sx={{
+            backgroundColor: "#FF6700",
+            color: "#070709",
+            py: 1.65,
+            px: 2,
+            borderRadius: "8px",
+            fontFamily: "var(--font-display)",
+            fontWeight: 900,
+            fontSize: "0.88rem",
+            letterSpacing: "0.06em",
+            textTransform: "uppercase",
+            gap: 1,
+            boxShadow: "0 0 24px rgba(255, 103, 0, 0.35)",
+            "&:hover": {
+              backgroundColor: "#FF7D24",
+              boxShadow: "0 0 32px rgba(255, 103, 0, 0.55)",
+            },
+            "&.Mui-disabled": {
+              backgroundColor: "rgba(255, 255, 255, 0.06)",
+              color: "#71717A",
+              boxShadow: "none",
+            },
+          }}
+        >
+          {submittingCart && <CircularProgress size={16} sx={{ color: "#070709" }} />}
           Buy Now
         </Button>
       </Box>
 
-      {/* Sub-actions row: Wishlist, Share, Compare */}
+      {/* Secondary Utility Action */}
       <Box
         sx={{
           display: "flex",
-          justifyContent: "space-between",
+          justifyContent: "flex-start",
           alignItems: "center",
-          gap: 1.5,
-          borderBottom: "1px solid rgba(255, 255, 255, 0.05)",
-          pb: 3.5,
+          borderTop: "1px solid rgba(255, 255, 255, 0.08)",
+          pt: 2.5,
         }}
       >
         <Button
-          startIcon={<FavoriteBorderIcon />}
+          startIcon={<ShareIcon sx={{ fontSize: "1rem" }} />}
+          onClick={() => void handleShare()}
           sx={{
-            color: "rgba(255,255,255,0.6)",
-            fontSize: "0.85rem",
+            color: "#A1A1AA",
+            fontFamily: "var(--font-mono)",
+            fontSize: "0.72rem",
             fontWeight: 700,
-            textTransform: "none",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
-            borderRadius: "20px",
-            flexGrow: 1,
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            border: "1px solid rgba(255, 255, 255, 0.12)",
+            backgroundColor: "rgba(15, 15, 20, 0.65)",
+            borderRadius: "8px",
+            px: 2.5,
             py: 1,
             "&:hover": {
-              backgroundColor: "rgba(255,255,255,0.05)",
-              color: "white",
-            },
-          }}
-        >
-          Wishlist
-        </Button>
-        <Button
-          startIcon={<ShareIcon />}
-          sx={{
-            color: "rgba(255,255,255,0.6)",
-            fontSize: "0.85rem",
-            fontWeight: 700,
-            textTransform: "none",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
-            borderRadius: "20px",
-            flexGrow: 1,
-            py: 1,
-            "&:hover": {
-              backgroundColor: "rgba(255,255,255,0.05)",
-              color: "white",
+              borderColor: "#FF6700",
+              backgroundColor: "rgba(255, 103, 0, 0.08)",
+              color: "#FF6700",
             },
           }}
         >
           Share
         </Button>
-        <Button
-          startIcon={<CompareArrowsIcon />}
-          sx={{
-            color: "rgba(255,255,255,0.6)",
-            fontSize: "0.85rem",
-            fontWeight: 700,
-            textTransform: "none",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
-            borderRadius: "20px",
-            flexGrow: 1,
-            py: 1,
-            "&:hover": {
-              backgroundColor: "rgba(255,255,255,0.05)",
-              color: "white",
-            },
-          }}
-        >
-          Compare
-        </Button>
       </Box>
 
-      {/* Toast Notification for Add to Cart */}
+      {/* Toast Notification matching BloodlineFleet */}
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={3500}
         onClose={() => setSnackbarOpen(false)}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
         <Alert
           onClose={() => setSnackbarOpen(false)}
@@ -465,9 +569,11 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
           variant="filled"
           sx={{
             width: "100%",
+            fontFamily: "var(--font-mono)",
             fontWeight: 700,
-            backgroundColor: snackbarSeverity === "success" ? "#e28a3a" : undefined,
-            color: snackbarSeverity === "success" ? "#000000" : undefined,
+            fontSize: "0.75rem",
+            backgroundColor: snackbarSeverity === "success" ? "#FF6700" : "#991B1B",
+            color: snackbarSeverity === "success" ? "#070709" : "#F4F4F5",
           }}
         >
           {snackbarMessage}

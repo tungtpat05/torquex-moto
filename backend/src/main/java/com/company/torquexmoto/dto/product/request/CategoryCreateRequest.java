@@ -19,6 +19,7 @@ public class CategoryCreateRequest {
     private String slug;
 
     @NotBlank(message = "Category image must not be blank")
+    @Pattern(regexp = MediaValidation.MEDIA_PATH_REGEX, message = MediaValidation.MEDIA_PATH_MESSAGE)
     private String categoryImage;
 
     @Size(max = 500, message = "Description must not exceed 500 characters")

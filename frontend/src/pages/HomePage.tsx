@@ -1,13 +1,16 @@
-import React, { useEffect } from 'react';
-import { Box } from '@mui/material';
-import { initSmoothScroll, destroySmoothScroll } from '@/lib/smoothScroll';
-import KtmHeroAwakening from '@/components/ktm/KtmHeroAwakening';
-import KtmApexSurge from '@/components/ktm/KtmApexSurge';
-import KtmPedigreeHeritage from '@/components/ktm/KtmPedigreeHeritage';
-import KtmBloodlineFleet from '@/components/ktm/KtmBloodlineFleet';
-import KtmCrateHandover from '@/components/ktm/KtmCrateHandover';
+import React, { useEffect } from "react";
+import { Box } from "@mui/material";
+import { useLocation } from "react-router-dom";
+import { initSmoothScroll, destroySmoothScroll, getLenis } from "@/lib/smoothScroll";
+import HeroAwakening from "@/components/home/HeroAwakening";
+import ApexSurge from "@/components/home/ApexSurge";
+import PedigreeHeritage from "@/components/home/PedigreeHeritage";
+import BloodlineFleet from "@/components/home/BloodlineFleet";
+import CrateHandover from "@/components/home/CrateHandover";
 
 const HomePage: React.FC = () => {
+  const location = useLocation();
+
   useEffect(() => {
     initSmoothScroll();
 
@@ -16,30 +19,38 @@ const HomePage: React.FC = () => {
     };
   }, []);
 
+  useEffect(() => {
+    if (!location.hash) return;
+    const targetHash = location.hash;
+    const timer = window.setTimeout(() => {
+      const targetEl = document.querySelector(targetHash) as HTMLElement | null;
+      if (!targetEl) return;
+      const lenis = getLenis();
+      if (lenis) {
+        lenis.scrollTo(targetEl, { duration: 1.0 });
+      } else {
+        targetEl.scrollIntoView({ behavior: "smooth" });
+      }
+    }, 180);
+
+    return () => window.clearTimeout(timer);
+  }, [location.hash]);
+
   return (
     <Box
       sx={{
-        width: '100%',
-        backgroundColor: '#070709',
-        color: '#F4F4F5',
-        minHeight: '100vh',
-        overflowX: 'hidden',
+        width: "100%",
+        backgroundColor: "#070709",
+        color: "#F4F4F5",
+        minHeight: "100vh",
+        overflowX: "hidden",
       }}
     >
-      {/* Act I & Act II: The Awakening & The Anatomy of Fury (Unified Porsche-Style Seamless Master Experience) */}
-      <KtmHeroAwakening />
-
-      {/* Act III: The Apex Surge (High-Velocity Editorial Action Cascade) */}
-      <KtmApexSurge />
-
-      {/* Act IV Part A: The Pedigree (18 Dakar Titles & MotoGP Heritage) */}
-      <KtmPedigreeHeritage />
-
-      {/* Act IV Part B: The Bloodline Fleet (Curated 6 KTM Weapons Showroom) */}
-      <KtmBloodlineFleet />
-
-      {/* Act V: The Crate Handover Ceremony & VIN Allocation Lock */}
-      <KtmCrateHandover />
+      <HeroAwakening />
+      <ApexSurge />
+      <PedigreeHeritage />
+      <BloodlineFleet />
+      <CrateHandover />
     </Box>
   );
 };

@@ -53,3 +53,13 @@ skills-lock.json
 # 6. DOCS
 # ==========================================
 /docs
+
+# ==========================================
+# 7. LOCAL TESTS
+# ==========================================
+backend/src/test/
+frontend/src/test/
+**/__tests__/
+**/*.test.*
+frontend/vitest.config.ts
+

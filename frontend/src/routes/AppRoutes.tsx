@@ -1,3 +1,5 @@
+import { lazy, ReactNode, Suspense } from "react";
+import { Box, CircularProgress } from "@mui/material";
 import {
   createBrowserRouter,
   createRoutesFromElements,
@@ -7,25 +9,46 @@ import {
 import MainLayout from "../layouts/MainLayout";
 import NotFoundPage from "../pages/NotFoundPage";
 import HomePage from "../pages/HomePage";
-import ProductPage from "../pages/ProductPage";
 import ProductDetailPage from "../pages/ProductDetailPage";
-import SignInPage from "../pages/auth/SignInPage.tsx";
-import AuthSuccessPage from "../pages/auth/AuthSuccessPage.tsx";
-import SignUpPage from "../pages/auth/SignUpPage.tsx";
+import SignInPage from "../pages/auth/SignInPage";
+import AuthSuccessPage from "../pages/auth/AuthSuccessPage";
+import SignUpPage from "../pages/auth/SignUpPage";
 import CartPage from "../pages/CartPage";
-import ProfilePage from "../pages/auth/ProfilePage.tsx";
-
-// Admin Imports
-import AdminLayout from "../layouts/AdminLayout";
-import AdminDashboardPage from "../pages/admin/AdminDashboardPage";
-import AdminProductsPage from "../pages/admin/AdminProductsPage";
-import AdminProductFormPage from "../pages/admin/AdminProductFormPage";
-import AdminCategoriesPage from "../pages/admin/AdminCategoriesPage";
-import AdminBrandsPage from "../pages/admin/AdminBrandsPage";
-import AdminBrandFormPage from "../pages/admin/AdminBrandFormPage";
-import AdminCategoryFormPage from "../pages/admin/AdminCategoryFormPage";
-
+import ProfilePage from "../pages/auth/ProfilePage";
 import ProtectedRoute from "./ProtectedRoute";
+
+const StaffLayout = lazy(() => import("../layouts/StaffLayout"));
+const DashboardPage = lazy(() => import("../pages/staff/DashboardPage"));
+const ProductsPage = lazy(() => import("../pages/staff/ProductsPage"));
+const ProductFormPage = lazy(() => import("../pages/staff/ProductFormPage"));
+const CategoriesPage = lazy(() => import("../pages/staff/CategoriesPage"));
+const CategoryFormPage = lazy(() => import("../pages/staff/CategoryFormPage"));
+const BrandsPage = lazy(() => import("../pages/staff/BrandsPage"));
+const BrandFormPage = lazy(() => import("../pages/staff/BrandFormPage"));
+
+const AdminLayout = lazy(() => import("../layouts/AdminLayout"));
+const AdminDashboardPage = lazy(() => import("../pages/admin/AdminDashboardPage"));
+const InternalAccountsPage = lazy(() => import("../pages/admin/InternalAccountsPage"));
+const InternalAccountFormPage = lazy(() => import("../pages/admin/InternalAccountFormPage"));
+const CustomersPage = lazy(() => import("../pages/admin/CustomersPage"));
+
+const StaffLoader = () => (
+  <Box
+    sx={{
+      minHeight: "100dvh",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: "#070709",
+    }}
+  >
+    <CircularProgress sx={{ color: "#FF6700" }} />
+  </Box>
+);
+
+const withStaffSuspense = (node: ReactNode) => (
+  <Suspense fallback={<StaffLoader />}>{node}</Suspense>
+);
 
 const AppRoutes = () => {
   const router = createBrowserRouter(
@@ -35,31 +58,65 @@ const AppRoutes = () => {
         <Route path="/register" element={<SignUpPage />} />
         <Route path="/auth/success" element={<AuthSuccessPage />} />
 
-        {/* Admin Routes */}
+        {/* Admin Identity & Account Portal */}
         <Route
           path="/admin"
           element={
-            <ProtectedRoute requireAdmin={true}>
-              <AdminLayout />
+            <ProtectedRoute allowedRoles={["ADMIN"]}>
+              {withStaffSuspense(<AdminLayout />)}
             </ProtectedRoute>
           }
         >
-          <Route index element={<AdminDashboardPage />} />
-          <Route path="dashboard" element={<AdminDashboardPage />} />
-          <Route path="products" element={<AdminProductsPage />} />
-          <Route path="products/add" element={<AdminProductFormPage mode="add" />} />
-          <Route path="products/edit/:id" element={<AdminProductFormPage mode="edit" />} />
-          <Route path="categories" element={<AdminCategoriesPage />} />
-          <Route path="categories/add" element={<AdminCategoryFormPage mode="add" />} />
-          <Route path="categories/edit/:id" element={<AdminCategoryFormPage mode="edit" />} />
-          <Route path="brands" element={<AdminBrandsPage />} />
-          <Route path="brands/add" element={<AdminBrandFormPage mode="add" />} />
-          <Route path="brands/edit/:id" element={<AdminBrandFormPage mode="edit" />} />
+          <Route index element={withStaffSuspense(<AdminDashboardPage />)} />
+          <Route path="dashboard" element={withStaffSuspense(<AdminDashboardPage />)} />
+          <Route path="internal-accounts" element={withStaffSuspense(<InternalAccountsPage />)} />
+          <Route
+            path="internal-accounts/create"
+            element={withStaffSuspense(<InternalAccountFormPage mode="create" />)}
+          />
+          <Route
+            path="internal-accounts/:id/edit"
+            element={withStaffSuspense(<InternalAccountFormPage mode="edit" />)}
+          />
+          <Route path="customers" element={withStaffSuspense(<CustomersPage />)} />
+        </Route>
+
+        {/* Store Operations Staff Portal */}
+        <Route
+          path="/staff"
+          element={
+            <ProtectedRoute allowedRoles={["STAFF"]}>
+              {withStaffSuspense(<StaffLayout />)}
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={withStaffSuspense(<DashboardPage />)} />
+          <Route path="dashboard" element={withStaffSuspense(<DashboardPage />)} />
+          <Route path="products" element={withStaffSuspense(<ProductsPage />)} />
+          <Route path="products/add" element={withStaffSuspense(<ProductFormPage mode="add" />)} />
+          <Route
+            path="products/edit/:id"
+            element={withStaffSuspense(<ProductFormPage mode="edit" />)}
+          />
+          <Route path="categories" element={withStaffSuspense(<CategoriesPage />)} />
+          <Route
+            path="categories/add"
+            element={withStaffSuspense(<CategoryFormPage mode="add" />)}
+          />
+          <Route
+            path="categories/edit/:id"
+            element={withStaffSuspense(<CategoryFormPage mode="edit" />)}
+          />
+          <Route path="brands" element={withStaffSuspense(<BrandsPage />)} />
+          <Route path="brands/add" element={withStaffSuspense(<BrandFormPage mode="add" />)} />
+          <Route
+            path="brands/edit/:id"
+            element={withStaffSuspense(<BrandFormPage mode="edit" />)}
+          />
         </Route>
 
         <Route path="/" element={<MainLayout />}>
           <Route index element={<HomePage />} />
-          <Route path="/products" element={<ProductPage />} />
           <Route path="/products/:id" element={<ProductDetailPage />} />
           <Route
             path="/cart"

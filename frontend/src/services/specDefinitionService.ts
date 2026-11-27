@@ -18,16 +18,6 @@ export const getSpecDefinitionsByCategory = async (
   return response.data;
 };
 
-export const getSpecDefinitionById = async (
-  categoryId: number,
-  id: number
-): Promise<SpecDefinition> => {
-  const response = await axiosClient.get<SpecDefinition>(
-    `/categories/${categoryId}/spec-definitions/${id}`
-  );
-  return response.data;
-};
-
 export const createSpecDefinition = async (
   categoryId: number,
   payload: SpecDefinitionCreateRequest
@@ -58,7 +48,6 @@ export const deleteSpecDefinition = async (
   await axiosClient.delete(`/categories/${categoryId}/spec-definitions/${id}`);
 };
 
-// Spec Option APIs
 export const getSpecDefinitionOptions = async (
   categoryId: number,
   specDefId: number
@@ -76,19 +65,6 @@ export const createSpecDefinitionOption = async (
 ): Promise<SpecDefinitionOption> => {
   const response = await axiosClient.post<SpecDefinitionOption>(
     `/categories/${categoryId}/spec-definitions/${specDefId}/options`,
-    payload
-  );
-  return response.data;
-};
-
-export const updateSpecDefinitionOption = async (
-  categoryId: number,
-  specDefId: number,
-  optionId: number,
-  payload: SpecDefinitionOptionCreateRequest
-): Promise<SpecDefinitionOption> => {
-  const response = await axiosClient.put<SpecDefinitionOption>(
-    `/categories/${categoryId}/spec-definitions/${specDefId}/options/${optionId}`,
     payload
   );
   return response.data;

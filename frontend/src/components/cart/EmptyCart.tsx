@@ -11,86 +11,104 @@ const EmptyCart = () => {
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        py: { xs: 8, md: 12 },
-        px: 3,
+        py: { xs: 8, md: 10 },
+        px: { xs: 3, md: 5 },
         textAlign: "center",
-        backgroundColor: "#121214",
-        border: "1px solid rgba(255, 255, 255, 0.05)",
-        borderRadius: "28px",
-        maxWidth: "680px",
+        backgroundColor: "rgba(15, 15, 20, 0.90)",
+        backdropFilter: "blur(20px)",
+        border: "1px solid rgba(255, 255, 255, 0.10)",
+        borderTop: "1px solid rgba(255, 255, 255, 0.25)",
+        borderRadius: "16px",
+        boxShadow: "0 24px 60px rgba(0, 0, 0, 0.75)",
+        maxWidth: "660px",
         mx: "auto",
         my: 4,
       }}
     >
-      {/* Gold Circular Icon Cover */}
       <Box
         sx={{
-          backgroundColor: "rgba(226, 138, 58, 0.08)",
-          border: "1px solid rgba(226, 138, 58, 0.15)",
+          backgroundColor: "rgba(255, 103, 0, 0.10)",
+          border: "1px solid rgba(255, 103, 0, 0.35)",
           borderRadius: "50%",
-          width: 96,
-          height: 96,
+          width: 88,
+          height: 88,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          mb: 4.5,
-          boxShadow: "0 10px 30px rgba(226, 138, 58, 0.05)",
+          mb: 4,
+          boxShadow: "0 0 30px rgba(255, 103, 0, 0.18)",
         }}
       >
-        <ShoppingBagOutlinedIcon sx={{ fontSize: "2.8rem", color: "#e28a3a" }} />
+        <ShoppingBagOutlinedIcon sx={{ fontSize: "2.4rem", color: "#FF6700" }} />
       </Box>
 
-      {/* Message Title */}
+      <Typography
+        sx={{
+          fontFamily: "var(--font-mono)",
+          fontSize: "0.68rem",
+          fontWeight: 800,
+          letterSpacing: "0.16em",
+          color: "#FF6700",
+          textTransform: "uppercase",
+          mb: 1.2,
+        }}
+      >
+        NO ACTIVE ALLOCATIONS
+      </Typography>
+
       <Typography
         variant="h4"
         sx={{
-          color: "#ffffff",
-          fontWeight: 800,
-          mb: 2,
-          fontFamily: "'Outfit', sans-serif",
-          fontSize: { xs: "1.8rem", md: "2.2rem" },
+          color: "#FFFFFF",
+          fontWeight: 950,
+          mb: 1.75,
+          fontFamily: "var(--font-display)",
+          fontSize: { xs: "1.75rem", md: "2.15rem" },
+          letterSpacing: "-0.025em",
+          textTransform: "uppercase",
         }}
       >
         Your Cart is Empty
       </Typography>
 
-      {/* Description */}
       <Typography
-        variant="body1"
         sx={{
-          color: "rgba(255, 255, 255, 0.45)",
-          maxWidth: "460px",
+          color: "#A1A1AA",
+          fontFamily: "var(--font-body)",
+          maxWidth: "430px",
           mx: "auto",
-          lineHeight: 1.6,
-          mb: 5,
-          fontSize: { xs: "0.95rem", md: "1.05rem" },
+          lineHeight: 1.65,
+          mb: 4.5,
+          fontSize: { xs: "0.94rem", md: "1rem" },
         }}
       >
-        Explore our curated collection of premium motorcycles and find your next ride. Simple financing and nationwide delivery available.
+        Select your next READY TO RACE machine from our official KTM flagship lineup.
       </Typography>
 
-      {/* Action CTA */}
       <Button
         component={Link}
-        to="/products"
+        to="/#fleet"
         variant="contained"
         endIcon={<ArrowForwardIcon />}
         sx={{
-          backgroundColor: "#e28a3a",
-          color: "#000000",
-          fontWeight: 800,
-          borderRadius: "100px",
-          px: 5,
-          py: 1.8,
-          fontSize: "1rem",
-          textTransform: "none",
-          boxShadow: "0 10px 20px rgba(226, 138, 58, 0.2)",
+          backgroundColor: "#FF6700",
+          color: "#070709",
+          fontFamily: "var(--font-display)",
+          fontWeight: 900,
+          borderRadius: "8px",
+          px: 4.5,
+          py: 1.5,
+          fontSize: "0.9rem",
+          letterSpacing: "0.06em",
+          textTransform: "uppercase",
+          boxShadow: "0 0 24px rgba(255, 103, 0, 0.35)",
           "&:hover": {
-            backgroundColor: "#f0a256",
+            backgroundColor: "#FF7D24",
+            boxShadow: "0 0 32px rgba(255, 103, 0, 0.55)",
           },
         }}
       >
-        Browse Motorcycles
+        Explore Lineup
       </Button>
     </Box>
   );

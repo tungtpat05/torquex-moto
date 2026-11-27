@@ -7,46 +7,54 @@ const darkTheme = createTheme({
   palette: {
     mode: "dark",
     primary: {
-      main: "#e28a3a", // Gold/Amber accent color
-      contrastText: "#000000",
+      main: "#FF6700", // KTM Ready to Race Orange
+      contrastText: "#070709",
     },
     secondary: {
-      main: "#a1a1aa", // Muted slate gray
+      main: "#A1A1AA", // Telemetry slate
     },
     background: {
-      default: "#09090b", // Deep dark background
-      paper: "#121215", // Sleek dark surface background
+      default: "#070709", // Canvas black
+      paper: "#0F0F14", // Paddock surface
     },
     text: {
-      primary: "#ffffff",
-      secondary: "#a1a1aa", // Zinc 400
+      primary: "#F4F4F5",
+      secondary: "#A1A1AA",
     },
   },
   typography: {
-    fontFamily: '"Outfit", "Inter", "Segoe UI", "Roboto", sans-serif',
+    fontFamily: 'var(--font-body)',
     h1: {
+      fontFamily: 'var(--font-display)',
       fontWeight: 900,
       letterSpacing: "-0.03em",
     },
     h2: {
+      fontFamily: 'var(--font-display)',
+      fontWeight: 800,
+      letterSpacing: "-0.02em",
+    },
+    h3: {
+      fontFamily: 'var(--font-display)',
       fontWeight: 800,
       letterSpacing: "-0.02em",
     },
     h4: {
+      fontFamily: 'var(--font-display)',
       fontWeight: 700,
     },
     button: {
       textTransform: "none",
-      fontWeight: 600,
+      fontWeight: 700,
     },
   },
   components: {
     MuiCssBaseline: {
       styleOverrides: {
         body: {
-          backgroundColor: "#09090b",
-          color: "#ffffff",
-          fontFamily: '"Outfit", "Inter", "Segoe UI", sans-serif',
+          backgroundColor: "#070709",
+          color: "#F4F4F5",
+          fontFamily: 'var(--font-body)',
         },
       },
     },
@@ -54,9 +62,9 @@ const darkTheme = createTheme({
       styleOverrides: {
         root: {
           backgroundImage: "none",
-          backgroundColor: "rgba(9, 9, 11, 0.8)",
+          backgroundColor: "rgba(7, 7, 9, 0.85)",
           backdropFilter: "blur(20px)",
-          borderBottom: "1px solid rgba(255, 255, 255, 0.05)",
+          borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
         },
       },
     },
@@ -78,6 +86,7 @@ const darkTheme = createTheme({
       styleOverrides: {
         root: {
           borderRadius: 8,
+          fontWeight: 800,
         },
       },
     },

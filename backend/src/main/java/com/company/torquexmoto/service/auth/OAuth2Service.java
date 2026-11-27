@@ -6,6 +6,7 @@ import com.company.torquexmoto.entity.user.UserSocialAccount;
 import com.company.torquexmoto.repository.user.UserRepository;
 import com.company.torquexmoto.repository.user.UserSocialAccountRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +24,9 @@ public class OAuth2Service {
     @Transactional
     public String processOAuth2Login(OAuth2User oAuth2User) {
         User user = findOrCreateOAuth2User(oAuth2User);
+        if (!Boolean.TRUE.equals(user.getIsActive())) {
+            throw new DisabledException("Account is disabled. Please contact administrator.");
+        }
         return jwtService.generateToken(user);
     }
 

@@ -4,10 +4,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import com.company.torquexmoto.entity.user.UserSocialAccount;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface UserSocialAccountRepository extends JpaRepository<UserSocialAccount, Integer> {
     Optional<UserSocialAccount> findByProviderAndProviderId(String provider, String providerId);
+    List<UserSocialAccount> findByUserIdIn(Collection<Integer> userIds);
 }
 

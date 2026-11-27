@@ -2,7 +2,6 @@ package com.company.torquexmoto.dto.product.request;
 
 import lombok.*;
 import jakarta.validation.constraints.*;
-import org.hibernate.validator.constraints.URL;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -13,7 +12,7 @@ public class BrandUpdateRequest {
     private String brandName;
 
     @NotBlank(message = "Logo URL must not be blank")
-    @URL(message = "Logo URL must be a valid URL")
+    @Pattern(regexp = MediaValidation.MEDIA_PATH_REGEX, message = MediaValidation.MEDIA_PATH_MESSAGE)
     private String logoUrl;
 
     private String logoPublicId;

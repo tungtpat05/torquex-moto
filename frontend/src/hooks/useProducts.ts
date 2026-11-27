@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Product } from "../types/product";
 import { getProducts, getProductsByCategory } from "../services/productService";
 
@@ -11,31 +11,28 @@ export const useProducts = (options?: UseProductsOptions) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        let data: Product[];
-        if (options?.categoryId) {
-          data = await getProductsByCategory(options.categoryId);
-        } else {
-          data = await getProducts();
-        }
-        
-        setProducts(data);
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "Failed to load products";
-        setError(errorMessage);
-        console.error("useProducts error:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchProducts = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-    void fetchProducts();
+      const data = options?.categoryId
+        ? await getProductsByCategory(options.categoryId)
+        : await getProducts();
+
+      setProducts(data);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to load products";
+      setError(errorMessage);
+      console.error("useProducts error:", err);
+    } finally {
+      setLoading(false);
+    }
   }, [options?.categoryId]);
 
-  return { products, loading, error };
+  useEffect(() => {
+    void fetchProducts();
+  }, [fetchProducts]);
+
+  return { products, loading, error, refetch: fetchProducts };
 };

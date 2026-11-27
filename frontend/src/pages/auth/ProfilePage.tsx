@@ -1,18 +1,19 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
-  Container,
-  Box,
-  Paper,
-  Typography,
+  Alert,
   Avatar,
-  Chip,
+  Box,
+  Breadcrumbs,
   Button,
-  Grid,
-  Divider,
-  Stack,
-  Skeleton,
   Card,
   CardContent,
+  Chip,
+  Divider,
+  Grid,
+  Paper,
+  Skeleton,
+  Stack,
+  Typography,
 } from "@mui/material";
 import PersonIcon from "@mui/icons-material/Person";
 import EmailIcon from "@mui/icons-material/Email";
@@ -23,31 +24,47 @@ import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import LogoutIcon from "@mui/icons-material/Logout";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import { useNavigate } from "react-router-dom";
+import NavigateNextIcon from "@mui/icons-material/NavigateNext";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context";
 import { getUser } from "../../services/authService";
 import { User } from "../../types/user";
+import { isAdminRole, isStaffRole, normalizeRole } from "../../utils/role";
+
+const paddockCardSx = {
+  borderRadius: "16px",
+  backgroundColor: "rgba(15, 15, 20, 0.90)",
+  backdropFilter: "blur(20px)",
+  backgroundImage: "none",
+  border: "1px solid rgba(255, 255, 255, 0.10)",
+  borderTop: "1px solid rgba(255, 255, 255, 0.25)",
+  boxShadow: "0 20px 50px rgba(0, 0, 0, 0.70)",
+  color: "#F4F4F5",
+};
 
 const ProfilePage = () => {
   const navigate = useNavigate();
   const { user: contextUser, logout } = useAuth();
   const [profileUser, setProfileUser] = useState<User | null>(contextUser);
   const [loading, setLoading] = useState<boolean>(!contextUser);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+
+  const fetchFreshUserData = useCallback(async () => {
+    try {
+      setFetchError(null);
+      const freshData = await getUser();
+      setProfileUser(freshData);
+    } catch (err) {
+      console.error("Failed to fetch profile details:", err);
+      setFetchError("Unable to refresh rider profile telemetry. Showing cached session info.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchFreshUserData = async () => {
-      try {
-        const freshData = await getUser();
-        setProfileUser(freshData);
-      } catch (err) {
-        console.error("Failed to fetch profile details:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchFreshUserData();
-  }, []);
+    void fetchFreshUserData();
+  }, [fetchFreshUserData]);
 
   const displayUser = profileUser || contextUser;
 
@@ -55,8 +72,10 @@ const ProfilePage = () => {
     ? displayUser.fullName.trim().charAt(0).toUpperCase()
     : "U";
 
-  const userRole = displayUser?.role?.toUpperCase() || "";
-  const isAdmin = userRole === "ADMIN" || userRole === "ROLE_ADMIN";
+  const userRole = normalizeRole(displayUser?.role) || "CUSTOMER";
+  const isStaff = isStaffRole(displayUser?.role);
+  const isAdmin = isAdminRole(displayUser?.role);
+  const isPrivilegedRole = isStaff || isAdmin;
 
   const handleLogout = async () => {
     await logout();
@@ -71,7 +90,7 @@ const ProfilePage = () => {
         month: "long",
         day: "numeric",
       });
-    } catch (_e) {
+    } catch {
       return dateString;
     }
   };
@@ -79,63 +98,122 @@ const ProfilePage = () => {
   return (
     <Box
       sx={{
+        position: "relative",
         minHeight: "100vh",
-        backgroundColor: "#09090b",
-        pt: { xs: 2, md: 4 },
-        pb: 2,
-        px: 2,
+        backgroundColor: "#070709",
+        pt: { xs: 2, md: 3 },
+        pb: 12,
+        overflowX: "hidden",
       }}
     >
-      <Container maxWidth="lg">
-        {/* Navigation Breadcrumb / Back button */}
-        <Box sx={{ mb: 1.5, display: "flex", alignItems: "center" }}>
-          <Button
-            startIcon={<ArrowBackIcon />}
-            onClick={() => navigate("/")}
+      {/* Overhead Ambient Studio Glow */}
+      <Box
+        sx={{
+          position: "absolute",
+          top: "-140px",
+          left: "50%",
+          transform: "translateX(-50%)",
+          width: "1000px",
+          height: "380px",
+          background:
+            "radial-gradient(ellipse at center, rgba(255, 103, 0, 0.10) 0%, rgba(255, 103, 0, 0.02) 52%, transparent 76%)",
+          filter: "blur(50px)",
+          pointerEvents: "none",
+        }}
+      />
+
+      <Box
+        sx={{
+          position: "relative",
+          zIndex: 2,
+          maxWidth: "1440px",
+          mx: "auto",
+          px: { xs: 2.5, md: 6, lg: 8 },
+        }}
+      >
+        <Breadcrumbs
+          separator={<NavigateNextIcon sx={{ fontSize: "0.95rem", color: "#71717A" }} />}
+          aria-label="breadcrumb"
+          sx={{ mb: 4 }}
+        >
+          <Typography
+            component={Link}
+            to="/"
             sx={{
-              color: "#a1a1aa",
-              "&:hover": { color: "#ffffff", backgroundColor: "rgba(255, 255, 255, 0.05)" },
+              color: "#A1A1AA",
+              textDecoration: "none",
+              fontFamily: "var(--font-mono)",
+              fontSize: "0.68rem",
+              fontWeight: 700,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              "&:hover": { color: "#FF6700" },
             }}
           >
-            Back to Store
-          </Button>
-        </Box>
+            Home
+          </Typography>
+          <Typography
+            sx={{
+              color: "#FF6700",
+              fontFamily: "var(--font-mono)",
+              fontSize: "0.68rem",
+              fontWeight: 800,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+            }}
+          >
+            Rider Account
+          </Typography>
+        </Breadcrumbs>
+
+        {fetchError && (
+          <Alert
+            severity="warning"
+            action={
+              <Button
+                color="inherit"
+                size="small"
+                onClick={() => void fetchFreshUserData()}
+                sx={{ fontFamily: "var(--font-mono)", fontWeight: 800 }}
+              >
+                RETRY
+              </Button>
+            }
+            sx={{
+              mb: 3,
+              backgroundColor: "rgba(255, 103, 0, 0.12)",
+              color: "#F4F4F5",
+              border: "1px solid rgba(255, 103, 0, 0.35)",
+              borderRadius: "8px",
+            }}
+          >
+            {fetchError}
+          </Alert>
+        )}
 
         {/* Profile Header Hero Card */}
-        <Paper
-          elevation={0}
-          sx={{
-            p: { xs: 3, sm: 4 },
-            mb: 4,
-            borderRadius: 4,
-            backgroundColor: "#121215",
-            backgroundImage: "none",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
-            boxShadow: "0 20px 40px rgba(0, 0, 0, 0.6)",
-            position: "relative",
-            overflow: "hidden",
-          }}
-        >
+        <Paper elevation={0} sx={{ ...paddockCardSx, p: { xs: 3, sm: 4 }, mb: 4 }}>
           <Grid container spacing={3} alignItems="center">
             <Grid size="auto">
               {loading ? (
                 <Skeleton
                   variant="circular"
-                  width={100}
-                  height={100}
+                  width={96}
+                  height={96}
                   sx={{ bgcolor: "rgba(255, 255, 255, 0.1)" }}
                 />
               ) : (
                 <Avatar
                   sx={{
-                    width: { xs: 80, sm: 100 },
-                    height: { xs: 80, sm: 100 },
-                    bgcolor: "rgba(255, 107, 53, 0.15)",
-                    color: "#ff6b35",
-                    fontSize: { xs: "2.2rem", sm: "2.8rem" },
-                    fontWeight: 900,
-                    border: "3px solid #ff6b35",
-                    boxShadow: "0 0 24px rgba(255, 107, 53, 0.4)",
+                    width: { xs: 76, sm: 96 },
+                    height: { xs: 76, sm: 96 },
+                    bgcolor: "rgba(255, 103, 0, 0.14)",
+                    color: "#FF6700",
+                    fontFamily: "var(--font-display)",
+                    fontSize: { xs: "2rem", sm: "2.6rem" },
+                    fontWeight: 950,
+                    border: "2.5px solid #FF6700",
+                    boxShadow: "0 0 28px rgba(255, 103, 0, 0.35)",
                   }}
                 >
                   {initialLetter}
@@ -152,33 +230,56 @@ const ProfilePage = () => {
               ) : (
                 <Box>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap", mb: 1 }}>
-                    <Typography variant="h4" component="h1" fontWeight={800} sx={{ color: "#ffffff" }}>
-                      {displayUser?.fullName || "User Profile"}
+                    <Typography
+                      component="h1"
+                      sx={{
+                        fontFamily: "var(--font-display)",
+                        fontWeight: 950,
+                        fontSize: { xs: "1.65rem", sm: "2.15rem" },
+                        letterSpacing: "-0.025em",
+                        color: "#FFFFFF",
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      {displayUser?.fullName || "Rider Profile"}
                     </Typography>
                     <Chip
-                      icon={isAdmin ? <AdminPanelSettingsIcon /> : <ShieldIcon />}
-                      label={userRole || "CUSTOMER"}
+                      icon={isPrivilegedRole ? <AdminPanelSettingsIcon /> : <ShieldIcon />}
+                      label={userRole}
                       sx={{
-                        backgroundColor: isAdmin ? "rgba(255, 107, 53, 0.18)" : "rgba(16, 185, 129, 0.18)",
-                        color: isAdmin ? "#ff6b35" : "#10b981",
-                        border: `1px solid ${isAdmin ? "rgba(255, 107, 53, 0.4)" : "rgba(16, 185, 129, 0.4)"}`,
-                        fontWeight: 700,
-                        fontSize: "0.8rem",
+                        backgroundColor: isPrivilegedRole ? "rgba(255, 103, 0, 0.16)" : "rgba(16, 185, 129, 0.14)",
+                        color: isPrivilegedRole ? "#FF6700" : "#10B981",
+                        border: `1px solid ${isPrivilegedRole ? "rgba(255, 103, 0, 0.4)" : "rgba(16, 185, 129, 0.35)"}`,
+                        fontFamily: "var(--font-mono)",
+                        fontWeight: 800,
+                        fontSize: "0.72rem",
                       }}
                     />
                     <Chip
-                      icon={<CheckCircleIcon sx={{ fontSize: "1rem !important" }} />}
+                      icon={<CheckCircleIcon sx={{ fontSize: "1rem !important", color: "#10B981 !important" }} />}
                       label="Active Account"
                       size="small"
                       sx={{
-                        backgroundColor: "rgba(255, 255, 255, 0.05)",
-                        color: "#a1a1aa",
-                        border: "1px solid rgba(255, 255, 255, 0.1)",
+                        backgroundColor: "rgba(255, 255, 255, 0.04)",
+                        color: "#D4D4D8",
+                        border: "1px solid rgba(255, 255, 255, 0.12)",
+                        fontFamily: "var(--font-mono)",
+                        fontSize: "0.68rem",
                       }}
                     />
                   </Box>
-                  <Typography variant="body1" sx={{ color: "#a1a1aa", display: "flex", alignItems: "center", gap: 1 }}>
-                    <EmailIcon sx={{ fontSize: 18, color: "#ff6b35" }} />
+                  <Typography
+                    sx={{
+                      color: "#A1A1AA",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      fontFamily: "var(--font-mono)",
+                      fontSize: "0.82rem",
+                      overflowWrap: "anywhere",
+                    }}
+                  >
+                    <EmailIcon sx={{ fontSize: 17, color: "#FF6700", flexShrink: 0 }} />
                     {displayUser?.email}
                   </Typography>
                 </Box>
@@ -193,15 +294,38 @@ const ProfilePage = () => {
                     startIcon={<AdminPanelSettingsIcon />}
                     onClick={() => navigate("/admin/dashboard")}
                     sx={{
-                      backgroundColor: "#ff6b35",
-                      color: "#ffffff",
-                      fontWeight: 700,
-                      borderRadius: 2,
-                      boxShadow: "0 8px 20px rgba(255, 107, 53, 0.3)",
-                      "&:hover": { backgroundColor: "#e05a2b" },
+                      backgroundColor: "#FF6700",
+                      color: "#070709",
+                      fontFamily: "var(--font-display)",
+                      fontWeight: 900,
+                      letterSpacing: "0.05em",
+                      textTransform: "uppercase",
+                      borderRadius: "8px",
+                      boxShadow: "0 0 24px rgba(255, 103, 0, 0.35)",
+                      "&:hover": { backgroundColor: "#FF7D24" },
                     }}
                   >
-                    Admin Dashboard
+                    Admin Portal
+                  </Button>
+                )}
+                {isStaff && (
+                  <Button
+                    variant="contained"
+                    startIcon={<AdminPanelSettingsIcon />}
+                    onClick={() => navigate("/staff/dashboard")}
+                    sx={{
+                      backgroundColor: "#FF6700",
+                      color: "#070709",
+                      fontFamily: "var(--font-display)",
+                      fontWeight: 900,
+                      letterSpacing: "0.05em",
+                      textTransform: "uppercase",
+                      borderRadius: "8px",
+                      boxShadow: "0 0 24px rgba(255, 103, 0, 0.35)",
+                      "&:hover": { backgroundColor: "#FF7D24" },
+                    }}
+                  >
+                    Staff Portal
                   </Button>
                 )}
                 <Button
@@ -210,12 +334,16 @@ const ProfilePage = () => {
                   onClick={handleLogout}
                   sx={{
                     borderColor: "rgba(239, 68, 68, 0.4)",
-                    color: "#fca5a5",
-                    fontWeight: 600,
-                    borderRadius: 2,
+                    color: "#FCA5A5",
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "0.76rem",
+                    fontWeight: 700,
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                    borderRadius: "8px",
                     "&:hover": {
-                      borderColor: "#ef4444",
-                      backgroundColor: "rgba(239, 68, 68, 0.1)",
+                      borderColor: "#EF4444",
+                      backgroundColor: "rgba(239, 68, 68, 0.12)",
                     },
                   }}
                 >
@@ -233,45 +361,115 @@ const ProfilePage = () => {
             <Card
               elevation={0}
               sx={{
+                ...paddockCardSx,
                 height: "100%",
-                borderRadius: 4,
-                backgroundColor: "#121215",
-                backgroundImage: "none",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
-                boxShadow: "0 12px 32px rgba(0, 0, 0, 0.4)",
-                color: "#ffffff",
-                transition: "all 0.25s ease",
-                "&:hover": {
-                  borderColor: "rgba(255, 107, 53, 0.3)",
-                  boxShadow: "0 16px 36px rgba(0, 0, 0, 0.6), 0 0 20px rgba(255, 107, 53, 0.08)",
-                  transform: "translateY(-3px)",
-                },
+                transition: "border-color 0.25s ease",
+                "&:hover": { borderColor: "rgba(255, 103, 0, 0.4)" },
               }}
             >
-              <CardContent sx={{ p: 3.5 }}>
-                <Typography variant="h6" fontWeight={700} sx={{ mb: 2.5, color: "#ff6b35", display: "flex", alignItems: "center", gap: 1.2 }}>
-                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", p: 0.8, borderRadius: 2, bgcolor: "rgba(255, 107, 53, 0.12)", color: "#ff6b35" }}>
-                    <PersonIcon sx={{ fontSize: 20 }} />
+              <CardContent sx={{ p: { xs: 3, md: 3.5 } }}>
+                <Box sx={{ mb: 2.5, display: "flex", alignItems: "center", gap: 1.25 }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      p: 0.9,
+                      borderRadius: "8px",
+                      bgcolor: "rgba(255, 103, 0, 0.14)",
+                      border: "1px solid rgba(255, 103, 0, 0.3)",
+                      color: "#FF6700",
+                    }}
+                  >
+                    <PersonIcon sx={{ fontSize: 19 }} />
                   </Box>
-                  User Information
-                </Typography>
-                <Divider sx={{ mb: 3, borderColor: "rgba(255, 255, 255, 0.07)" }} />
+                  <Typography
+                    component="h2"
+                    sx={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: "0.78rem",
+                      fontWeight: 800,
+                      letterSpacing: "0.12em",
+                      textTransform: "uppercase",
+                      color: "#FF6700",
+                    }}
+                  >
+                    Rider Telemetry
+                  </Typography>
+                </Box>
+                <Divider sx={{ mb: 3, borderColor: "rgba(255, 255, 255, 0.08)" }} />
 
                 <Stack spacing={2.5}>
-                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", py: 0.5 }}>
-                    <Typography variant="body2" sx={{ color: "#a1a1aa", display: "flex", alignItems: "center", gap: 1.2, fontWeight: 500 }}>
-                      <PersonIcon sx={{ fontSize: 18, color: "rgba(255, 255, 255, 0.35)" }} /> Full Name
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "baseline",
+                      justifyContent: "space-between",
+                      flexWrap: "wrap",
+                      gap: 1.5,
+                      py: 0.5,
+                    }}
+                  >
+                    <Typography
+                      sx={{
+                        color: "#A1A1AA",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        fontFamily: "var(--font-mono)",
+                        fontSize: "0.74rem",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.06em",
+                      }}
+                    >
+                      <PersonIcon sx={{ fontSize: 17, color: "#71717A" }} /> Full Name
                     </Typography>
-                    <Typography variant="body1" fontWeight={600} sx={{ color: "#ffffff" }}>
+                    <Typography
+                      sx={{
+                        color: "#FFFFFF",
+                        fontWeight: 700,
+                        overflowWrap: "anywhere",
+                        textAlign: "right",
+                      }}
+                    >
                       {displayUser?.fullName || "N/A"}
                     </Typography>
                   </Box>
 
-                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", py: 0.5 }}>
-                    <Typography variant="body2" sx={{ color: "#a1a1aa", display: "flex", alignItems: "center", gap: 1.2, fontWeight: 500 }}>
-                      <EmailIcon sx={{ fontSize: 18, color: "rgba(255, 255, 255, 0.35)" }} /> Email Address
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "baseline",
+                      justifyContent: "space-between",
+                      flexWrap: "wrap",
+                      gap: 1.5,
+                      py: 0.5,
+                    }}
+                  >
+                    <Typography
+                      sx={{
+                        color: "#A1A1AA",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        fontFamily: "var(--font-mono)",
+                        fontSize: "0.74rem",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.06em",
+                      }}
+                    >
+                      <EmailIcon sx={{ fontSize: 17, color: "#71717A" }} /> Email Address
                     </Typography>
-                    <Typography variant="body1" fontWeight={600} sx={{ color: "#ffffff" }}>
+                    <Typography
+                      sx={{
+                        color: "#FFFFFF",
+                        fontFamily: "var(--font-mono)",
+                        fontSize: "0.86rem",
+                        fontWeight: 700,
+                        overflowWrap: "anywhere",
+                        textAlign: "right",
+                      }}
+                    >
                       {displayUser?.email || "N/A"}
                     </Typography>
                   </Box>
@@ -285,54 +483,137 @@ const ProfilePage = () => {
             <Card
               elevation={0}
               sx={{
+                ...paddockCardSx,
                 height: "100%",
-                borderRadius: 4,
-                backgroundColor: "#121215",
-                backgroundImage: "none",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
-                boxShadow: "0 12px 32px rgba(0, 0, 0, 0.4)",
-                color: "#ffffff",
-                transition: "all 0.25s ease",
-                "&:hover": {
-                  borderColor: "rgba(255, 107, 53, 0.3)",
-                  boxShadow: "0 16px 36px rgba(0, 0, 0, 0.6), 0 0 20px rgba(255, 107, 53, 0.08)",
-                  transform: "translateY(-3px)",
-                },
+                transition: "border-color 0.25s ease",
+                "&:hover": { borderColor: "rgba(255, 103, 0, 0.4)" },
               }}
             >
-              <CardContent sx={{ p: 3.5 }}>
-                <Typography variant="h6" fontWeight={700} sx={{ mb: 2.5, color: "#ff6b35", display: "flex", alignItems: "center", gap: 1.2 }}>
-                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", p: 0.8, borderRadius: 2, bgcolor: "rgba(255, 107, 53, 0.12)", color: "#ff6b35" }}>
-                    <ShieldIcon sx={{ fontSize: 20 }} />
+              <CardContent sx={{ p: { xs: 3, md: 3.5 } }}>
+                <Box sx={{ mb: 2.5, display: "flex", alignItems: "center", gap: 1.25 }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      p: 0.9,
+                      borderRadius: "8px",
+                      bgcolor: "rgba(255, 103, 0, 0.14)",
+                      border: "1px solid rgba(255, 103, 0, 0.3)",
+                      color: "#FF6700",
+                    }}
+                  >
+                    <ShieldIcon sx={{ fontSize: 19 }} />
                   </Box>
-                  Account Security & Role
-                </Typography>
-                <Divider sx={{ mb: 3, borderColor: "rgba(255, 255, 255, 0.07)" }} />
+                  <Typography
+                    component="h2"
+                    sx={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: "0.78rem",
+                      fontWeight: 800,
+                      letterSpacing: "0.12em",
+                      textTransform: "uppercase",
+                      color: "#FF6700",
+                    }}
+                  >
+                    Account Security &amp; Role
+                  </Typography>
+                </Box>
+                <Divider sx={{ mb: 3, borderColor: "rgba(255, 255, 255, 0.08)" }} />
 
                 <Stack spacing={2.5}>
-                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", py: 0.5 }}>
-                    <Typography variant="body2" sx={{ color: "#a1a1aa", display: "flex", alignItems: "center", gap: 1.2, fontWeight: 500 }}>
-                      <ShieldIcon sx={{ fontSize: 18, color: "rgba(255, 255, 255, 0.35)" }} /> Access Level
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "baseline",
+                      justifyContent: "space-between",
+                      flexWrap: "wrap",
+                      gap: 1.5,
+                      py: 0.5,
+                    }}
+                  >
+                    <Typography
+                      sx={{
+                        color: "#A1A1AA",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        fontFamily: "var(--font-mono)",
+                        fontSize: "0.74rem",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.06em",
+                      }}
+                    >
+                      <ShieldIcon sx={{ fontSize: 17, color: "#71717A" }} /> Access Level
                     </Typography>
-                    <Typography variant="body1" fontWeight={700} sx={{ color: isAdmin ? "#ff6b35" : "#10b981" }}>
+                    <Typography
+                      sx={{
+                        fontFamily: "var(--font-mono)",
+                        fontWeight: 800,
+                        color: isPrivilegedRole ? "#FF6700" : "#10B981",
+                      }}
+                    >
                       {userRole}
                     </Typography>
                   </Box>
 
-                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", py: 0.5 }}>
-                    <Typography variant="body2" sx={{ color: "#a1a1aa", display: "flex", alignItems: "center", gap: 1.2, fontWeight: 500 }}>
-                      <CheckCircleIcon sx={{ fontSize: 18, color: "rgba(255, 255, 255, 0.35)" }} /> Account Status
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "baseline",
+                      justifyContent: "space-between",
+                      flexWrap: "wrap",
+                      gap: 1.5,
+                      py: 0.5,
+                    }}
+                  >
+                    <Typography
+                      sx={{
+                        color: "#A1A1AA",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        fontFamily: "var(--font-mono)",
+                        fontSize: "0.74rem",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.06em",
+                      }}
+                    >
+                      <CheckCircleIcon sx={{ fontSize: 17, color: "#71717A" }} /> Account Status
                     </Typography>
-                    <Typography variant="body1" fontWeight={600} sx={{ color: "#10b981" }}>
+                    <Typography sx={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "#10B981" }}>
                       {displayUser?.isActive !== false ? "Active & Verified" : "Suspended"}
                     </Typography>
                   </Box>
 
-                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", py: 0.5 }}>
-                    <Typography variant="body2" sx={{ color: "#a1a1aa", display: "flex", alignItems: "center", gap: 1.2, fontWeight: 500 }}>
-                      <CalendarTodayIcon sx={{ fontSize: 18, color: "rgba(255, 255, 255, 0.35)" }} /> Member Since
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "baseline",
+                      justifyContent: "space-between",
+                      flexWrap: "wrap",
+                      gap: 1.5,
+                      py: 0.5,
+                    }}
+                  >
+                    <Typography
+                      sx={{
+                        color: "#A1A1AA",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        fontFamily: "var(--font-mono)",
+                        fontSize: "0.74rem",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.06em",
+                      }}
+                    >
+                      <CalendarTodayIcon sx={{ fontSize: 17, color: "#71717A" }} /> Member Since
                     </Typography>
-                    <Typography variant="body1" fontWeight={600} sx={{ color: "#ffffff" }}>
+                    <Typography
+                      className="tabular-nums"
+                      sx={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "#FFFFFF" }}
+                    >
                       {formatDate(displayUser?.createdAt)}
                     </Typography>
                   </Box>
@@ -343,23 +624,20 @@ const ProfilePage = () => {
 
           {/* Quick Actions Bar */}
           <Grid size={{ xs: 12 }}>
-            <Paper
-              elevation={0}
-              sx={{
-                p: 3.5,
-                borderRadius: 4,
-                backgroundColor: "#121215",
-                backgroundImage: "none",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
-                boxShadow: "0 12px 32px rgba(0, 0, 0, 0.4)",
-                transition: "all 0.25s ease",
-                "&:hover": {
-                  borderColor: "rgba(255, 107, 53, 0.25)",
-                },
-              }}
-            >
-              <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 2, color: "#ffffff" }}>
-                Quick Actions
+            <Paper elevation={0} sx={{ ...paddockCardSx, p: { xs: 3, md: 3.5 } }}>
+              <Typography
+                component="h2"
+                sx={{
+                  mb: 2,
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "0.76rem",
+                  fontWeight: 800,
+                  letterSpacing: "0.14em",
+                  textTransform: "uppercase",
+                  color: "#A1A1AA",
+                }}
+              >
+                Quick Navigation
               </Typography>
               <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
                 <Button
@@ -367,38 +645,56 @@ const ProfilePage = () => {
                   startIcon={<ShoppingBagIcon />}
                   onClick={() => navigate("/cart")}
                   sx={{
-                    borderColor: "rgba(255, 255, 255, 0.15)",
-                    color: "#ffffff",
-                    borderRadius: 2,
-                    px: 2.5,
-                    py: 1,
-                    fontWeight: 600,
-                    "&:hover": { borderColor: "#ff6b35", backgroundColor: "rgba(255, 107, 53, 0.1)", color: "#ff6b35" },
+                    borderColor: "rgba(255, 255, 255, 0.16)",
+                    backgroundColor: "rgba(255, 255, 255, 0.02)",
+                    color: "#F4F4F5",
+                    borderRadius: "8px",
+                    px: 2.75,
+                    py: 1.1,
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "0.76rem",
+                    fontWeight: 700,
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                    "&:hover": {
+                      borderColor: "#FF6700",
+                      backgroundColor: "rgba(255, 103, 0, 0.08)",
+                      color: "#FF6700",
+                    },
                   }}
                 >
-                  Shopping Cart
+                  Allocation Cart
                 </Button>
                 <Button
                   variant="outlined"
                   startIcon={<ArrowBackIcon />}
-                  onClick={() => navigate("/products")}
+                  onClick={() => navigate("/#fleet")}
                   sx={{
-                    borderColor: "rgba(255, 255, 255, 0.15)",
-                    color: "#ffffff",
-                    borderRadius: 2,
-                    px: 2.5,
-                    py: 1,
-                    fontWeight: 600,
-                    "&:hover": { borderColor: "#ff6b35", backgroundColor: "rgba(255, 107, 53, 0.1)", color: "#ff6b35" },
+                    borderColor: "rgba(255, 255, 255, 0.16)",
+                    backgroundColor: "rgba(255, 255, 255, 0.02)",
+                    color: "#F4F4F5",
+                    borderRadius: "8px",
+                    px: 2.75,
+                    py: 1.1,
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "0.76rem",
+                    fontWeight: 700,
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                    "&:hover": {
+                      borderColor: "#FF6700",
+                      backgroundColor: "rgba(255, 103, 0, 0.08)",
+                      color: "#FF6700",
+                    },
                   }}
                 >
-                  Browse Products
+                  Explore Lineup
                 </Button>
               </Stack>
             </Paper>
           </Grid>
         </Grid>
-      </Container>
+      </Box>
     </Box>
   );
 };

@@ -6,6 +6,7 @@ import com.company.torquexmoto.dto.common.ImageUploadResult;
 import com.company.torquexmoto.exception.StorageException;
 import com.company.torquexmoto.service.storage.ImageStorageService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -18,6 +19,9 @@ import java.util.Map;
 public class CloudinaryStorageService implements ImageStorageService {
 
     private final Cloudinary cloudinary;
+
+    @Value("${cloudinary.folder:torquex-moto}")
+    private String cloudinaryFolder = "torquex-moto";
 
     private static final List<String> ALLOWED_CONTENT_TYPES = List.of(
             "image/jpeg",
@@ -45,7 +49,10 @@ public class CloudinaryStorageService implements ImageStorageService {
         }
 
         try {
-            Map<?, ?> uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.emptyMap());
+            Map<?, ?> options = (cloudinaryFolder != null && !cloudinaryFolder.isBlank())
+                    ? ObjectUtils.asMap("folder", cloudinaryFolder.trim())
+                    : ObjectUtils.emptyMap();
+            Map<?, ?> uploadResult = cloudinary.uploader().upload(file.getBytes(), options);
             String url = (String) uploadResult.get("secure_url");
             String publicId = (String) uploadResult.get("public_id");
             return new ImageUploadResult(url, publicId);
