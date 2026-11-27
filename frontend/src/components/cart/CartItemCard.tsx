@@ -7,12 +7,19 @@ import { CartItemResponse } from "@/types/cart";
 
 interface CartItemCardProps {
   item: CartItemResponse;
+  pending?: boolean;
   onIncrease: (variantId: number) => void;
   onDecrease: (variantId: number) => void;
   onRemove: (variantId: number) => void;
 }
 
-const CartItemCard = ({ item, onIncrease, onDecrease, onRemove }: CartItemCardProps) => {
+const CartItemCard = ({
+  item,
+  pending = false,
+  onIncrease,
+  onDecrease,
+  onRemove,
+}: CartItemCardProps) => {
   const { productId, variantId, productName, thumbnail, variantImage, color, unitPrice, quantity, lineTotal } = item;
 
   const displayImage = variantImage || thumbnail;
@@ -21,9 +28,12 @@ const CartItemCard = ({ item, onIncrease, onDecrease, onRemove }: CartItemCardPr
   return (
     <Box
       sx={{
-        backgroundColor: "#121214",
-        border: "1px solid rgba(255, 255, 255, 0.05)",
-        borderRadius: "20px",
+        backgroundColor: "rgba(15, 15, 20, 0.90)",
+        backdropFilter: "blur(20px)",
+        border: "1px solid rgba(255, 255, 255, 0.10)",
+        borderTop: "1px solid rgba(255, 255, 255, 0.25)",
+        borderRadius: "16px",
+        boxShadow: "0 18px 42px rgba(0, 0, 0, 0.65)",
         p: { xs: 2.5, md: 3 },
         display: "flex",
         flexDirection: { xs: "column", sm: "row" },
@@ -31,94 +41,102 @@ const CartItemCard = ({ item, onIncrease, onDecrease, onRemove }: CartItemCardPr
         justifyContent: "space-between",
         gap: 3,
         mb: 2.5,
-        transition: "all 0.3s ease",
+        opacity: pending ? 0.72 : 1,
+        transition: "border-color 0.25s ease, opacity 0.2s ease",
         "&:hover": {
-          borderColor: "rgba(226, 138, 58, 0.2)",
-          boxShadow: "0 10px 20px rgba(0, 0, 0, 0.3)",
+          borderColor: "rgba(255, 103, 0, 0.45)",
         },
       }}
     >
-      <Box sx={{ display: "flex", gap: 2.5, flex: 1, width: "100%", alignItems: "center" }}>
+      <Box sx={{ display: "flex", gap: 2.5, flex: 1, width: "100%", alignItems: "center", minWidth: 0 }}>
         <Box
           component={Link}
           to={`/products/${productId}`}
+          aria-label={`View ${productName}`}
           sx={{
-            width: { xs: "100px", sm: "140px" },
-            height: { xs: "80px", sm: "110px" },
-            backgroundColor: "#17171a",
-            borderRadius: "14px",
+            width: { xs: "96px", sm: "136px" },
+            height: { xs: "76px", sm: "104px" },
+            backgroundColor: "#16161D",
+            border: "1px solid rgba(255, 255, 255, 0.08)",
+            borderRadius: "12px",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             flexShrink: 0,
             overflow: "hidden",
-            p: 1.5,
+            p: 1.25,
           }}
         >
           <Box
             component="img"
             src={displayImage}
             alt={productName}
+            decoding="async"
             sx={{
               width: "100%",
               height: "100%",
               objectFit: "contain",
-              transition: "transform 0.4s ease",
-              "&:hover": { transform: "scale(1.08)" },
+              transition: "transform 0.35s ease",
+              "&:hover": { transform: "scale(1.06)" },
             }}
           />
         </Box>
 
-        <Box sx={{ flex: 1 }}>
+        <Box sx={{ flex: 1, minWidth: 0 }}>
           <Typography
-            variant="caption"
             sx={{
-              color: "#e28a3a",
+              fontFamily: "var(--font-mono)",
+              color: "#FF6700",
               fontWeight: 800,
-              letterSpacing: "0.08em",
+              letterSpacing: "0.1em",
               textTransform: "uppercase",
-              fontSize: "0.7rem",
-              mb: 0.5,
+              fontSize: "0.66rem",
+              mb: 0.6,
               display: "block",
             }}
           >
-            Color: {colorName}
+            Colorway: {colorName}
           </Typography>
 
           <Typography
             component={Link}
             to={`/products/${productId}`}
-            variant="h6"
             sx={{
-              color: "#ffffff",
-              fontWeight: 800,
-              fontSize: { xs: "1rem", sm: "1.15rem" },
-              mb: 0.8,
-              lineHeight: 1.25,
-              fontFamily: "'Outfit', sans-serif",
+              color: "#FFFFFF",
+              fontWeight: 900,
+              fontSize: { xs: "1.05rem", sm: "1.2rem" },
+              mb: 0.9,
+              lineHeight: 1.15,
+              fontFamily: "var(--font-display)",
+              textTransform: "uppercase",
               textDecoration: "none",
               display: "inline-block",
+              transition: "color 0.2s ease",
               "&:hover": { color: "#FF6700" },
             }}
           >
             {productName}
           </Typography>
 
-          <Box sx={{ display: "flex", gap: 3, mt: 1 }}>
+          <Box sx={{ display: "flex", gap: 3, mt: 0.5 }}>
             <Button
               variant="text"
+              disabled={pending}
               onClick={() => onRemove(variantId)}
               startIcon={<DeleteOutlineIcon sx={{ fontSize: "1rem" }} />}
               sx={{
-                color: "rgba(255, 255, 255, 0.45)",
-                fontSize: "0.78rem",
-                fontWeight: 600,
-                textTransform: "none",
-                p: 0,
+                color: "#A1A1AA",
+                fontFamily: "var(--font-mono)",
+                fontSize: "0.70rem",
+                fontWeight: 700,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                px: 0.75,
+                py: 0.4,
                 minWidth: 0,
                 "&:hover": {
-                  backgroundColor: "transparent",
-                  color: "#ef4444",
+                  backgroundColor: "rgba(239, 68, 68, 0.10)",
+                  color: "#EF4444",
                 },
               }}
             >
@@ -134,54 +152,90 @@ const CartItemCard = ({ item, onIncrease, onDecrease, onRemove }: CartItemCardPr
           alignItems: "center",
           justifyContent: "space-between",
           width: { xs: "100%", sm: "auto" },
-          gap: { xs: 2, sm: 4 },
+          gap: { xs: 2, sm: 3.5 },
         }}
       >
         <Box
           sx={{
             display: "flex",
             alignItems: "center",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
-            borderRadius: "100px",
-            backgroundColor: "rgba(255, 255, 255, 0.02)",
-            p: 0.5,
+            border: "1px solid rgba(255, 255, 255, 0.12)",
+            borderRadius: "8px",
+            backgroundColor: "#16161D",
+            p: 0.4,
           }}
         >
           <IconButton
             size="small"
+            aria-label={`Decrease quantity of ${productName}`}
             onClick={() => onDecrease(variantId)}
-            disabled={quantity <= 1}
+            disabled={pending || quantity <= 1}
             sx={{
-              color: "rgba(255,255,255,0.7)",
-              "&:disabled": { color: "rgba(255,255,255,0.15)" },
+              width: 36,
+              height: 36,
+              borderRadius: "6px",
+              color: "#D4D4D8",
+              "&:hover": { color: "#FF6700", backgroundColor: "rgba(255, 103, 0, 0.08)" },
+              "&.Mui-disabled": { color: "rgba(255, 255, 255, 0.2)" },
             }}
           >
             <RemoveIcon sx={{ fontSize: "0.95rem" }} />
           </IconButton>
           <Typography
+            className="tabular-nums"
             sx={{
-              color: "#ffffff",
+              color: "#FFFFFF",
+              fontFamily: "var(--font-mono)",
               fontWeight: 800,
               fontSize: "0.88rem",
-              px: 2,
+              px: 1.5,
               minWidth: "36px",
               textAlign: "center",
             }}
           >
             {quantity}
           </Typography>
-          <IconButton size="small" onClick={() => onIncrease(variantId)} sx={{ color: "rgba(255,255,255,0.7)" }}>
+          <IconButton
+            size="small"
+            aria-label={`Increase quantity of ${productName}`}
+            onClick={() => onIncrease(variantId)}
+            disabled={pending}
+            sx={{
+              width: 36,
+              height: 36,
+              borderRadius: "6px",
+              color: "#D4D4D8",
+              "&:hover": { color: "#FF6700", backgroundColor: "rgba(255, 103, 0, 0.08)" },
+            }}
+          >
             <AddIcon sx={{ fontSize: "0.95rem" }} />
           </IconButton>
         </Box>
 
-        <Box sx={{ textAlign: "right", minWidth: { xs: "auto", sm: "110px" } }}>
-          <Typography variant="h6" sx={{ color: "#ffffff", fontWeight: 800, fontSize: "1.15rem" }}>
+        <Box sx={{ textAlign: "right", minWidth: { xs: "auto", sm: "120px" } }}>
+          <Typography
+            className="tabular-nums"
+            sx={{
+              color: "#FFFFFF",
+              fontFamily: "var(--font-mono)",
+              fontWeight: 900,
+              fontSize: "1.15rem",
+            }}
+          >
             ${Number(lineTotal).toLocaleString()}
           </Typography>
           {quantity > 1 && (
-            <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.35)", fontSize: "0.75rem", display: "block", mt: 0.2 }}>
-              (${unitPrice.toLocaleString()} each)
+            <Typography
+              className="tabular-nums"
+              sx={{
+                color: "#A1A1AA",
+                fontFamily: "var(--font-mono)",
+                fontSize: "0.70rem",
+                display: "block",
+                mt: 0.3,
+              }}
+            >
+              (${Number(unitPrice).toLocaleString()} each)
             </Typography>
           )}
         </Box>

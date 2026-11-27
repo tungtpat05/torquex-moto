@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import {
   Box,
+  ButtonBase,
   Typography,
   IconButton,
   Badge,
@@ -25,6 +26,7 @@ import { useProducts } from "@/hooks/useProducts";
 import { Product } from "@/types/product";
 import { getLenis } from "@/lib/smoothScroll";
 import { isStaffRole } from "@/utils/role";
+import { TorqueXKtmLockup } from "./BrandMark";
 
 interface CategoryGroup {
   categoryName: string;
@@ -50,6 +52,11 @@ export const Navbar: React.FC = () => {
   const location = useLocation();
 
   const isStaff = isStaffRole(user?.role);
+  const isHomeActive = location.pathname === "/";
+  const isModelsActive = location.pathname.startsWith("/products/") || modelsOpen;
+  const isCartActive = location.pathname === "/cart";
+  const isProfileActive = location.pathname === "/profile";
+  const cartCount = cart?.totalQuantity || 0;
 
   const groupedModels = useMemo<CategoryGroup[]>(() => {
     const active = products.filter((p) => p.isActive !== false);
@@ -267,52 +274,34 @@ export const Navbar: React.FC = () => {
         {/* LEFT SECTION */}
         <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 2.5, sm: 4, md: 6 } }}>
           {/* Brand Logo */}
-          <Box
+          <ButtonBase
             onClick={handleScrollToTopOrHome}
+            aria-label="TorqueX KTM Home"
             sx={{
               display: "flex",
               alignItems: "center",
-              gap: 1,
-              cursor: "pointer",
+              borderRadius: "4px",
+              py: 0.5,
+              px: 0.25,
             }}
           >
-            <Typography
-              sx={{
-                fontFamily: "var(--font-display)",
-                fontWeight: 900,
-                fontSize: { xs: "1.25rem", md: "1.42rem" },
-                letterSpacing: "-0.04em",
-                color: "#0A0A0C",
-                lineHeight: 1,
-              }}
-            >
-              TORQUEX
-            </Typography>
-            <Box
-              sx={{
-                backgroundColor: "#FF6700",
-                color: "#FFFFFF",
-                fontFamily: "var(--font-display)",
-                fontWeight: 900,
-                fontSize: "0.62rem",
-                letterSpacing: "0.08em",
-                px: 0.65,
-                py: 0.2,
-                borderRadius: "2px",
-                lineHeight: 1,
-              }}
-            >
-              KTM
-            </Box>
-          </Box>
+            <TorqueXKtmLockup
+              showMark={false}
+              tone="light"
+              textSize={{ xs: "1.25rem", md: "1.42rem" }}
+            />
+          </ButtonBase>
 
           {/* Desktop Navigation Links: HOME, MODELS */}
           <Box sx={{ display: { xs: "none", sm: "flex" }, alignItems: "center", gap: { sm: 3, md: 4.5 } }}>
-            <Box
+            <ButtonBase
               onClick={handleScrollToTopOrHome}
+              aria-current={isHomeActive ? "page" : undefined}
               sx={{
-                cursor: "pointer",
                 py: 1,
+                px: 0.5,
+                borderRadius: "4px",
+                position: "relative",
                 "&:hover .nav-text": { color: "#FF6700" },
               }}
             >
@@ -323,32 +312,25 @@ export const Navbar: React.FC = () => {
                   fontSize: "0.78rem",
                   fontWeight: 700,
                   letterSpacing: "0.14em",
-                  color: "#18181B",
+                  color: isHomeActive ? "#FF6700" : "#18181B",
                   transition: "color 0.2s ease",
                 }}
               >
                 HOME
               </Typography>
-            </Box>
+            </ButtonBase>
 
-            <Box
-              role="button"
-              tabIndex={0}
+            <ButtonBase
               aria-expanded={modelsOpen}
               aria-haspopup="true"
               onClick={() => (modelsOpen ? closeModelsMenu() : openModelsMenu())}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  modelsOpen ? closeModelsMenu() : openModelsMenu();
-                }
-              }}
               sx={{
                 display: "flex",
                 alignItems: "center",
                 gap: 0.4,
-                cursor: "pointer",
                 py: 1,
+                px: 0.5,
+                borderRadius: "4px",
                 "&:hover .nav-text": { color: "#FF6700" },
               }}
             >
@@ -359,7 +341,7 @@ export const Navbar: React.FC = () => {
                   fontSize: "0.78rem",
                   fontWeight: 700,
                   letterSpacing: "0.14em",
-                  color: modelsOpen ? "#FF6700" : "#18181B",
+                  color: isModelsActive ? "#FF6700" : "#18181B",
                   transition: "color 0.2s ease",
                 }}
               >
@@ -368,53 +350,41 @@ export const Navbar: React.FC = () => {
               <KeyboardArrowDownIcon
                 sx={{
                   fontSize: "1rem",
-                  color: modelsOpen ? "#FF6700" : "#18181B",
+                  color: isModelsActive ? "#FF6700" : "#18181B",
                   transform: modelsOpen ? "rotate(180deg)" : "rotate(0deg)",
                   transition: "transform 0.2s ease, color 0.2s ease",
                 }}
               />
-            </Box>
+            </ButtonBase>
           </Box>
         </Box>
 
         {/* RIGHT SECTION */}
         <Box sx={{ display: "flex", alignItems: "center" }}>
           <Box
+            aria-hidden="true"
             sx={{
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               height: "100%",
-              px: { xs: 1.5, sm: 2.5, md: 3.5 },
-              position: "relative",
+              px: { xs: 1.5, sm: 2.5, md: 3 },
             }}
           >
             <Box sx={{ width: "1px", height: "24px", backgroundColor: "rgba(0, 0, 0, 0.12)" }} />
-            <Box
-              sx={{
-                position: "absolute",
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
-                color: "#FF6700",
-                fontSize: "0.95rem",
-                fontWeight: 700,
-                fontFamily: "var(--font-mono)",
-                lineHeight: 1,
-                backgroundColor: "#FFFFFF",
-                px: 0.3,
-              }}
-            >
-              +
-            </Box>
           </Box>
 
           <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1, sm: 1.5, md: 2 } }}>
             <IconButton
               onClick={() => navigate("/cart")}
-              aria-label="View Shopping Cart"
+              aria-label={`View Allocation Cart (${cartCount} ${cartCount === 1 ? "item" : "items"})`}
+              aria-current={isCartActive ? "page" : undefined}
               sx={{
-                color: "#18181B",
+                color: isCartActive ? "#FF6700" : "#18181B",
+                backgroundColor: isCartActive ? "rgba(255, 103, 0, 0.08)" : "transparent",
+                border: isCartActive ? "1px solid rgba(255, 103, 0, 0.35)" : "1px solid transparent",
+                minWidth: 40,
+                minHeight: 40,
                 p: { xs: 0.8, md: 1 },
                 borderRadius: "4px",
                 transition: "all 0.2s ease",
@@ -425,7 +395,7 @@ export const Navbar: React.FC = () => {
               }}
             >
               <Badge
-                badgeContent={cart?.totalQuantity || 0}
+                badgeContent={cartCount}
                 sx={{
                   "& .MuiBadge-badge": {
                     backgroundColor: "#FF6700",
@@ -450,7 +420,7 @@ export const Navbar: React.FC = () => {
                   aria-label="Open Account Menu"
                   sx={{
                     p: 0.4,
-                    border: "1px solid rgba(0, 0, 0, 0.12)",
+                    border: isProfileActive ? "1.5px solid #FF6700" : "1px solid rgba(0, 0, 0, 0.12)",
                     transition: "border-color 0.2s ease",
                     "&:hover": { borderColor: "#FF6700" },
                   }}
@@ -605,7 +575,7 @@ export const Navbar: React.FC = () => {
             >
               KTM FACTORY LINEUP
             </Typography>
-            <Box
+            <ButtonBase
               onClick={() => {
                 closeModelsMenu();
                 navigate("/#fleet");
@@ -614,18 +584,20 @@ export const Navbar: React.FC = () => {
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 0.5,
-                cursor: "pointer",
                 color: "#FF6700",
                 fontFamily: "var(--font-mono)",
                 fontSize: "0.72rem",
                 fontWeight: 800,
                 letterSpacing: "0.08em",
+                px: 0.8,
+                py: 0.4,
+                borderRadius: "4px",
                 "&:hover": { textDecoration: "underline" },
               }}
             >
               <span>SHOWROOM FLEET</span>
               <ArrowOutwardIcon sx={{ fontSize: "0.9rem" }} />
-            </Box>
+            </ButtonBase>
           </Box>
 
           {productsLoading && (
@@ -671,16 +643,18 @@ export const Navbar: React.FC = () => {
                   </Typography>
                   <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                     {group.items.map((bike) => (
-                      <Box
+                      <ButtonBase
                         key={bike.id}
                         onClick={() => handleSelectModel(bike.id)}
                         sx={{
+                          width: "100%",
                           display: "flex",
                           alignItems: "center",
+                          justifyContent: "flex-start",
+                          textAlign: "left",
                           gap: 1.25,
                           p: 1,
                           borderRadius: "6px",
-                          cursor: "pointer",
                           border: "1px solid transparent",
                           transition: "all 0.18s ease",
                           "&:hover": {
@@ -716,6 +690,7 @@ export const Navbar: React.FC = () => {
                             {bike.productName}
                           </Typography>
                           <Typography
+                            className="tabular-nums"
                             sx={{
                               fontFamily: "var(--font-mono)",
                               fontSize: "0.68rem",
@@ -725,7 +700,7 @@ export const Navbar: React.FC = () => {
                             {formatShortPrice(bike)}
                           </Typography>
                         </Box>
-                      </Box>
+                      </ButtonBase>
                     ))}
                   </Box>
                 </Box>
@@ -756,15 +731,12 @@ export const Navbar: React.FC = () => {
       >
         <Box sx={{ overflowY: "auto" }}>
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Typography sx={{ fontFamily: "var(--font-display)", fontWeight: 900, color: "#0A0A0C", fontSize: "1.2rem" }}>
-                TORQUEX
-              </Typography>
-              <Box sx={{ backgroundColor: "#FF6700", color: "#FFFFFF", fontWeight: 900, fontSize: "0.62rem", px: 0.6, py: 0.2, borderRadius: "2px" }}>
-                KTM
-              </Box>
-            </Box>
-            <IconButton onClick={() => setMobileDrawerOpen(false)} sx={{ color: "#0A0A0C" }}>
+            <TorqueXKtmLockup showMark={false} tone="light" textSize="1.2rem" />
+            <IconButton
+              onClick={() => setMobileDrawerOpen(false)}
+              aria-label="Close navigation menu"
+              sx={{ color: "#0A0A0C" }}
+            >
               <CloseIcon />
             </IconButton>
           </Box>
@@ -833,7 +805,7 @@ export const Navbar: React.FC = () => {
                       {group.categoryName}
                     </Typography>
                     {group.items.map((bike) => (
-                      <Box
+                      <ListItemButton
                         key={bike.id}
                         onClick={() => handleSelectModel(bike.id)}
                         sx={{
@@ -843,7 +815,6 @@ export const Navbar: React.FC = () => {
                           py: 0.7,
                           px: 1,
                           borderRadius: "4px",
-                          cursor: "pointer",
                           "&:hover": { backgroundColor: "rgba(255, 103, 0, 0.08)" },
                         }}
                       >
@@ -856,7 +827,7 @@ export const Navbar: React.FC = () => {
                         <Typography sx={{ fontSize: "0.84rem", fontWeight: 700, color: "#0A0A0C" }}>
                           {bike.productName}
                         </Typography>
-                      </Box>
+                      </ListItemButton>
                     ))}
                   </Box>
                 ))}
@@ -912,20 +883,22 @@ export const Navbar: React.FC = () => {
               SIGN IN →
             </Box>
           ) : (
-            <Box
+            <ButtonBase
               onClick={() => handleUserSettingClick(undefined, true)}
               sx={{
+                width: "100%",
                 textAlign: "center",
                 color: "#EF4444",
                 fontFamily: "var(--font-mono)",
                 fontSize: "0.82rem",
                 fontWeight: 700,
-                cursor: "pointer",
                 py: 1,
+                borderRadius: "4px",
+                "&:hover": { backgroundColor: "rgba(239, 68, 68, 0.08)" },
               }}
             >
               SIGN OUT
-            </Box>
+            </ButtonBase>
           )}
         </Box>
       </Drawer>

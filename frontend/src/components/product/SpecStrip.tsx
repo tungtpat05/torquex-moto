@@ -15,127 +15,145 @@ interface SpecStripProps {
   product: Product;
 }
 
+const CORE_TELEMETRY_KEYS = ["displacement", "max_power", "max_torque", "dry_weight"];
+
 const getSpecIcon = (keyCode: string) => {
   const code = keyCode.toLowerCase();
   if (code.includes("displacement") || code.includes("cc") || code.includes("engine")) {
-    return <SpeedIcon sx={{ color: "#e28a3a", fontSize: "1.5rem" }} />;
+    return <SpeedIcon sx={{ color: "#FF6700", fontSize: "1.35rem" }} />;
   }
   if (code.includes("power") || code.includes("hp")) {
-    return <FlashOnIcon sx={{ color: "#e28a3a", fontSize: "1.5rem" }} />;
+    return <FlashOnIcon sx={{ color: "#FF6700", fontSize: "1.35rem" }} />;
   }
   if (code.includes("torque") || code.includes("nm")) {
-    return <SettingsIcon sx={{ color: "#e28a3a", fontSize: "1.5rem" }} />;
+    return <SettingsIcon sx={{ color: "#FF6700", fontSize: "1.35rem" }} />;
   }
   if (code.includes("transmission") || code.includes("gear") || code.includes("box")) {
-    return <ConstructionIcon sx={{ color: "#e28a3a", fontSize: "1.5rem" }} />;
+    return <ConstructionIcon sx={{ color: "#FF6700", fontSize: "1.35rem" }} />;
   }
   if (code.includes("weight") || code.includes("kg")) {
-    return <ScaleIcon sx={{ color: "#e28a3a", fontSize: "1.5rem" }} />;
+    return <ScaleIcon sx={{ color: "#FF6700", fontSize: "1.35rem" }} />;
   }
   if (code.includes("fuel") || code.includes("gas") || code.includes("tank")) {
-    return <LocalGasStationIcon sx={{ color: "#e28a3a", fontSize: "1.5rem" }} />;
+    return <LocalGasStationIcon sx={{ color: "#FF6700", fontSize: "1.35rem" }} />;
   }
   if (code.includes("height") || code.includes("seat") || code.includes("mm")) {
-    return <SwapCallsIcon sx={{ color: "#e28a3a", fontSize: "1.5rem" }} />;
+    return <SwapCallsIcon sx={{ color: "#FF6700", fontSize: "1.35rem" }} />;
   }
-  return <BoltIcon sx={{ color: "#e28a3a", fontSize: "1.5rem" }} />;
+  return <BoltIcon sx={{ color: "#FF6700", fontSize: "1.35rem" }} />;
 };
 
-const formatSpecValue = (spec: ProductSpecification): string => {
+const formatSpecNumberOrText = (spec: ProductSpecification): { main: string; unit?: string } => {
   if (spec.dataType === "select" && spec.optionValue) {
-    return spec.optionValue;
+    return { main: spec.optionValue };
   }
   if (spec.dataType === "number" && spec.valueNumber !== undefined && spec.valueNumber !== null) {
-    const formattedNum = Number.isInteger(spec.valueNumber)
-      ? String(spec.valueNumber)
-      : String(Number(spec.valueNumber));
-    return spec.unit ? `${formattedNum} ${spec.unit}` : formattedNum;
+    const num = Number(spec.valueNumber);
+    const formattedNum = Number.isInteger(num) ? num.toLocaleString() : String(num);
+    return { main: formattedNum, unit: spec.unit?.toUpperCase() || undefined };
   }
   if (spec.value) {
-    return spec.value;
+    return { main: spec.value };
   }
-  return "-";
+  return { main: "—" };
 };
 
 const SpecStrip: React.FC<SpecStripProps> = ({ product }) => {
   const specifications = product.specifications || [];
 
   if (specifications.length === 0) {
-    return null; // Hide spec strip if no dynamic specs are provided
+    return null;
   }
 
-  // Display top 8 specs
-  const displaySpecs = specifications.slice(0, 8);
+  // Pick 4 core telemetry specs matching BloodlineFleet / HeroAwakening, then backfill up to 4 if absent
+  const prioritized = CORE_TELEMETRY_KEYS
+    .map((key) => specifications.find((s) => s.keyCode?.toLowerCase() === key))
+    .filter((s): s is ProductSpecification => Boolean(s));
+
+  const remaining = specifications.filter((s) => !prioritized.includes(s));
+  const displaySpecs = [...prioritized, ...remaining].slice(0, 4);
 
   return (
     <Box
       sx={{
-        backgroundColor: "#121214",
-        border: "1px solid rgba(255, 255, 255, 0.05)",
-        borderRadius: "16px",
-        py: 3,
-        px: 3,
         width: "100%",
         display: "grid",
         gridTemplateColumns: {
           xs: "repeat(2, 1fr)",
-          sm: `repeat(${Math.min(4, displaySpecs.length)}, 1fr)`,
-          lg: `repeat(${displaySpecs.length}, 1fr)`,
+          md: `repeat(${displaySpecs.length}, 1fr)`,
         },
-        gap: { xs: 4, lg: 2 },
+        gap: 2,
       }}
     >
-      {displaySpecs.map((spec, index) => (
-        <Box
-          key={spec.id || index}
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            textAlign: "center",
-            gap: 1.5,
-            borderRight: {
-              xs: "none",
-              sm: index % 4 !== 3 && index !== displaySpecs.length - 1 ? "1px solid rgba(255, 255, 255, 0.05)" : "none",
-              lg: index !== displaySpecs.length - 1 ? "1px solid rgba(255, 255, 255, 0.05)" : "none",
-            },
-            pr: {
-              xs: 0,
-              sm: index % 4 !== 3 ? 2 : 0,
-              lg: index !== displaySpecs.length - 1 ? 2 : 0,
-            },
-          }}
-        >
-          {getSpecIcon(spec.keyCode || "")}
-          <Box>
-            <Typography
-              variant="body1"
-              sx={{
-                fontWeight: 800,
-                color: "white",
-                fontSize: "0.95rem",
-                fontFamily: "'Outfit', sans-serif",
-              }}
-            >
-              {formatSpecValue(spec)}
-            </Typography>
-            <Typography
-              variant="caption"
-              sx={{
-                fontWeight: 700,
-                color: "rgba(255,255,255,0.4)",
-                letterSpacing: "0.08em",
-                fontSize: "0.65rem",
-                display: "block",
-                mt: 0.5,
-                textTransform: "uppercase",
-              }}
-            >
-              {spec.displayName}
-            </Typography>
+      {displaySpecs.map((spec, index) => {
+        const { main, unit } = formatSpecNumberOrText(spec);
+        return (
+          <Box
+            key={spec.id || index}
+            sx={{
+              p: { xs: 2.25, md: 2.75 },
+              borderRadius: "16px",
+              backgroundColor: "rgba(15, 15, 20, 0.90)",
+              backdropFilter: "blur(20px)",
+              border: "1px solid rgba(255, 255, 255, 0.10)",
+              borderTop: "1px solid rgba(255, 255, 255, 0.25)",
+              boxShadow: "0 16px 40px rgba(0, 0, 0, 0.65)",
+              display: "flex",
+              flexDirection: "column",
+              gap: 1.25,
+              transition: "border-color 0.25s ease, transform 0.2s ease",
+              "&:hover": {
+                borderColor: "#FF6700",
+                transform: "translateY(-2px)",
+              },
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1 }}>
+              <Typography
+                sx={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "0.64rem",
+                  fontWeight: 700,
+                  color: "#A1A1AA",
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                }}
+              >
+                {spec.displayName}
+              </Typography>
+              {getSpecIcon(spec.keyCode || "")}
+            </Box>
+
+            <Box sx={{ display: "flex", alignItems: "baseline", gap: 0.8, flexWrap: "wrap" }}>
+              <Typography
+                className="tabular-nums"
+                sx={{
+                  fontFamily: "var(--font-mono)",
+                  fontWeight: 900,
+                  color: "#FFFFFF",
+                  fontSize: { xs: "1.25rem", md: "1.55rem" },
+                  lineHeight: 1.1,
+                }}
+              >
+                {main}
+              </Typography>
+              {unit && (
+                <Typography
+                  sx={{
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "0.74rem",
+                    fontWeight: 800,
+                    color: "#FF6700",
+                    letterSpacing: "0.08em",
+                  }}
+                >
+                  {unit}
+                </Typography>
+              )}
+            </Box>
           </Box>
-        </Box>
-      ))}
+        );
+      })}
     </Box>
   );
 };

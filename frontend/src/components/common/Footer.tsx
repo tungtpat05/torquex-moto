@@ -9,6 +9,7 @@ import {
 } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 import { useProducts } from "@/hooks/useProducts";
+import { TorqueXKtmLockup } from "./BrandMark";
 
 const Footer = () => {
   const { products, loading, error } = useProducts();
@@ -28,33 +29,8 @@ const Footer = () => {
         <Grid container spacing={{ xs: 5, md: 8 }}>
           {/* Brand & Manifesto Column */}
           <Grid size={{ xs: 12, md: 4 }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
-              <Typography
-                sx={{
-                  fontFamily: "var(--font-display)",
-                  fontWeight: 900,
-                  fontSize: "1.4rem",
-                  letterSpacing: "-0.03em",
-                  color: "#F4F4F5",
-                }}
-              >
-                TORQUEX
-              </Typography>
-              <Box
-                sx={{
-                  backgroundColor: "#FF6700",
-                  color: "#070709",
-                  fontFamily: "var(--font-display)",
-                  fontWeight: 900,
-                  fontSize: "0.65rem",
-                  letterSpacing: "0.08em",
-                  px: 0.8,
-                  py: 0.2,
-                  borderRadius: "2px",
-                }}
-              >
-                KTM
-              </Box>
+            <Box sx={{ mb: 1.5 }}>
+              <TorqueXKtmLockup showMark={false} textSize="1.4rem" badgeTextColor="#070709" />
             </Box>
 
             <Typography
@@ -66,7 +42,7 @@ const Footer = () => {
                 mb: 2,
               }}
             >
-              EXCLUSIVE DIGITAL BOUTIQUE // MATTIGHOFEN, AUSTRIA
+              EXCLUSIVE DIGITAL BOUTIQUE
             </Typography>
 
             <Typography
@@ -233,7 +209,7 @@ const Footer = () => {
           </Typography>
 
           <Typography sx={{ fontFamily: "var(--font-mono)", fontSize: "0.7rem", color: "#FF6700", letterSpacing: "0.1em" }}>
-            READY TO RACE // MATTIGHOFEN, AUSTRIA
+            READY TO RACE • MATTIGHOFEN, AUSTRIA
           </Typography>
         </Box>
       </Container>

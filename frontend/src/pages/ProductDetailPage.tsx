@@ -29,18 +29,27 @@ const ProductDetailPage = () => {
     return (
       <Box
         sx={{
-          minHeight: "80vh",
+          minHeight: "75vh",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          backgroundColor: "#09090b",
-          gap: 2,
+          backgroundColor: "#070709",
+          gap: 2.5,
         }}
       >
-        <CircularProgress sx={{ color: "#e28a3a" }} />
-        <Typography variant="body1" sx={{ color: "white", fontWeight: 700 }}>
-          Loading motorcycle details...
+        <CircularProgress sx={{ color: "#FF6700" }} />
+        <Typography
+          sx={{
+            fontFamily: "var(--font-mono)",
+            fontSize: "0.78rem",
+            fontWeight: 700,
+            letterSpacing: "0.14em",
+            color: "#A1A1AA",
+            textTransform: "uppercase",
+          }}
+        >
+          LOADING KTM MACHINE TELEMETRY...
         </Typography>
       </Box>
     );
@@ -50,125 +59,239 @@ const ProductDetailPage = () => {
     return (
       <Box
         sx={{
-          minHeight: "80vh",
+          minHeight: "75vh",
           display: "flex",
-          flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          backgroundColor: "#09090b",
-          gap: 3,
+          backgroundColor: "#070709",
+          px: 3,
         }}
       >
-        <Typography variant="h5" sx={{ color: "#ef4444", fontWeight: 800 }}>
-          Error Loading Details
-        </Typography>
-        <Typography variant="body1" sx={{ color: "rgba(255, 255, 255, 0.6)" }}>
-          {error || "Motorcycle model detail could not be found."}
-        </Typography>
-        <Button
-          component={Link}
-          to="/#fleet"
-          variant="contained"
+        <Box
           sx={{
-            backgroundColor: "#e28a3a",
-            color: "#000000",
-            fontWeight: 800,
-            textTransform: "none",
-            "&:hover": { backgroundColor: "#f0a256" },
+            maxWidth: 520,
+            width: "100%",
+            p: { xs: 3.5, md: 5 },
+            borderRadius: "16px",
+            backgroundColor: "rgba(15, 15, 20, 0.90)",
+            backdropFilter: "blur(20px)",
+            border: "1px solid rgba(255, 255, 255, 0.10)",
+            borderTop: "1px solid rgba(255, 255, 255, 0.25)",
+            textAlign: "center",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 2,
           }}
         >
-          Back to Fleet
-        </Button>
+          <Typography
+            component="h1"
+            sx={{
+              fontFamily: "var(--font-display)",
+              fontWeight: 900,
+              fontSize: { xs: "1.6rem", md: "2rem" },
+              color: "#EF4444",
+              textTransform: "uppercase",
+            }}
+          >
+            MACHINE NOT FOUND
+          </Typography>
+          <Typography sx={{ color: "#A1A1AA", fontSize: "0.92rem", mb: 1 }}>
+            {error || "Motorcycle model detail could not be located in the factory catalog."}
+          </Typography>
+          <Button
+            component={Link}
+            to="/#fleet"
+            variant="contained"
+            sx={{
+              backgroundColor: "#FF6700",
+              color: "#070709",
+              fontFamily: "var(--font-display)",
+              fontWeight: 900,
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+              borderRadius: "8px",
+              px: 4,
+              py: 1.3,
+              boxShadow: "0 0 24px rgba(255, 103, 0, 0.35)",
+              "&:hover": {
+                backgroundColor: "#FF7D24",
+                boxShadow: "0 0 32px rgba(255, 103, 0, 0.55)",
+              },
+            }}
+          >
+            Back to Fleet
+          </Button>
+        </Box>
       </Box>
     );
   }
 
   return (
-    <Box sx={{ backgroundColor: "#09090b", minHeight: "100vh", pb: 10 }}>
-      {/* Top Navigation & Breadcrumbs Bar */}
-      <Box sx={{ py: 3, px: { xs: 2, md: 6 } }}>
-        <Breadcrumbs
-          separator={<NavigateNextIcon sx={{ fontSize: "1rem", color: "rgba(255, 255, 255, 0.2)" }} />}
-          aria-label="breadcrumb"
-          sx={{ mb: 2 }}
-        >
-          <Link to="/" style={{ textDecoration: "none" }}>
-            <Typography variant="caption" sx={{ color: "rgba(255, 255, 255, 0.4)", fontWeight: 700 }}>
-              Home
-            </Typography>
-          </Link>
-          <Link to="/#fleet" style={{ textDecoration: "none" }}>
-            <Typography variant="caption" sx={{ color: "rgba(255, 255, 255, 0.4)", fontWeight: 700 }}>
-              Lineup
-            </Typography>
-          </Link>
-          {product.brand?.brandName && (
-            <Typography variant="caption" sx={{ color: "rgba(255, 255, 255, 0.4)", fontWeight: 700 }}>
-              {product.brand.brandName}
-            </Typography>
-          )}
-          <Typography variant="caption" sx={{ color: "#e28a3a", fontWeight: 800 }}>
-            {product.slug || product.productName}
-          </Typography>
-        </Breadcrumbs>
+    <Box
+      sx={{
+        position: "relative",
+        backgroundColor: "#070709",
+        minHeight: "100vh",
+        pb: 12,
+        overflowX: "hidden",
+      }}
+    >
+      {/* Overhead Showroom Studio Glow */}
+      <Box
+        sx={{
+          position: "absolute",
+          top: "-120px",
+          left: "50%",
+          transform: "translateX(-50%)",
+          width: "1100px",
+          height: "420px",
+          background:
+            "radial-gradient(ellipse at center, rgba(255, 103, 0, 0.11) 0%, rgba(255, 103, 0, 0.02) 52%, transparent 76%)",
+          filter: "blur(55px)",
+          pointerEvents: "none",
+        }}
+      />
 
-        {/* Back Link */}
-        <Link to="/#fleet" style={{ textDecoration: "none" }}>
-          <Box
-            sx={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 1,
-              color: "rgba(255, 255, 255, 0.5)",
-              transition: "color 0.15s",
-              "&:hover": { color: "white" },
-            }}
+      <Box
+        sx={{
+          position: "relative",
+          zIndex: 2,
+          maxWidth: "1440px",
+          mx: "auto",
+          px: { xs: 2.5, md: 6, lg: 8 },
+        }}
+      >
+        {/* Top Navigation & Telemetry Breadcrumbs */}
+        <Box sx={{ pt: { xs: 2, md: 3 }, pb: 3 }}>
+          <Breadcrumbs
+            separator={<NavigateNextIcon sx={{ fontSize: "0.95rem", color: "#71717A" }} />}
+            aria-label="breadcrumb"
+            sx={{ mb: 2 }}
           >
-            <ArrowBackIcon sx={{ fontSize: "1rem" }} />
-            <Typography variant="body2" sx={{ fontWeight: 700 }}>
-              Back to Fleet
-            </Typography>
-          </Box>
-        </Link>
-      </Box>
-
-      {/* Main Showroom Section */}
-      <Box sx={{ px: { xs: 2, md: 6 }, mb: 6 }}>
-        <Grid container spacing={{ xs: 4, md: 6 }}>
-          <Grid size={{ xs: 12, md: 6.5 }}>
-            <ProductGallery
-              productId={product.id}
-              thumbnailUrl={product.thumbnail}
-              productName={product.productName}
-              images={product.images}
-              variants={product.variants}
-              focusImageTrigger={variantFocus}
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 5.5 }}>
-            <ProductInfo
-              product={product}
-              onVariantSelect={(variant) => {
-                if (variant.variantImage) {
-                  setVariantFocus((prev) => ({
-                    imageUrl: variant.variantImage,
-                    seq: (prev?.seq || 0) + 1,
-                  }));
-                }
+            <Link to="/" style={{ textDecoration: "none" }}>
+              <Typography
+                sx={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "0.68rem",
+                  fontWeight: 700,
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  color: "#A1A1AA",
+                  transition: "color 0.2s ease",
+                  "&:hover": { color: "#FF6700" },
+                }}
+              >
+                Home
+              </Typography>
+            </Link>
+            <Link to="/#fleet" style={{ textDecoration: "none" }}>
+              <Typography
+                sx={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "0.68rem",
+                  fontWeight: 700,
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  color: "#A1A1AA",
+                  transition: "color 0.2s ease",
+                  "&:hover": { color: "#FF6700" },
+                }}
+              >
+                Lineup
+              </Typography>
+            </Link>
+            {product.brand?.brandName && (
+              <Typography
+                sx={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "0.68rem",
+                  fontWeight: 700,
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  color: "#71717A",
+                }}
+              >
+                {product.brand.brandName}
+              </Typography>
+            )}
+            <Typography
+              sx={{
+                fontFamily: "var(--font-mono)",
+                fontSize: "0.68rem",
+                fontWeight: 800,
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+                color: "#FF6700",
               }}
-            />
+            >
+              {product.productName}
+            </Typography>
+          </Breadcrumbs>
+
+          <Link to="/#fleet" style={{ textDecoration: "none" }}>
+            <Box
+              sx={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 1,
+                color: "#A1A1AA",
+                transition: "color 0.2s ease",
+                "&:hover": { color: "#FF6700" },
+              }}
+            >
+              <ArrowBackIcon sx={{ fontSize: "0.95rem" }} />
+              <Typography
+                sx={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "0.72rem",
+                  fontWeight: 800,
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                }}
+              >
+                Back to Fleet
+              </Typography>
+            </Box>
+          </Link>
+        </Box>
+
+        {/* Main Showroom Section */}
+        <Box sx={{ mb: 6 }}>
+          <Grid container spacing={{ xs: 4, md: 6 }} alignItems="flex-start">
+            <Grid size={{ xs: 12, md: 6.5 }}>
+              <ProductGallery
+                productId={product.id}
+                thumbnailUrl={product.thumbnail}
+                productName={product.productName}
+                images={product.images}
+                variants={product.variants}
+                focusImageTrigger={variantFocus}
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 5.5 }}>
+              <ProductInfo
+                product={product}
+                onVariantSelect={(variant) => {
+                  if (variant.variantImage) {
+                    setVariantFocus((prev) => ({
+                      imageUrl: variant.variantImage,
+                      seq: (prev?.seq || 0) + 1,
+                    }));
+                  }
+                }}
+              />
+            </Grid>
           </Grid>
-        </Grid>
-      </Box>
+        </Box>
 
-      {/* Quick Specifications Strip */}
-      <Box sx={{ px: { xs: 2, md: 6 }, mb: 6 }}>
-        <SpecStrip product={product} />
-      </Box>
+        {/* Key Telemetry Strip (4 core metrics) */}
+        <Box sx={{ mb: 6 }}>
+          <SpecStrip product={product} />
+        </Box>
 
-      {/* Detailed specs and description block */}
-      <Box sx={{ px: { xs: 2, md: 6 } }}>
+        {/* Full Specifications & Editorial Description */}
         <TabbedDetails product={product} />
       </Box>
     </Box>

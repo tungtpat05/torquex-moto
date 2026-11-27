@@ -49,15 +49,19 @@ interface TorqueXKtmLockupProps {
   markSize?: number;
   textSize?: string | { xs?: string; sm?: string; md?: string };
   asHeading?: boolean;
+  tone?: "dark" | "light";
+  badgeTextColor?: string;
 }
 
-/** Shared dark-surface TORQUEX + pill badge lockup (matches Customer Navbar DNA). */
+/** Shared TORQUEX + pill badge lockup (matches Customer Navbar / Footer / Staff DNA). */
 export const TorqueXKtmLockup: React.FC<TorqueXKtmLockupProps> = ({
   badgeText = "KTM",
   showMark = true,
   markSize = 36,
   textSize = "1.45rem",
   asHeading = false,
+  tone = "dark",
+  badgeTextColor = "#FFFFFF",
 }) => (
   <Box
     component={asHeading ? "h1" : "div"}
@@ -72,7 +76,7 @@ export const TorqueXKtmLockup: React.FC<TorqueXKtmLockupProps> = ({
           fontWeight: 900,
           fontSize: textSize,
           letterSpacing: "-0.04em",
-          color: "#F4F4F5",
+          color: tone === "light" ? "#0A0A0C" : "#F4F4F5",
           lineHeight: 1,
           whiteSpace: "nowrap",
         }}
@@ -83,7 +87,7 @@ export const TorqueXKtmLockup: React.FC<TorqueXKtmLockupProps> = ({
         component="span"
         sx={{
           backgroundColor: "#FF6700",
-          color: "#FFFFFF",
+          color: badgeTextColor,
           fontFamily: "var(--font-display)",
           fontWeight: 900,
           fontSize: "0.62rem",
