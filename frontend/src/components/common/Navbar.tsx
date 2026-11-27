@@ -25,7 +25,7 @@ import { useAuth, useCart } from "@/context";
 import { useProducts } from "@/hooks/useProducts";
 import { Product } from "@/types/product";
 import { getLenis } from "@/lib/smoothScroll";
-import { isStaffRole } from "@/utils/role";
+import { isAdminRole, isStaffRole } from "@/utils/role";
 import { TorqueXKtmLockup } from "./BrandMark";
 
 interface CategoryGroup {
@@ -52,6 +52,7 @@ export const Navbar: React.FC = () => {
   const location = useLocation();
 
   const isStaff = isStaffRole(user?.role);
+  const isAdmin = isAdminRole(user?.role);
   const isHomeActive = location.pathname === "/";
   const isModelsActive = location.pathname.startsWith("/products/") || modelsOpen;
   const isCartActive = location.pathname === "/cart";
@@ -476,6 +477,11 @@ export const Navbar: React.FC = () => {
                     </Typography>
                   </Box>
 
+                  {isAdmin && (
+                    <MenuItem onClick={() => handleUserSettingClick("/admin/dashboard")}>
+                      Admin Portal
+                    </MenuItem>
+                  )}
                   {isStaff && (
                     <MenuItem onClick={() => handleUserSettingClick("/staff/dashboard")}>
                       Staff Portal
@@ -833,6 +839,29 @@ export const Navbar: React.FC = () => {
                 ))}
               </Box>
             </Collapse>
+
+            {isAdmin && (
+              <ListItem disablePadding sx={{ mb: 1 }}>
+                <ListItemButton
+                  onClick={() => {
+                    setMobileDrawerOpen(false);
+                    navigate("/admin/dashboard");
+                  }}
+                  sx={{ py: 1.1, px: 1.5, borderRadius: "4px" }}
+                >
+                  <ListItemText
+                    primary="ADMIN PORTAL"
+                    primaryTypographyProps={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: "0.85rem",
+                      fontWeight: 700,
+                      letterSpacing: "0.12em",
+                      color: "#FF6700",
+                    }}
+                  />
+                </ListItemButton>
+              </ListItem>
+            )}
 
             {isStaff && (
               <ListItem disablePadding sx={{ mb: 1 }}>

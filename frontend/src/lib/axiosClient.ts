@@ -6,7 +6,7 @@ if (!baseURL && import.meta.env.DEV) {
 }
 
 const AUTH_ENDPOINTS = ["/auth/me", "/auth/login", "/auth/register", "/auth/logout"];
-const PROTECTED_PATH_PREFIXES = ["/staff", "/cart", "/profile"];
+const PROTECTED_PATH_PREFIXES = ["/admin", "/staff", "/cart", "/profile"];
 
 export function shouldRedirectOn401(requestUrl = "", currentPath = ""): boolean {
   if (AUTH_ENDPOINTS.some((endpoint) => requestUrl.includes(endpoint))) {

@@ -29,7 +29,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context";
 import { getUser } from "../../services/authService";
 import { User } from "../../types/user";
-import { isStaffRole, normalizeRole } from "../../utils/role";
+import { isAdminRole, isStaffRole, normalizeRole } from "../../utils/role";
 
 const paddockCardSx = {
   borderRadius: "16px",
@@ -74,7 +74,8 @@ const ProfilePage = () => {
 
   const userRole = normalizeRole(displayUser?.role) || "CUSTOMER";
   const isStaff = isStaffRole(displayUser?.role);
-  const isPrivilegedRole = isStaff || userRole === "ADMIN";
+  const isAdmin = isAdminRole(displayUser?.role);
+  const isPrivilegedRole = isStaff || isAdmin;
 
   const handleLogout = async () => {
     await logout();
@@ -287,6 +288,26 @@ const ProfilePage = () => {
 
             <Grid size={{ xs: 12, md: "auto" }}>
               <Stack direction={{ xs: "row", sm: "row", md: "column" }} spacing={1.5}>
+                {isAdmin && (
+                  <Button
+                    variant="contained"
+                    startIcon={<AdminPanelSettingsIcon />}
+                    onClick={() => navigate("/admin/dashboard")}
+                    sx={{
+                      backgroundColor: "#FF6700",
+                      color: "#070709",
+                      fontFamily: "var(--font-display)",
+                      fontWeight: 900,
+                      letterSpacing: "0.05em",
+                      textTransform: "uppercase",
+                      borderRadius: "8px",
+                      boxShadow: "0 0 24px rgba(255, 103, 0, 0.35)",
+                      "&:hover": { backgroundColor: "#FF7D24" },
+                    }}
+                  >
+                    Admin Portal
+                  </Button>
+                )}
                 {isStaff && (
                   <Button
                     variant="contained"

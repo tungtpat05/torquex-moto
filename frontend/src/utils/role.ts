@@ -13,7 +13,14 @@ export function isStaffRole(role?: string): boolean {
   return normalizeRole(role) === "STAFF";
 }
 
+export function isAdminRole(role?: string): boolean {
+  return normalizeRole(role) === "ADMIN";
+}
+
 export function getDefaultLandingPath(role?: string, fallbackPath = "/"): string {
+  if (isAdminRole(role)) {
+    return "/admin/dashboard";
+  }
   if (isStaffRole(role)) {
     return "/staff/dashboard";
   }
