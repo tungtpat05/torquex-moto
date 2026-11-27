@@ -26,6 +26,12 @@ const CategoryFormPage = lazy(() => import("../pages/staff/CategoryFormPage"));
 const BrandsPage = lazy(() => import("../pages/staff/BrandsPage"));
 const BrandFormPage = lazy(() => import("../pages/staff/BrandFormPage"));
 
+const AdminLayout = lazy(() => import("../layouts/AdminLayout"));
+const AdminDashboardPage = lazy(() => import("../pages/admin/AdminDashboardPage"));
+const InternalAccountsPage = lazy(() => import("../pages/admin/InternalAccountsPage"));
+const InternalAccountFormPage = lazy(() => import("../pages/admin/InternalAccountFormPage"));
+const CustomersPage = lazy(() => import("../pages/admin/CustomersPage"));
+
 const StaffLoader = () => (
   <Box
     sx={{
@@ -51,6 +57,29 @@ const AppRoutes = () => {
         <Route path="/login" element={<SignInPage />} />
         <Route path="/register" element={<SignUpPage />} />
         <Route path="/auth/success" element={<AuthSuccessPage />} />
+
+        {/* Admin Identity & Account Portal */}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute allowedRoles={["ADMIN"]}>
+              {withStaffSuspense(<AdminLayout />)}
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={withStaffSuspense(<AdminDashboardPage />)} />
+          <Route path="dashboard" element={withStaffSuspense(<AdminDashboardPage />)} />
+          <Route path="internal-accounts" element={withStaffSuspense(<InternalAccountsPage />)} />
+          <Route
+            path="internal-accounts/create"
+            element={withStaffSuspense(<InternalAccountFormPage mode="create" />)}
+          />
+          <Route
+            path="internal-accounts/:id/edit"
+            element={withStaffSuspense(<InternalAccountFormPage mode="edit" />)}
+          />
+          <Route path="customers" element={withStaffSuspense(<CustomersPage />)} />
+        </Route>
 
         {/* Store Operations Staff Portal */}
         <Route
