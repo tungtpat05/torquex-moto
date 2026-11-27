@@ -45,6 +45,7 @@ const CustomersPage = () => {
   const [statusFilter, setStatusFilter] = useState<"" | "active" | "locked">("");
   const [page, setPage] = useState(1);
   const [statusTarget, setStatusTarget] = useState<AdminUser | null>(null);
+  const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [statusSubmitting, setStatusSubmitting] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -110,7 +111,7 @@ const CustomersPage = () => {
       );
     } finally {
       setStatusSubmitting(false);
-      setStatusTarget(null);
+      setStatusDialogOpen(false);
     }
   };
 
@@ -389,7 +390,10 @@ const CustomersPage = () => {
                                 <LockOpenIcon fontSize="small" />
                               )
                             }
-                            onClick={() => setStatusTarget(customer)}
+                            onClick={() => {
+                              setStatusTarget(customer);
+                              setStatusDialogOpen(true);
+                            }}
                             sx={{
                               borderRadius: "8px",
                               fontWeight: 700,
@@ -429,19 +433,19 @@ const CustomersPage = () => {
       </SectionCard>
 
       <ConfirmDialog
-        open={Boolean(statusTarget)}
+        open={statusDialogOpen && Boolean(statusTarget)}
         title={statusTarget?.isActive ? "Lock customer account?" : "Unlock customer account?"}
         description={
           statusTarget?.isActive
             ? `Locking ${statusTarget.email}: This customer will be signed out immediately and blocked from logging in until unlocked.`
-            : `Unlocking ${statusTarget?.email} will allow this customer to sign in again.`
+            : `Unlocking ${statusTarget?.email ?? ""} will allow this customer to sign in again.`
         }
         confirmLabel={statusTarget?.isActive ? "Lock Account" : "Unlock Account"}
         cancelLabel="Cancel"
         tone={statusTarget?.isActive ? "danger" : "primary"}
         loading={statusSubmitting}
         onConfirm={() => void handleConfirmStatusToggle()}
-        onCancel={() => setStatusTarget(null)}
+        onCancel={() => setStatusDialogOpen(false)}
       />
 
       <Snackbar

@@ -57,6 +57,7 @@ const InternalAccountsPage = () => {
   const [page, setPage] = useState(1);
   const [resetTarget, setResetTarget] = useState<AdminUser | null>(null);
   const [statusTarget, setStatusTarget] = useState<AdminUser | null>(null);
+  const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [statusSubmitting, setStatusSubmitting] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(
@@ -139,7 +140,7 @@ const InternalAccountsPage = () => {
       );
     } finally {
       setStatusSubmitting(false);
-      setStatusTarget(null);
+      setStatusDialogOpen(false);
     }
   };
 
@@ -513,7 +514,10 @@ const InternalAccountsPage = () => {
                               <Tooltip title={account.isActive ? "Lock Account" : "Unlock Account"} arrow>
                                 <IconButton
                                   aria-label={`${account.isActive ? "Lock" : "Unlock"} ${account.fullName}`}
-                                  onClick={() => setStatusTarget(account)}
+                                  onClick={() => {
+                                    setStatusTarget(account);
+                                    setStatusDialogOpen(true);
+                                  }}
                                   sx={{
                                     minWidth: 36,
                                     minHeight: 36,
@@ -567,19 +571,19 @@ const InternalAccountsPage = () => {
       />
 
       <ConfirmDialog
-        open={Boolean(statusTarget)}
+        open={statusDialogOpen && Boolean(statusTarget)}
         title={statusTarget?.isActive ? "Lock staff account?" : "Unlock staff account?"}
         description={
           statusTarget?.isActive
             ? `Locking ${statusTarget.email} will revoke their active session immediately and block Staff Portal access until unlocked.`
-            : `Unlocking ${statusTarget?.email} restores their ability to sign in to the Staff Portal.`
+            : `Unlocking ${statusTarget?.email ?? ""} restores their ability to sign in to the Staff Portal.`
         }
         confirmLabel={statusTarget?.isActive ? "Lock Account" : "Unlock Account"}
         cancelLabel="Cancel"
         tone={statusTarget?.isActive ? "danger" : "primary"}
         loading={statusSubmitting}
         onConfirm={() => void handleConfirmStatusToggle()}
-        onCancel={() => setStatusTarget(null)}
+        onCancel={() => setStatusDialogOpen(false)}
       />
 
       <Snackbar
