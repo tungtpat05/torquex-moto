@@ -94,6 +94,7 @@ export const PedigreeHeritage: React.FC = () => {
           pin: true,
           scrub: 0.8, // Inertial smooth scrub
           anticipatePin: 1,
+          refreshPriority: 3,
           onUpdate: (self) => {
             const p = self.progress;
 

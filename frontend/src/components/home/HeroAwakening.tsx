@@ -122,6 +122,7 @@ export const HeroAwakening: React.FC = () => {
             pin: true,
             scrub: 0.8,
             anticipatePin: 1,
+            refreshPriority: 5,
             onUpdate: (self) => {
               const progress = self.progress;
 

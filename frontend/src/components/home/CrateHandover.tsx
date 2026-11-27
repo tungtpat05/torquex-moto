@@ -69,6 +69,7 @@ export const CrateHandover: React.FC = () => {
           trigger: sectionRef.current,
           start: 'top 76%',
           once: true,
+          refreshPriority: 1,
         },
       });
 
@@ -114,6 +115,7 @@ export const CrateHandover: React.FC = () => {
           pin: true,
           scrub: 0.8,
           anticipatePin: 1,
+          refreshPriority: 1,
           onUpdate: (self) => {
             const p = self.progress;
             const nextPhase = p < 0.34 ? 0 : p < 0.68 ? 1 : 2;

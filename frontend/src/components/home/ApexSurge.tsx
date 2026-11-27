@@ -128,6 +128,7 @@ export const ApexSurge: React.FC = () => {
         trigger: sectionRef.current,
         start: 'top bottom',
         end: 'bottom top',
+        refreshPriority: 4,
         onEnter: () => {
           const vid = videoRef.current;
           if (vid && !vid.ended) {
@@ -166,6 +167,7 @@ export const ApexSurge: React.FC = () => {
               start: 'top bottom',
               end: 'top top',
               scrub: 0.5,
+              refreshPriority: 4,
             },
           }
         );
@@ -178,6 +180,7 @@ export const ApexSurge: React.FC = () => {
             pin: true,
             scrub: 1.0, // Buttery soft inertia damping
             anticipatePin: 1,
+            refreshPriority: 4,
           },
         });
 

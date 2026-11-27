@@ -175,6 +175,7 @@ export const BloodlineFleet: React.FC = () => {
           trigger: sectionRef.current,
           start: "top 78%",
           once: true,
+          refreshPriority: 2,
         },
       });
 
@@ -215,6 +216,7 @@ export const BloodlineFleet: React.FC = () => {
       !trackViewportRef.current ||
       !trackRef.current
     ) {
+      ScrollTrigger.sort();
       ScrollTrigger.refresh();
       return;
     }
@@ -239,6 +241,7 @@ export const BloodlineFleet: React.FC = () => {
           scrub: 0.75,
           anticipatePin: 1,
           invalidateOnRefresh: true,
+          refreshPriority: 2,
           onUpdate: (self) => {
             gsap.set(".fleet-pit-progress", { scaleX: Math.min(1, Math.max(0, self.progress)) });
           },
@@ -310,7 +313,11 @@ export const BloodlineFleet: React.FC = () => {
       });
     }, sectionRef);
 
+    ScrollTrigger.sort();
+    ScrollTrigger.refresh();
+
     const refreshId = window.requestAnimationFrame(() => {
+      ScrollTrigger.sort();
       ScrollTrigger.refresh();
     });
 
