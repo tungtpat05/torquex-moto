@@ -1,24 +1,42 @@
-import { Card, Box, Typography } from "@mui/material";
+import { ReactNode } from "react";
+import { Box, Card, Typography } from "@mui/material";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
-import { ReactNode } from "react";
 
 interface MetricCardProps {
   title: string;
   value: string;
   diff: string;
-  isPositive: boolean;
+  tone?: "neutral" | "positive" | "warning" | "danger";
+  trend?: "up" | "down";
   icon: ReactNode;
 }
 
-const MetricCard = ({ title, value, diff, isPositive, icon }: MetricCardProps) => {
+const toneColors: Record<NonNullable<MetricCardProps["tone"]>, string> = {
+  neutral: "#A1A1AA",
+  positive: "#4ADE80",
+  warning: "#FBBF24",
+  danger: "#FCA5A5",
+};
+
+const MetricCard = ({
+  title,
+  value,
+  diff,
+  tone = "neutral",
+  trend,
+  icon,
+}: MetricCardProps) => {
+  const diffColor = toneColors[tone];
+
   return (
     <Card
       elevation={0}
       sx={{
-        backgroundColor: "#18181b",
-        border: "1px solid rgba(255, 255, 255, 0.05)",
-        borderRadius: 3,
+        backgroundColor: "rgba(15, 15, 20, 0.92)",
+        border: "1px solid rgba(255, 255, 255, 0.10)",
+        borderTop: "1px solid rgba(255, 255, 255, 0.22)",
+        borderRadius: "16px",
         p: 2.5,
         display: "flex",
         flexDirection: "column",
@@ -31,11 +49,12 @@ const MetricCard = ({ title, value, diff, isPositive, icon }: MetricCardProps) =
         <Typography
           variant="body2"
           sx={{
-            color: "#71717a",
-            fontWeight: 600,
+            fontFamily: "var(--font-mono)",
+            color: "#A1A1AA",
+            fontWeight: 700,
             textTransform: "uppercase",
-            letterSpacing: "0.05em",
-            fontSize: "0.75rem",
+            letterSpacing: "0.06em",
+            fontSize: "0.72rem",
           }}
         >
           {title}
@@ -44,13 +63,13 @@ const MetricCard = ({ title, value, diff, isPositive, icon }: MetricCardProps) =
           sx={{
             width: 36,
             height: 36,
-            borderRadius: 2,
-            backgroundColor: "rgba(255, 255, 255, 0.03)",
+            borderRadius: "8px",
+            backgroundColor: "#16161D",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            color: "#a1a1aa",
-            border: "1px solid rgba(255, 255, 255, 0.05)",
+            color: "#FF6700",
+            border: "1px solid rgba(255, 255, 255, 0.12)",
           }}
         >
           {icon}
@@ -60,28 +79,30 @@ const MetricCard = ({ title, value, diff, isPositive, icon }: MetricCardProps) =
       <Box>
         <Typography
           variant="h4"
+          className="tabular-nums"
           sx={{
-            fontWeight: 700,
-            color: "#ffffff",
+            fontFamily: "var(--font-display)",
+            fontWeight: 900,
+            color: "#F4F4F5",
             mb: 0.75,
-            fontSize: { xs: "1.75rem", md: "2.1rem" },
+            fontSize: { xs: "1.75rem", md: "2.15rem" },
+            lineHeight: 1.1,
           }}
         >
           {value}
         </Typography>
 
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-          {isPositive ? (
-            <ArrowUpwardIcon sx={{ color: "#22c55e", fontSize: "0.85rem" }} />
-          ) : (
-            <ArrowDownwardIcon sx={{ color: "#ef4444", fontSize: "0.85rem" }} />
-          )}
+          {trend === "up" && <ArrowUpwardIcon sx={{ color: diffColor, fontSize: "0.85rem" }} />}
+          {trend === "down" && <ArrowDownwardIcon sx={{ color: diffColor, fontSize: "0.85rem" }} />}
           <Typography
             variant="caption"
+            className="tabular-nums"
             sx={{
-              color: isPositive ? "#22c55e" : "#ef4444",
+              fontFamily: "var(--font-mono)",
+              color: diffColor,
               fontWeight: 600,
-              fontSize: "0.8rem",
+              fontSize: "0.76rem",
             }}
           >
             {diff}

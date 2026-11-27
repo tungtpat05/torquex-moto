@@ -1,31 +1,34 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
+  Alert,
   Box,
   Button,
-  Grid,
-  TextField,
-  Typography,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  FormControlLabel,
-  Switch,
-  IconButton,
   Chip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  FormControl,
+  FormControlLabel,
+  Grid,
+  IconButton,
+  InputLabel,
+  MenuItem,
   Paper,
-  TableContainer,
+  Select,
+  Snackbar,
+  Switch,
   Table,
+  TableBody,
+  TableCell,
+  TableContainer,
   TableHead,
   TableRow,
-  TableCell,
-  TableBody,
-  Divider,
+  TextField,
+  Tooltip,
+  Typography,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
@@ -33,15 +36,17 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import SectionCard from "../common/SectionCard";
+import StatusChip from "../common/StatusChip";
+import ConfirmDialog from "../common/ConfirmDialog";
 import { SpecDefinition, SpecDataType } from "../../../types/specDefinition";
 import { ApiErrorResponse } from "../../../types/apiError";
 import {
-  getSpecDefinitionsByCategory,
   createSpecDefinition,
-  updateSpecDefinition,
-  deleteSpecDefinition,
   createSpecDefinitionOption,
+  deleteSpecDefinition,
   deleteSpecDefinitionOption,
+  getSpecDefinitionsByCategory,
+  updateSpecDefinition,
 } from "../../../services/specDefinitionService";
 import {
   specDefinitionSchema,
@@ -71,7 +76,12 @@ const SpecDefinitionManager: React.FC<SpecDefinitionManagerProps> = ({ categoryI
   const [formError, setFormError] = useState<string | null>(null);
 
   const [newOptionValue, setNewOptionValue] = useState("");
+  const [draftOptions, setDraftOptions] = useState<string[]>([]);
   const [addingOption, setAddingOption] = useState(false);
+
+  const [pendingDeleteDef, setPendingDeleteDef] = useState<SpecDefinition | null>(null);
+  const [deletingDef, setDeletingDef] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const {
     control,
@@ -121,6 +131,8 @@ const SpecDefinitionManager: React.FC<SpecDefinitionManagerProps> = ({ categoryI
     setEditingDef(null);
     setIsKeyManuallyEdited(false);
     setFormError(null);
+    setNewOptionValue("");
+    setDraftOptions([]);
     reset({
       keyCode: "",
       displayName: "",
@@ -137,6 +149,8 @@ const SpecDefinitionManager: React.FC<SpecDefinitionManagerProps> = ({ categoryI
     setEditingDef(def);
     setIsKeyManuallyEdited(true);
     setFormError(null);
+    setNewOptionValue("");
+    setDraftOptions([]);
     reset({
       keyCode: def.keyCode,
       displayName: def.displayName,
@@ -164,8 +178,9 @@ const SpecDefinitionManager: React.FC<SpecDefinitionManagerProps> = ({ categoryI
           isRequired: values.isRequired,
           isActive: values.isActive,
         });
+        setToastMessage("Specification field updated.");
       } else {
-        await createSpecDefinition(categoryId, {
+        const created = await createSpecDefinition(categoryId, {
           keyCode: values.keyCode.trim(),
           displayName: values.displayName.trim(),
           dataType: values.dataType,
@@ -173,6 +188,16 @@ const SpecDefinitionManager: React.FC<SpecDefinitionManagerProps> = ({ categoryI
           displayOrder: values.displayOrder,
           isRequired: values.isRequired,
         });
+
+        if (values.dataType === "select" && draftOptions.length > 0) {
+          for (let i = 0; i < draftOptions.length; i += 1) {
+            await createSpecDefinitionOption(categoryId, created.id, {
+              optionValue: draftOptions[i],
+              displayOrder: i + 1,
+            });
+          }
+        }
+        setToastMessage("Specification field created.");
       }
       setDialogOpen(false);
       await fetchSpecDefs();
@@ -188,25 +213,40 @@ const SpecDefinitionManager: React.FC<SpecDefinitionManagerProps> = ({ categoryI
     }
   };
 
-  const handleDeleteDef = async (defId: number) => {
-    if (!categoryId) return;
-    if (!window.confirm("Are you sure you want to delete this specification field?")) return;
-
+  const handleConfirmDeleteDef = async () => {
+    if (!categoryId || !pendingDeleteDef) return;
+    setDeletingDef(true);
     try {
-      await deleteSpecDefinition(categoryId, defId);
+      await deleteSpecDefinition(categoryId, pendingDeleteDef.id);
+      setPendingDeleteDef(null);
+      setToastMessage("Specification field deleted.");
       await fetchSpecDefs();
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { message?: string } } };
       setError(axiosErr?.response?.data?.message || "Failed to delete spec field.");
+      setPendingDeleteDef(null);
+    } finally {
+      setDeletingDef(false);
     }
   };
 
   const handleAddOption = async () => {
-    if (!categoryId || !editingDef || !newOptionValue.trim()) return;
+    const trimmed = newOptionValue.trim();
+    if (!trimmed) return;
+
+    if (!editingDef) {
+      if (!draftOptions.includes(trimmed)) {
+        setDraftOptions((prev) => [...prev, trimmed]);
+      }
+      setNewOptionValue("");
+      return;
+    }
+
+    if (!categoryId) return;
     setAddingOption(true);
     try {
       await createSpecDefinitionOption(categoryId, editingDef.id, {
-        optionValue: newOptionValue.trim(),
+        optionValue: trimmed,
         displayOrder: (editingDef.options?.length || 0) + 1,
       });
       setNewOptionValue("");
@@ -216,6 +256,7 @@ const SpecDefinitionManager: React.FC<SpecDefinitionManagerProps> = ({ categoryI
       if (updatedCurrent) {
         setEditingDef(updatedCurrent);
       }
+      setToastMessage(`Option "${trimmed}" added.`);
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { message?: string } } };
       setFormError(axiosErr?.response?.data?.message || "Failed to add option.");
@@ -234,6 +275,7 @@ const SpecDefinitionManager: React.FC<SpecDefinitionManagerProps> = ({ categoryI
       if (updatedCurrent) {
         setEditingDef(updatedCurrent);
       }
+      setToastMessage("Option removed.");
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { message?: string } } };
       setFormError(axiosErr?.response?.data?.message || "Failed to delete option.");
@@ -243,7 +285,7 @@ const SpecDefinitionManager: React.FC<SpecDefinitionManagerProps> = ({ categoryI
   if (!categoryId) {
     return (
       <SectionCard title="Specification Fields">
-        <Typography variant="body2" sx={{ color: "#71717a", fontStyle: "italic", py: 1 }}>
+        <Typography variant="body2" sx={{ color: "#A1A1AA", fontStyle: "italic", py: 1 }}>
           Save the category first to configure custom specification fields (e.g. Displacement, Max Power, Electronics).
         </Typography>
       </SectionCard>
@@ -252,8 +294,17 @@ const SpecDefinitionManager: React.FC<SpecDefinitionManagerProps> = ({ categoryI
 
   return (
     <SectionCard title="Specification Fields Configuration">
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-        <Typography variant="body2" sx={{ color: "#a1a1aa" }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: 1.5,
+          mb: 2,
+        }}
+      >
+        <Typography variant="body2" sx={{ color: "#A1A1AA" }}>
           Define specs required for models under this category.
         </Typography>
         <Button
@@ -262,11 +313,12 @@ const SpecDefinitionManager: React.FC<SpecDefinitionManagerProps> = ({ categoryI
           startIcon={<AddIcon />}
           onClick={handleOpenAddDialog}
           sx={{
-            backgroundColor: "#ff6b35",
-            color: "#ffffff",
-            fontWeight: 650,
-            textTransform: "none",
-            "&:hover": { backgroundColor: "#e05a2b" },
+            backgroundColor: "#FF6700",
+            color: "#070709",
+            fontWeight: 800,
+            borderRadius: "8px",
+            px: 2,
+            "&:hover": { backgroundColor: "#FF7D24" },
           }}
         >
           Add Spec Field
@@ -274,14 +326,14 @@ const SpecDefinitionManager: React.FC<SpecDefinitionManagerProps> = ({ categoryI
       </Box>
 
       {error && (
-        <Typography color="error" variant="body2" sx={{ mb: 2 }}>
+        <Alert severity="error" sx={{ mb: 2, borderRadius: "10px" }}>
           {error}
-        </Typography>
+        </Alert>
       )}
 
       {loading ? (
         <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
-          <CircularProgress size={28} color="warning" />
+          <CircularProgress size={28} sx={{ color: "#FF6700" }} />
         </Box>
       ) : specDefs.length === 0 ? (
         <Paper
@@ -289,12 +341,15 @@ const SpecDefinitionManager: React.FC<SpecDefinitionManagerProps> = ({ categoryI
           sx={{
             p: 3,
             textAlign: "center",
-            backgroundColor: "rgba(255, 255, 255, 0.02)",
-            borderColor: "rgba(255, 255, 255, 0.08)",
+            backgroundColor: "#16161D",
+            borderColor: "rgba(255, 255, 255, 0.12)",
+            borderRadius: "12px",
           }}
         >
-          <Typography variant="body2" sx={{ color: "#71717a" }}>
-            No specification fields defined for this category yet. Click <strong>"Add Spec Field"</strong> to create fields like <em>Displacement (cc)</em>, <em>Horsepower</em>, or <em>Transmission</em>.
+          <Typography variant="body2" sx={{ color: "#A1A1AA" }}>
+            No specification fields defined for this category yet. Click{" "}
+            <strong>Add Spec Field</strong> to create fields like <em>Displacement (cc)</em>,{" "}
+            <em>Horsepower</em>, or <em>Transmission</em>.
           </Typography>
         </Paper>
       ) : (
@@ -302,29 +357,60 @@ const SpecDefinitionManager: React.FC<SpecDefinitionManagerProps> = ({ categoryI
           component={Paper}
           variant="outlined"
           sx={{
-            backgroundColor: "#18181b",
-            borderColor: "rgba(255, 255, 255, 0.08)",
+            overflowX: "auto",
+            backgroundColor: "#0F0F14",
+            borderColor: "rgba(255, 255, 255, 0.10)",
+            borderRadius: "12px",
           }}
         >
-          <Table size="small">
+          <Table size="small" sx={{ minWidth: 680 }}>
             <TableHead sx={{ backgroundColor: "rgba(255, 255, 255, 0.03)" }}>
-              <TableRow>
-                <TableCell sx={{ color: "#71717a", fontWeight: 700, fontSize: "0.75rem" }}>#</TableCell>
-                <TableCell sx={{ color: "#71717a", fontWeight: 700, fontSize: "0.75rem" }}>DISPLAY NAME</TableCell>
-                <TableCell sx={{ color: "#71717a", fontWeight: 700, fontSize: "0.75rem" }}>KEY CODE</TableCell>
-                <TableCell sx={{ color: "#71717a", fontWeight: 700, fontSize: "0.75rem" }}>TYPE</TableCell>
-                <TableCell sx={{ color: "#71717a", fontWeight: 700, fontSize: "0.75rem" }}>UNIT</TableCell>
-                <TableCell sx={{ color: "#71717a", fontWeight: 700, fontSize: "0.75rem" }}>REQ?</TableCell>
-                <TableCell sx={{ color: "#71717a", fontWeight: 700, fontSize: "0.75rem" }}>STATUS</TableCell>
-                <TableCell align="right" sx={{ color: "#71717a", fontWeight: 700, fontSize: "0.75rem" }}>ACTIONS</TableCell>
+              <TableRow
+                sx={{
+                  "& th": {
+                    fontFamily: "var(--font-mono)",
+                    color: "#A1A1AA",
+                    fontWeight: 700,
+                    fontSize: "0.7rem",
+                    letterSpacing: "0.05em",
+                    borderColor: "rgba(255, 255, 255, 0.08)",
+                  },
+                }}
+              >
+                <TableCell>#</TableCell>
+                <TableCell>DISPLAY NAME</TableCell>
+                <TableCell>KEY CODE</TableCell>
+                <TableCell>TYPE</TableCell>
+                <TableCell>UNIT</TableCell>
+                <TableCell>REQ?</TableCell>
+                <TableCell>STATUS</TableCell>
+                <TableCell align="right">ACTIONS</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {specDefs.map((def, idx) => (
-                <TableRow key={def.id} hover sx={{ "&:hover": { backgroundColor: "rgba(255, 255, 255, 0.02)" } }}>
-                  <TableCell sx={{ color: "#e4e4e7" }}>{def.displayOrder || idx + 1}</TableCell>
-                  <TableCell sx={{ color: "#ffffff", fontWeight: 600 }}>{def.displayName}</TableCell>
-                  <TableCell sx={{ color: "#a1a1aa", fontFamily: "monospace", fontSize: "0.8rem" }}>
+                <TableRow
+                  key={def.id}
+                  hover
+                  sx={{
+                    "& td": { borderColor: "rgba(255, 255, 255, 0.06)" },
+                    "&:hover": { backgroundColor: "rgba(255, 255, 255, 0.02)" },
+                  }}
+                >
+                  <TableCell
+                    className="tabular-nums"
+                    sx={{ fontFamily: "var(--font-mono)", color: "#E4E4E7" }}
+                  >
+                    {def.displayOrder || idx + 1}
+                  </TableCell>
+                  <TableCell sx={{ color: "#F4F4F5", fontWeight: 600 }}>{def.displayName}</TableCell>
+                  <TableCell
+                    sx={{
+                      color: "#A1A1AA",
+                      fontFamily: "var(--font-mono)",
+                      fontSize: "0.78rem",
+                    }}
+                  >
                     {def.keyCode}
                   </TableCell>
                   <TableCell>
@@ -332,45 +418,69 @@ const SpecDefinitionManager: React.FC<SpecDefinitionManagerProps> = ({ categoryI
                       label={def.dataType.toUpperCase()}
                       size="small"
                       sx={{
-                        fontSize: "0.65rem",
+                        fontFamily: "var(--font-mono)",
+                        fontSize: "0.66rem",
                         fontWeight: 700,
+                        borderRadius: "4px",
                         backgroundColor:
-                          def.dataType === "number"
-                            ? "rgba(59, 130, 246, 0.15)"
-                            : def.dataType === "select"
-                            ? "rgba(168, 85, 247, 0.15)"
-                            : "rgba(113, 113, 122, 0.2)",
-                        color:
-                          def.dataType === "number"
-                            ? "#60a5fa"
-                            : def.dataType === "select"
-                            ? "#c084fc"
-                            : "#a1a1aa",
+                          def.dataType === "select" ? "rgba(255, 103, 0, 0.14)" : "#16161D",
+                        color: def.dataType === "select" ? "#FF6700" : "#E4E4E7",
+                        border: "1px solid rgba(255, 255, 255, 0.12)",
                       }}
                     />
                   </TableCell>
-                  <TableCell sx={{ color: "#a1a1aa" }}>{def.unit || "—"}</TableCell>
-                  <TableCell sx={{ color: def.isRequired ? "#ef4444" : "#71717a" }}>
-                    {def.isRequired ? "Yes" : "No"}
+                  <TableCell sx={{ color: "#A1A1AA" }}>{def.unit || "—"}</TableCell>
+                  <TableCell
+                    sx={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: "0.76rem",
+                      color: def.isRequired ? "#FCA5A5" : "#71717A",
+                    }}
+                  >
+                    {def.isRequired ? "YES" : "NO"}
                   </TableCell>
                   <TableCell>
-                    <Chip
-                      label={def.isActive ? "Active" : "Disabled"}
-                      size="small"
-                      sx={{
-                        fontSize: "0.65rem",
-                        backgroundColor: def.isActive ? "rgba(34, 197, 94, 0.1)" : "rgba(239, 68, 68, 0.1)",
-                        color: def.isActive ? "#4ade80" : "#f87171",
-                      }}
-                    />
+                    <StatusChip status={def.isActive ? "Active" : "Inactive"} />
                   </TableCell>
                   <TableCell align="right">
-                    <IconButton size="small" onClick={() => handleOpenEditDialog(def)} sx={{ color: "#a1a1aa", "&:hover": { color: "#ffffff" } }}>
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton size="small" onClick={() => handleDeleteDef(def.id)} sx={{ color: "#71717a", "&:hover": { color: "#ef4444" } }}>
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
+                    <Box sx={{ display: "inline-flex", gap: 0.75 }}>
+                      <Tooltip title={`Edit ${def.displayName}`} arrow>
+                        <IconButton
+                          aria-label={`Edit ${def.displayName}`}
+                          onClick={() => handleOpenEditDialog(def)}
+                          sx={{
+                            minWidth: 36,
+                            minHeight: 36,
+                            borderRadius: "8px",
+                            color: "#A1A1AA",
+                            "&:hover": {
+                              color: "#FF6700",
+                              backgroundColor: "rgba(255, 103, 0, 0.10)",
+                            },
+                          }}
+                        >
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title={`Delete ${def.displayName}`} arrow>
+                        <IconButton
+                          aria-label={`Delete ${def.displayName}`}
+                          onClick={() => setPendingDeleteDef(def)}
+                          sx={{
+                            minWidth: 36,
+                            minHeight: 36,
+                            borderRadius: "8px",
+                            color: "#A1A1AA",
+                            "&:hover": {
+                              color: "#EF4444",
+                              backgroundColor: "rgba(239, 68, 68, 0.12)",
+                            },
+                          }}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
                   </TableCell>
                 </TableRow>
               ))}
@@ -387,14 +497,21 @@ const SpecDefinitionManager: React.FC<SpecDefinitionManagerProps> = ({ categoryI
         fullWidth
         PaperProps={{
           sx: {
-            backgroundColor: "#18181b",
-            color: "#ffffff",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
-            borderRadius: 2,
+            backgroundColor: "#0F0F14",
+            color: "#F4F4F5",
+            border: "1px solid rgba(255, 255, 255, 0.12)",
+            borderTop: "1px solid rgba(255, 255, 255, 0.22)",
+            borderRadius: "16px",
           },
         }}
       >
-        <DialogTitle sx={{ fontWeight: 700, fontSize: "1.1rem" }}>
+        <DialogTitle
+          sx={{
+            fontFamily: "var(--font-display)",
+            fontWeight: 800,
+            fontSize: "1.1rem",
+          }}
+        >
           {editingDef ? `Edit Spec Field: ${editingDef.displayName}` : "Add New Specification Field"}
         </DialogTitle>
         <Box
@@ -408,9 +525,9 @@ const SpecDefinitionManager: React.FC<SpecDefinitionManagerProps> = ({ categoryI
         >
           <DialogContent dividers sx={{ borderColor: "rgba(255, 255, 255, 0.08)" }}>
             {formError && (
-              <Typography color="error" variant="body2" sx={{ mb: 2, p: 1.5, borderRadius: 1, backgroundColor: "rgba(239, 68, 68, 0.1)" }}>
+              <Alert severity="error" sx={{ mb: 2, borderRadius: "10px" }}>
                 {formError}
-              </Typography>
+              </Alert>
             )}
             <Grid container spacing={2.5} sx={{ pt: 1 }}>
               <Grid size={{ xs: 12, sm: 6 }}>
@@ -434,7 +551,7 @@ const SpecDefinitionManager: React.FC<SpecDefinitionManagerProps> = ({ categoryI
                       error={Boolean(fieldState.error)}
                       helperText={fieldState.error?.message}
                       disabled={isSubmitting}
-                      sx={{ "& label": { color: "#71717a", fontWeight: 600, fontSize: "0.85rem" } }}
+                      sx={{ "& label": { color: "#A1A1AA", fontWeight: 600, fontSize: "0.85rem" } }}
                     />
                   )}
                 />
@@ -455,9 +572,12 @@ const SpecDefinitionManager: React.FC<SpecDefinitionManagerProps> = ({ categoryI
                         setIsKeyManuallyEdited(true);
                       }}
                       error={Boolean(fieldState.error)}
-                      helperText={fieldState.error?.message || "Unique identifier code (e.g. displacement, max_power)"}
+                      helperText={
+                        fieldState.error?.message ||
+                        "Unique identifier code (e.g. displacement, max_power)"
+                      }
                       disabled={isSubmitting}
-                      sx={{ "& label": { color: "#71717a", fontWeight: 600, fontSize: "0.85rem" } }}
+                      sx={{ "& label": { color: "#A1A1AA", fontWeight: 600, fontSize: "0.85rem" } }}
                     />
                   )}
                 />
@@ -467,14 +587,20 @@ const SpecDefinitionManager: React.FC<SpecDefinitionManagerProps> = ({ categoryI
                   name="dataType"
                   control={control}
                   render={({ field }) => (
-                    <FormControl fullWidth size="small">
-                      <InputLabel sx={{ color: "#71717a", fontWeight: 600 }}>DATA TYPE</InputLabel>
+                    <FormControl fullWidth>
+                      <InputLabel
+                        id="spec-data-type-label"
+                        sx={{ color: "#A1A1AA", fontWeight: 600, fontSize: "0.85rem" }}
+                      >
+                        DATA TYPE
+                      </InputLabel>
                       <Select
+                        labelId="spec-data-type-label"
                         value={field.value}
                         label="DATA TYPE"
                         onChange={(e) => field.onChange(e.target.value as SpecDataType)}
                         disabled={isSubmitting}
-                        sx={{ color: "#ffffff" }}
+                        sx={{ color: "#F4F4F5" }}
                       >
                         <MenuItem value="text">Text (Free string)</MenuItem>
                         <MenuItem value="number">Number (Numeric value + Unit)</MenuItem>
@@ -498,9 +624,11 @@ const SpecDefinitionManager: React.FC<SpecDefinitionManagerProps> = ({ categoryI
                       error={Boolean(fieldState.error)}
                       helperText={
                         fieldState.error?.message ||
-                        (dataType === "number" ? "Appended to value (e.g. cc)" : "Only applicable for Number type")
+                        (dataType === "number"
+                          ? "Appended to value (e.g. cc)"
+                          : "Only applicable for Number type")
                       }
-                      sx={{ "& label": { color: "#71717a", fontWeight: 600, fontSize: "0.85rem" } }}
+                      sx={{ "& label": { color: "#A1A1AA", fontWeight: 600, fontSize: "0.85rem" } }}
                     />
                   )}
                 />
@@ -515,12 +643,14 @@ const SpecDefinitionManager: React.FC<SpecDefinitionManagerProps> = ({ categoryI
                       type="number"
                       label="DISPLAY ORDER"
                       value={field.value}
-                      onChange={(e) => field.onChange(e.target.value === "" ? 0 : Number(e.target.value))}
+                      onChange={(e) =>
+                        field.onChange(e.target.value === "" ? 0 : Number(e.target.value))
+                      }
                       onBlur={field.onBlur}
                       error={Boolean(fieldState.error)}
                       helperText={fieldState.error?.message}
                       disabled={isSubmitting}
-                      sx={{ "& label": { color: "#71717a", fontWeight: 600, fontSize: "0.85rem" } }}
+                      sx={{ "& label": { color: "#A1A1AA", fontWeight: 600, fontSize: "0.85rem" } }}
                     />
                   )}
                 />
@@ -536,11 +666,16 @@ const SpecDefinitionManager: React.FC<SpecDefinitionManagerProps> = ({ categoryI
                           checked={Boolean(field.value)}
                           onChange={(e) => field.onChange(e.target.checked)}
                           disabled={isSubmitting}
-                          sx={{ "& .MuiSwitch-switchBase.Mui-checked": { color: "#ff6b35" } }}
+                          sx={{
+                            "& .MuiSwitch-switchBase.Mui-checked": { color: "#FF6700" },
+                            "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+                              backgroundColor: "#FF6700",
+                            },
+                          }}
                         />
                       }
                       label="Is Required Field"
-                      sx={{ color: "#e4e4e7" }}
+                      sx={{ color: "#F4F4F5" }}
                     />
                   )}
                 />
@@ -557,60 +692,106 @@ const SpecDefinitionManager: React.FC<SpecDefinitionManagerProps> = ({ categoryI
                             checked={Boolean(field.value)}
                             onChange={(e) => field.onChange(e.target.checked)}
                             disabled={isSubmitting}
-                            sx={{ "& .MuiSwitch-switchBase.Mui-checked": { color: "#ff6b35" } }}
+                            sx={{
+                              "& .MuiSwitch-switchBase.Mui-checked": { color: "#FF6700" },
+                              "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+                                backgroundColor: "#FF6700",
+                              },
+                            }}
                           />
                         }
                         label="Active Status"
-                        sx={{ color: "#e4e4e7" }}
+                        sx={{ color: "#F4F4F5" }}
                       />
                     )}
                   />
                 </Grid>
               )}
 
-              {dataType === "select" && editingDef && (
+              {dataType === "select" && (
                 <Grid size={{ xs: 12 }}>
                   <Divider sx={{ my: 1, borderColor: "rgba(255, 255, 255, 0.08)" }} />
-                  <Typography variant="subtitle2" sx={{ color: "#ff6b35", fontWeight: 700, mb: 1 }}>
+                  <Typography variant="subtitle2" sx={{ color: "#FF6700", fontWeight: 700, mb: 1 }}>
                     Predefined Options (Dropdown Choices)
                   </Typography>
                   <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
                     <TextField
                       size="small"
+                      aria-label="New predefined option"
                       placeholder="New option (e.g. 6-speed PANKL)"
                       value={newOptionValue}
                       onChange={(e) => setNewOptionValue(e.target.value)}
-                      disabled={addingOption}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          void handleAddOption();
+                        }
+                      }}
+                      disabled={addingOption || isSubmitting}
                       sx={{ flex: 1 }}
                     />
                     <Button
                       variant="outlined"
                       size="small"
-                      onClick={handleAddOption}
-                      disabled={addingOption || !newOptionValue.trim()}
-                      sx={{ color: "#ffffff", borderColor: "#71717a" }}
+                      onClick={() => void handleAddOption()}
+                      disabled={addingOption || isSubmitting || !newOptionValue.trim()}
+                      sx={{
+                        color: "#F4F4F5",
+                        borderColor: "rgba(255, 255, 255, 0.24)",
+                        borderRadius: "8px",
+                        fontWeight: 600,
+                      }}
                     >
                       {addingOption ? "Adding..." : "Add Option"}
                     </Button>
                   </Box>
 
                   <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-                    {editingDef.options && editingDef.options.length > 0 ? (
-                      editingDef.options.map((opt) => (
+                    {editingDef ? (
+                      editingDef.options && editingDef.options.length > 0 ? (
+                        editingDef.options.map((opt) => (
+                          <Chip
+                            key={opt.id}
+                            label={opt.optionValue}
+                            onDelete={() => void handleDeleteOption(opt.id)}
+                            sx={{
+                              backgroundColor: "#16161D",
+                              color: "#F4F4F5",
+                              border: "1px solid rgba(255, 255, 255, 0.12)",
+                              "& .MuiChip-deleteIcon": {
+                                color: "#A1A1AA",
+                                "&:hover": { color: "#EF4444" },
+                              },
+                            }}
+                          />
+                        ))
+                      ) : (
+                        <Typography variant="caption" sx={{ color: "#71717A" }}>
+                          No options added yet. Add options above.
+                        </Typography>
+                      )
+                    ) : draftOptions.length > 0 ? (
+                      draftOptions.map((opt) => (
                         <Chip
-                          key={opt.id}
-                          label={opt.optionValue}
-                          onDelete={() => handleDeleteOption(opt.id)}
+                          key={opt}
+                          label={opt}
+                          onDelete={() =>
+                            setDraftOptions((prev) => prev.filter((item) => item !== opt))
+                          }
                           sx={{
-                            backgroundColor: "rgba(255, 255, 255, 0.08)",
-                            color: "#ffffff",
-                            "& .MuiChip-deleteIcon": { color: "#71717a", "&:hover": { color: "#ef4444" } },
+                            backgroundColor: "#16161D",
+                            color: "#F4F4F5",
+                            border: "1px solid rgba(255, 255, 255, 0.12)",
+                            "& .MuiChip-deleteIcon": {
+                              color: "#A1A1AA",
+                              "&:hover": { color: "#EF4444" },
+                            },
                           }}
                         />
                       ))
                     ) : (
-                      <Typography variant="caption" sx={{ color: "#71717a" }}>
-                        No options added yet. Add options above.
+                      <Typography variant="caption" sx={{ color: "#71717A" }}>
+                        Add draft options here — they will be saved automatically with the spec field.
                       </Typography>
                     )}
                   </Box>
@@ -619,20 +800,57 @@ const SpecDefinitionManager: React.FC<SpecDefinitionManagerProps> = ({ categoryI
             </Grid>
           </DialogContent>
           <DialogActions sx={{ px: 3, py: 2 }}>
-            <Button onClick={() => setDialogOpen(false)} disabled={isSubmitting} sx={{ color: "#71717a" }}>
+            <Button
+              onClick={() => setDialogOpen(false)}
+              disabled={isSubmitting}
+              sx={{ color: "#A1A1AA", borderRadius: "8px" }}
+            >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={isSubmitting}
               variant="contained"
-              sx={{ backgroundColor: "#ff6b35", color: "#ffffff", fontWeight: 700, "&:hover": { backgroundColor: "#e05a2b" } }}
+              sx={{
+                backgroundColor: "#FF6700",
+                color: "#070709",
+                fontWeight: 800,
+                borderRadius: "8px",
+                "&:hover": { backgroundColor: "#FF7D24" },
+              }}
             >
               {isSubmitting ? "Saving..." : editingDef ? "Save Changes" : "Create Spec Field"}
             </Button>
           </DialogActions>
         </Box>
       </Dialog>
+
+      <ConfirmDialog
+        open={Boolean(pendingDeleteDef)}
+        title="Delete specification field?"
+        description={`Are you sure you want to delete "${pendingDeleteDef?.displayName || ""}"? This cannot be undone.`}
+        confirmLabel="Delete Field"
+        cancelLabel="Cancel"
+        tone="danger"
+        loading={deletingDef}
+        onConfirm={() => void handleConfirmDeleteDef()}
+        onCancel={() => setPendingDeleteDef(null)}
+      />
+
+      <Snackbar
+        open={Boolean(toastMessage)}
+        autoHideDuration={3500}
+        onClose={() => setToastMessage(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      >
+        <Alert
+          severity="success"
+          onClose={() => setToastMessage(null)}
+          sx={{ borderRadius: "10px", fontWeight: 600 }}
+        >
+          {toastMessage}
+        </Alert>
+      </Snackbar>
     </SectionCard>
   );
 };

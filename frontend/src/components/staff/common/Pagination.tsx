@@ -1,4 +1,4 @@
-import { Box, IconButton, Typography, Button } from "@mui/material";
+import { Box, Button, IconButton, Typography } from "@mui/material";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 
@@ -13,9 +13,8 @@ interface PaginationProps {
 }
 
 const getPaginationRange = (currentPage: number, totalPages: number) => {
-  const siblings = 1; // Number of page buttons to show on either side of the current page
+  const siblings = 1;
 
-  // If total pages is small, show all pages
   if (totalPages <= 7) {
     return Array.from({ length: totalPages }, (_, i) => i + 1);
   }
@@ -39,7 +38,10 @@ const getPaginationRange = (currentPage: number, totalPages: number) => {
   }
 
   if (shouldShowLeftDots && shouldShowRightDots) {
-    const middleRange = Array.from({ length: rightSiblingIndex - leftSiblingIndex + 1 }, (_, i) => leftSiblingIndex + i);
+    const middleRange = Array.from(
+      { length: rightSiblingIndex - leftSiblingIndex + 1 },
+      (_, i) => leftSiblingIndex + i
+    );
     return [1, "...", ...middleRange, "...", totalPages];
   }
 
@@ -55,110 +57,152 @@ const Pagination = ({
   onPageChange,
   itemLabel = "items",
 }: PaginationProps) => {
+  const isEmpty = totalItems === 0;
+
   return (
     <Box
       sx={{
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
+        flexWrap: "wrap",
+        gap: 2,
         width: "100%",
         pt: 2.5,
         mt: 1.5,
-        borderTop: "1px solid rgba(255, 255, 255, 0.05)",
+        borderTop: "1px solid rgba(255, 255, 255, 0.08)",
       }}
     >
-      {/* Description text */}
-      <Typography variant="body2" sx={{ color: "#71717a", fontSize: "0.85rem" }}>
-        Showing {startIndex}-{endIndex} of {totalItems} {itemLabel}
+      <Typography
+        variant="body2"
+        className="tabular-nums"
+        sx={{
+          fontFamily: "var(--font-mono)",
+          color: "#A1A1AA",
+          fontSize: "0.78rem",
+        }}
+      >
+        {isEmpty
+          ? `0 ${itemLabel}`
+          : `Showing ${startIndex}-${endIndex} of ${totalItems} ${itemLabel}`}
       </Typography>
 
-      {/* Pages Navigation */}
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        <IconButton
-          size="small"
-          disabled={currentPage === 1}
-          onClick={() => onPageChange(currentPage - 1)}
-          sx={{
-            color: "#a1a1aa",
-            border: "1px solid rgba(255, 255, 255, 0.05)",
-            borderRadius: 1.5,
-            p: 0.75,
-            "&.Mui-disabled": {
-              color: "#3f3f46",
-              borderColor: "rgba(255, 255, 255, 0.02)",
-            },
-          }}
-        >
-          <ChevronLeftIcon fontSize="small" />
-        </IconButton>
+      {!isEmpty && (
+        <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 0.75 }}>
+          <IconButton
+            size="small"
+            aria-label="Previous page"
+            disabled={currentPage <= 1}
+            onClick={() => onPageChange(currentPage - 1)}
+            sx={{
+              minWidth: 36,
+              height: 36,
+              color: "#A1A1AA",
+              border: "1px solid rgba(255, 255, 255, 0.10)",
+              borderRadius: "8px",
+              "&:hover": {
+                backgroundColor: "rgba(255, 255, 255, 0.05)",
+                color: "#F4F4F5",
+              },
+              "&:focus-visible": {
+                outline: "2px solid #FF6700",
+                outlineOffset: "2px",
+              },
+              "&.Mui-disabled": {
+                color: "#3F3F46",
+                borderColor: "rgba(255, 255, 255, 0.04)",
+              },
+            }}
+          >
+            <ChevronLeftIcon fontSize="small" />
+          </IconButton>
 
-        {getPaginationRange(currentPage, totalPages).map((page, index) => {
-          if (page === "...") {
+          {getPaginationRange(currentPage, totalPages).map((page, index) => {
+            if (page === "...") {
+              return (
+                <Box
+                  key={`dots-${index}`}
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    minWidth: 36,
+                    height: 36,
+                    fontFamily: "var(--font-mono)",
+                    color: "#71717A",
+                    fontSize: "0.8rem",
+                  }}
+                >
+                  ...
+                </Box>
+              );
+            }
+
+            const isSelected = page === currentPage;
+
             return (
-              <Box
-                key={`dots-${index}`}
+              <Button
+                key={page}
+                aria-label={`Page ${page}`}
+                aria-current={isSelected ? "page" : undefined}
+                onClick={() => onPageChange(page as number)}
+                className="tabular-nums"
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  minWidth: 32,
-                  height: 32,
-                  color: "#71717a",
-                  fontSize: "0.85rem",
-                  fontWeight: 600,
+                  minWidth: 36,
+                  height: 36,
+                  p: 0,
+                  borderRadius: "8px",
+                  fontFamily: "var(--font-mono)",
+                  fontWeight: isSelected ? 800 : 600,
+                  fontSize: "0.8rem",
+                  backgroundColor: isSelected ? "#FF6700" : "transparent",
+                  color: isSelected ? "#070709" : "#A1A1AA",
+                  border: "1px solid",
+                  borderColor: isSelected ? "#FF6700" : "rgba(255, 255, 255, 0.10)",
+                  "&:hover": {
+                    backgroundColor: isSelected ? "#FF7D24" : "rgba(255, 255, 255, 0.05)",
+                    color: isSelected ? "#070709" : "#F4F4F5",
+                  },
+                  "&:focus-visible": {
+                    outline: "2px solid #FF6700",
+                    outlineOffset: "2px",
+                  },
                 }}
               >
-                ...
-              </Box>
+                {page}
+              </Button>
             );
-          }
+          })}
 
-          const isSelected = page === currentPage;
-
-          return (
-            <Button
-              key={page}
-              onClick={() => onPageChange(page as number)}
-              sx={{
-                minWidth: 32,
-                height: 32,
-                p: 0,
-                borderRadius: 1.5,
-                fontWeight: 600,
-                fontSize: "0.85rem",
-                backgroundColor: isSelected ? "#ff6b35" : "transparent",
-                color: isSelected ? "#ffffff" : "#a1a1aa",
-                border: "1px solid",
-                borderColor: isSelected ? "#ff6b35" : "rgba(255, 255, 255, 0.05)",
-                "&:hover": {
-                  backgroundColor: isSelected ? "#e05a2b" : "rgba(255, 255, 255, 0.03)",
-                  color: isSelected ? "#ffffff" : "#ffffff",
-                },
-              }}
-            >
-              {page}
-            </Button>
-          );
-        })}
-
-        <IconButton
-          size="small"
-          disabled={currentPage === totalPages}
-          onClick={() => onPageChange(currentPage + 1)}
-          sx={{
-            color: "#a1a1aa",
-            border: "1px solid rgba(255, 255, 255, 0.05)",
-            borderRadius: 1.5,
-            p: 0.75,
-            "&.Mui-disabled": {
-              color: "#3f3f46",
-              borderColor: "rgba(255, 255, 255, 0.02)",
-            },
-          }}
-        >
-          <ChevronRightIcon fontSize="small" />
-        </IconButton>
-      </Box>
+          <IconButton
+            size="small"
+            aria-label="Next page"
+            disabled={currentPage >= totalPages}
+            onClick={() => onPageChange(currentPage + 1)}
+            sx={{
+              minWidth: 36,
+              height: 36,
+              color: "#A1A1AA",
+              border: "1px solid rgba(255, 255, 255, 0.10)",
+              borderRadius: "8px",
+              "&:hover": {
+                backgroundColor: "rgba(255, 255, 255, 0.05)",
+                color: "#F4F4F5",
+              },
+              "&:focus-visible": {
+                outline: "2px solid #FF6700",
+                outlineOffset: "2px",
+              },
+              "&.Mui-disabled": {
+                color: "#3F3F46",
+                borderColor: "rgba(255, 255, 255, 0.04)",
+              },
+            }}
+          >
+            <ChevronRightIcon fontSize="small" />
+          </IconButton>
+        </Box>
+      )}
     </Box>
   );
 };

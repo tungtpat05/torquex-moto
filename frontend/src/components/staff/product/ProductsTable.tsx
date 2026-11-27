@@ -1,140 +1,239 @@
 import { useState } from "react";
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Checkbox, Avatar, Typography, Box } from "@mui/material";
+import {
+  Avatar,
+  Box,
+  Button,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
+} from "@mui/material";
+import { useNavigate } from "react-router-dom";
 import StatusChip from "../common/StatusChip";
 import ActionButtons from "../common/ActionButtons";
 import Pagination from "../common/Pagination";
-import { useNavigate } from "react-router-dom";
-
 import { Product } from "../../../types/product";
 
 interface ProductsTableProps {
   products: Product[];
+  page?: number;
+  onPageChange?: (page: number) => void;
+  hasActiveFilters?: boolean;
+  onClearFilters?: () => void;
 }
 
-const ProductsTable = ({ products }: ProductsTableProps) => {
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  const [page, setPage] = useState(1);
+const ProductsTable = ({
+  products,
+  page: controlledPage,
+  onPageChange,
+  hasActiveFilters = false,
+  onClearFilters,
+}: ProductsTableProps) => {
+  const [internalPage, setInternalPage] = useState(1);
   const navigate = useNavigate();
 
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedIds(products.map((p) => p.id));
-    } else {
-      setSelectedIds([]);
-    }
-  };
-
-  const handleSelectOne = (id: number, checked: boolean) => {
-    if (checked) {
-      setSelectedIds([...selectedIds, id]);
-    } else {
-      setSelectedIds(selectedIds.filter((item) => item !== id));
-    }
-  };
-
-  // Mock handling pagination metrics
   const itemsPerPage = 8;
   const totalItems = products.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
-  const startIndex = (page - 1) * itemsPerPage + 1;
-  const endIndex = Math.min(page * itemsPerPage, totalItems);
+  const rawPage = controlledPage ?? internalPage;
+  const safePage = Math.min(Math.max(1, rawPage), totalPages);
+  const startIndex = totalItems === 0 ? 0 : (safePage - 1) * itemsPerPage + 1;
+  const endIndex = Math.min(safePage * itemsPerPage, totalItems);
 
-  // Filter list to fit currentPage items
-  const paginatedProducts = products.slice((page - 1) * itemsPerPage, page * itemsPerPage);
+  const paginatedProducts = products.slice(
+    (safePage - 1) * itemsPerPage,
+    safePage * itemsPerPage
+  );
 
   const handlePageChange = (newPage: number) => {
-    setPage(newPage);
+    if (onPageChange) {
+      onPageChange(newPage);
+    } else {
+      setInternalPage(newPage);
+    }
   };
+
+  if (totalItems === 0) {
+    return (
+      <Box
+        sx={{
+          py: 6,
+          px: 2,
+          textAlign: "center",
+          borderRadius: "12px",
+          backgroundColor: "#16161D",
+          border: "1px dashed rgba(255, 255, 255, 0.14)",
+        }}
+      >
+        <Typography
+          variant="subtitle1"
+          sx={{ fontFamily: "var(--font-display)", fontWeight: 700, color: "#F4F4F5", mb: 0.75 }}
+        >
+          {hasActiveFilters ? "No matching products" : "No products found"}
+        </Typography>
+        <Typography variant="body2" sx={{ color: "#A1A1AA", mb: 2.5 }}>
+          {hasActiveFilters
+            ? "No motorcycle model matches your current search or filters."
+            : "Add your first motorcycle model to populate the catalog."}
+        </Typography>
+        {hasActiveFilters && onClearFilters ? (
+          <Button
+            variant="outlined"
+            onClick={onClearFilters}
+            sx={{
+              borderRadius: "8px",
+              borderColor: "#FF6700",
+              color: "#FF6700",
+              fontWeight: 700,
+            }}
+          >
+            Clear Filters
+          </Button>
+        ) : (
+          <Button
+            variant="contained"
+            onClick={() => navigate("/staff/products/add")}
+            sx={{
+              borderRadius: "8px",
+              backgroundColor: "#FF6700",
+              color: "#070709",
+              fontWeight: 800,
+              "&:hover": { backgroundColor: "#FF7D24" },
+            }}
+          >
+            Add Product
+          </Button>
+        )}
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ width: "100%" }}>
       <TableContainer sx={{ overflowX: "auto" }}>
-        <Table size="medium" sx={{ minWidth: 800 }}>
+        <Table size="medium" sx={{ minWidth: 780 }}>
           <TableHead>
-            <TableRow sx={{ "& th": { backgroundColor: "#18181b", color: "#71717a", fontWeight: 650, fontSize: "0.75rem", borderBottom: "1px solid rgba(255, 255, 255, 0.05)", py: 1.5, px: 2 } }}>
-              <TableCell padding="checkbox">
-                <Checkbox
-                  checked={products.length > 0 && selectedIds.length === products.length}
-                  indeterminate={selectedIds.length > 0 && selectedIds.length < products.length}
-                  onChange={(e) => handleSelectAll(e.target.checked)}
-                  sx={{ color: "#3f3f46", "&.Mui-checked": { color: "#ff6b35" }, "&.MuiCheckbox-indeterminate": { color: "#ff6b35" } }}
-                />
-              </TableCell>
-              <TableCell>Image</TableCell>
+            <TableRow
+              sx={{
+                "& th": {
+                  backgroundColor: "rgba(255, 255, 255, 0.03)",
+                  color: "#A1A1AA",
+                  fontFamily: "var(--font-mono)",
+                  fontWeight: 700,
+                  fontSize: "0.72rem",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                  borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+                  py: 1.5,
+                  px: 2,
+                },
+              }}
+            >
+              <TableCell sx={{ width: 100 }}>Image</TableCell>
               <TableCell sx={{ minWidth: 200 }}>Product</TableCell>
               <TableCell>Category</TableCell>
               <TableCell>Price</TableCell>
               <TableCell>Status</TableCell>
-              <TableCell>Actions</TableCell>
+              <TableCell align="right" sx={{ pr: 3 }}>
+                Actions
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {paginatedProducts.map((product) => {
-              const isSelected = selectedIds.includes(product.id);
+              const hasDiscount =
+                product.discountPrice !== null &&
+                product.discountPrice !== undefined &&
+                product.discountPrice > 0 &&
+                product.discountPrice < product.basePrice;
+              const activePrice = hasDiscount ? product.discountPrice : product.basePrice;
 
               return (
                 <TableRow
                   key={product.id}
                   hover
-                  selected={isSelected}
                   sx={{
-                    "& td": { borderBottom: "1px solid rgba(255, 255, 255, 0.03)", color: "#e4e4e7", py: 2, px: 2 },
-                    "&.Mui-selected": { backgroundColor: "rgba(255, 107, 53, 0.03) !important" },
-                    "&:hover": { backgroundColor: "rgba(255, 255, 255, 0.01)" }
+                    "& td": {
+                      borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
+                      color: "#F4F4F5",
+                      py: 1.75,
+                      px: 2,
+                    },
+                    "&:hover": { backgroundColor: "rgba(255, 255, 255, 0.02)" },
                   }}
                 >
-                  <TableCell padding="checkbox">
-                    <Checkbox
-                      checked={isSelected}
-                      onChange={(e) => handleSelectOne(product.id, e.target.checked)}
-                      sx={{ color: "#3f3f46", "&.Mui-checked": { color: "#ff6b35" } }}
-                    />
-                  </TableCell>
                   <TableCell>
                     <Avatar
                       variant="rounded"
                       src={product.thumbnail || ""}
-                      sx={{ width: 44, height: 44, border: "1px solid rgba(255, 255, 255, 0.05)", backgroundColor: "#27272a" }}
+                      alt={product.productName}
+                      sx={{
+                        width: 68,
+                        height: 44,
+                        p: 0.5,
+                        borderRadius: "8px",
+                        border: "1px solid rgba(255, 255, 255, 0.12)",
+                        backgroundColor: "#16161D",
+                        "& img": { objectFit: "contain" },
+                      }}
                     />
                   </TableCell>
                   <TableCell>
                     <Box>
-                      <Typography variant="body2" sx={{ fontWeight: 700, color: "#ffffff", fontSize: "0.875rem" }}>
+                      <Typography
+                        variant="body2"
+                        sx={{ fontWeight: 700, color: "#F4F4F5", fontSize: "0.9rem" }}
+                      >
                         {product.productName || "—"}
                       </Typography>
-                      <Typography variant="caption" sx={{ color: "#71717a", display: "block", mt: 0.25 }}>
+                      <Typography variant="caption" sx={{ color: "#A1A1AA", display: "block", mt: 0.25 }}>
                         {product.brand?.brandName || "—"}
                       </Typography>
                     </Box>
                   </TableCell>
                   <TableCell>
-                    <Box>
-                      <Typography variant="body2" sx={{ fontWeight: 700, color: "#ffffff", fontSize: "0.875rem" }}>
-                        {product.category?.categoryName || "—"}
-                      </Typography>
-                    </Box>
+                    <Typography
+                      variant="body2"
+                      sx={{ fontWeight: 600, color: "#E4E4E7", fontSize: "0.875rem" }}
+                    >
+                      {product.category?.categoryName || "—"}
+                    </Typography>
                   </TableCell>
                   <TableCell>
                     <Box sx={{ display: "flex", flexDirection: "column" }}>
-                      <Typography variant="body2" sx={{ fontWeight: 700, color: "#ffffff", fontSize: "0.875rem" }}>
-                        {(() => {
-                          const hasDiscount =
-                            product.discountPrice !== null &&
-                            product.discountPrice !== undefined &&
-                            product.discountPrice > 0 &&
-                            product.discountPrice < product.basePrice;
-                          const activePrice = hasDiscount ? product.discountPrice : product.basePrice;
-                          return activePrice !== null && activePrice !== undefined ? `$${activePrice.toLocaleString()}` : "—";
-                        })()}
+                      <Typography
+                        variant="body2"
+                        className="tabular-nums"
+                        sx={{
+                          fontFamily: "var(--font-mono)",
+                          fontWeight: 700,
+                          color: "#F4F4F5",
+                          fontSize: "0.85rem",
+                        }}
+                      >
+                        {activePrice !== null && activePrice !== undefined
+                          ? `$${activePrice.toLocaleString()}`
+                          : "—"}
                       </Typography>
-                      {product.discountPrice !== null &&
-                        product.discountPrice !== undefined &&
-                        product.discountPrice > 0 &&
-                        product.discountPrice < product.basePrice && (
-                          <Typography variant="caption" sx={{ color: "#71717a", textDecoration: "line-through", mt: 0.1 }}>
-                            {product.basePrice !== null && product.basePrice !== undefined ? `$${product.basePrice.toLocaleString()}` : "—"}
-                          </Typography>
-                        )}
+                      {hasDiscount && (
+                        <Typography
+                          variant="caption"
+                          className="tabular-nums"
+                          sx={{
+                            fontFamily: "var(--font-mono)",
+                            color: "#71717A",
+                            textDecoration: "line-through",
+                            fontSize: "0.72rem",
+                          }}
+                        >
+                          {product.basePrice !== null && product.basePrice !== undefined
+                            ? `$${product.basePrice.toLocaleString()}`
+                            : "—"}
+                        </Typography>
+                      )}
                     </Box>
                   </TableCell>
                   <TableCell>
@@ -142,8 +241,10 @@ const ProductsTable = ({ products }: ProductsTableProps) => {
                   </TableCell>
                   <TableCell align="right" sx={{ pr: 3 }}>
                     <ActionButtons
-                      onView={() => window.open(`/products/${product.id}`, "_blank")}
+                      onView={() => window.open(`/products/${product.id}`, "_blank", "noopener,noreferrer")}
                       onEdit={() => navigate(`/staff/products/edit/${product.id}`)}
+                      viewLabel={`View ${product.productName} on Storefront`}
+                      editLabel={`Edit ${product.productName}`}
                     />
                   </TableCell>
                 </TableRow>
@@ -153,12 +254,11 @@ const ProductsTable = ({ products }: ProductsTableProps) => {
         </Table>
       </TableContainer>
 
-      {/* Pagination wrapper component */}
       <Pagination
-        currentPage={page}
+        currentPage={safePage}
         totalPages={totalPages}
         totalItems={totalItems}
-        startIndex={totalItems === 0 ? 0 : startIndex}
+        startIndex={startIndex}
         endIndex={endIndex}
         onPageChange={handlePageChange}
         itemLabel="products"

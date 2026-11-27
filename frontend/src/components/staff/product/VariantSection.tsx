@@ -1,40 +1,41 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
-  Box,
-  Typography,
-  Button,
+  Alert,
   Avatar,
-  TextField,
-  CircularProgress,
-  IconButton,
-  Tooltip,
-  Paper,
+  Box,
+  Button,
   Chip,
-  Switch,
+  CircularProgress,
   Dialog,
-  DialogTitle,
-  DialogContent,
   DialogActions,
+  DialogContent,
+  DialogTitle,
   FormControl,
+  IconButton,
+  InputAdornment,
   InputLabel,
-  Select,
   MenuItem,
+  Paper,
+  Select,
+  Snackbar,
+  Switch,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Alert,
-  InputAdornment,
+  TextField,
+  Tooltip,
+  Typography,
 } from "@mui/material";
 import {
   Add,
-  Edit,
   CloudUpload,
-  Refresh,
-  Palette,
+  Edit,
   Inventory,
+  Palette,
+  Refresh,
   Style,
 } from "@mui/icons-material";
 import { Controller, useForm } from "react-hook-form";
@@ -43,19 +44,19 @@ import SectionCard from "../common/SectionCard";
 import StatusChip from "../common/StatusChip";
 import { getColors, createColor } from "../../../services/colorService";
 import {
-  getProductVariants,
   createProductVariant,
+  getProductVariants,
   updateProductVariant,
-  uploadProductImage,
 } from "../../../services/productService";
+import { uploadImage } from "../../../services/imageService";
 import { Color } from "../../../types/color";
 import { ProductVariant } from "../../../types/product";
 import { ApiErrorResponse } from "../../../types/apiError";
 import {
-  variantSchema,
-  VariantFormValues,
-  quickColorSchema,
   QuickColorFormValues,
+  quickColorSchema,
+  VariantFormValues,
+  variantSchema,
 } from "../../../schemas/variantSchema";
 import { applyServerValidationErrors } from "../../../schemas/common";
 
@@ -80,6 +81,7 @@ const VariantSection = ({ productId, productName, disabled }: VariantSectionProp
 
   const [openColorModal, setOpenColorModal] = useState(false);
   const [colorSubmitError, setColorSubmitError] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const {
     control: variantControl,
@@ -174,7 +176,8 @@ const VariantSection = ({ productId, productName, disabled }: VariantSectionProp
     resetVariantForm({
       colorId: variant.color?.id ? String(variant.color.id) : "",
       sku: variant.sku || "",
-      additionalPrice: variant.additionalPrice !== undefined ? String(variant.additionalPrice) : "0",
+      additionalPrice:
+        variant.additionalPrice !== undefined ? String(variant.additionalPrice) : "0",
       stockQuantity: variant.stockQuantity !== undefined ? String(variant.stockQuantity) : "0",
       variantImage: variant.variantImage || "",
       variantImagePublicId: variant.variantImagePublicId || "",
@@ -190,12 +193,13 @@ const VariantSection = ({ productId, productName, disabled }: VariantSectionProp
 
   const handleVariantImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = "";
     if (!file) return;
 
     setUploadingImage(true);
     setVariantSubmitError(null);
     try {
-      const res = await uploadProductImage(file);
+      const res = await uploadImage(file);
       setVariantValue("variantImage", res.url, { shouldValidate: true, shouldDirty: true });
       setVariantValue("variantImagePublicId", res.publicId || "");
     } catch (err: unknown) {
@@ -224,6 +228,7 @@ const VariantSection = ({ productId, productName, disabled }: VariantSectionProp
           variantImagePublicId: values.variantImagePublicId?.trim() || "",
           isActive: values.isActive,
         });
+        setToastMessage("Variant updated.");
       } else {
         await createProductVariant(productId, {
           colorId: Number(values.colorId),
@@ -233,6 +238,7 @@ const VariantSection = ({ productId, productName, disabled }: VariantSectionProp
           variantImage: values.variantImage.trim(),
           variantImagePublicId: values.variantImagePublicId?.trim() || "",
         });
+        setToastMessage("Variant created.");
       }
       setOpenModal(false);
       await fetchVariants();
@@ -259,6 +265,7 @@ const VariantSection = ({ productId, productName, disabled }: VariantSectionProp
       setVariantValue("colorId", String(newColor.id), { shouldValidate: true });
       setOpenColorModal(false);
       resetColorForm({ colorName: "", colorCode: "#FF6700" });
+      setToastMessage(`Color "${newColor.colorName}" added.`);
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: ApiErrorResponse }; message?: string };
       const apiData = axiosErr?.response?.data;
@@ -281,22 +288,25 @@ const VariantSection = ({ productId, productName, disabled }: VariantSectionProp
             py: 6,
             px: 3,
             textAlign: "center",
-            backgroundColor: "rgba(255, 255, 255, 0.02)",
-            borderRadius: 2,
-            border: "1px dashed rgba(255, 255, 255, 0.12)",
+            backgroundColor: "#16161D",
+            borderRadius: "12px",
+            border: "1px dashed rgba(255, 255, 255, 0.14)",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
           }}
         >
-          <Style sx={{ fontSize: 48, color: "#71717a", mb: 1.5 }} />
-          <Typography variant="h6" sx={{ color: "#ffffff", fontWeight: 650, mb: 1 }}>
+          <Style sx={{ fontSize: 48, color: "#71717A", mb: 1.5 }} />
+          <Typography
+            variant="h6"
+            sx={{ fontFamily: "var(--font-display)", color: "#F4F4F5", fontWeight: 700, mb: 1 }}
+          >
             Save Basic Info First
           </Typography>
-          <Typography variant="body2" sx={{ color: "#71717a", maxWidth: 480, mx: "auto", lineHeight: 1.6 }}>
+          <Typography variant="body2" sx={{ color: "#A1A1AA", maxWidth: 480, mx: "auto", lineHeight: 1.6 }}>
             Please publish or save the product basic information first. After creation, you will be able to manage variants for{" "}
-            <strong style={{ color: "#e4e4e7" }}>{productName || "this product"}</strong> here.
+            <strong style={{ color: "#F4F4F5" }}>{productName || "this product"}</strong> here.
           </Typography>
         </Box>
       </SectionCard>
@@ -317,27 +327,37 @@ const VariantSection = ({ productId, productName, disabled }: VariantSectionProp
           }}
         >
           <Box>
-            <Typography variant="subtitle2" sx={{ color: "#e4e4e7", fontWeight: 600 }}>
+            <Typography variant="subtitle2" sx={{ color: "#F4F4F5", fontWeight: 700 }}>
               Variants List ({variants.length})
             </Typography>
-            <Typography variant="caption" sx={{ color: "#71717a" }}>
+            <Typography variant="caption" sx={{ color: "#A1A1AA" }}>
               Configure motorcycle colorways, SKU codes, price adjustments, and stock counts.
             </Typography>
           </Box>
 
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <Tooltip title="Refresh variants list">
-              <IconButton
-                onClick={() => void fetchVariants()}
-                disabled={loadingVariants || disabled}
-                sx={{
-                  color: "#71717a",
-                  backgroundColor: "rgba(255, 255, 255, 0.05)",
-                  "&:hover": { backgroundColor: "rgba(255, 255, 255, 0.1)", color: "#ffffff" },
-                }}
-              >
-                <Refresh fontSize="small" />
-              </IconButton>
+            <Tooltip title="Refresh variants list" arrow>
+              <span>
+                <IconButton
+                  aria-label="Refresh variants list"
+                  onClick={() => void fetchVariants()}
+                  disabled={loadingVariants || disabled}
+                  sx={{
+                    minWidth: 36,
+                    minHeight: 36,
+                    borderRadius: "8px",
+                    color: "#A1A1AA",
+                    backgroundColor: "#16161D",
+                    border: "1px solid rgba(255, 255, 255, 0.10)",
+                    "&:hover": {
+                      borderColor: "#FF6700",
+                      color: "#F4F4F5",
+                    },
+                  }}
+                >
+                  <Refresh fontSize="small" />
+                </IconButton>
+              </span>
             </Tooltip>
 
             <Button
@@ -346,14 +366,13 @@ const VariantSection = ({ productId, productName, disabled }: VariantSectionProp
               onClick={handleOpenCreateModal}
               disabled={disabled}
               sx={{
-                backgroundColor: "#ff6b35",
-                color: "#ffffff",
-                fontWeight: 650,
+                backgroundColor: "#FF6700",
+                color: "#070709",
+                fontWeight: 800,
                 fontSize: "0.85rem",
-                textTransform: "none",
-                borderRadius: 2,
-                boxShadow: "0 4px 12px rgba(255, 107, 53, 0.15)",
-                "&:hover": { backgroundColor: "#e05a2b" },
+                borderRadius: "8px",
+                px: 2.25,
+                "&:hover": { backgroundColor: "#FF7D24" },
               }}
             >
               Add Variant
@@ -362,14 +381,14 @@ const VariantSection = ({ productId, productName, disabled }: VariantSectionProp
         </Box>
 
         {variantError && (
-          <Alert severity="error" sx={{ backgroundColor: "rgba(239, 68, 68, 0.1)", color: "#fca5a5" }}>
+          <Alert severity="error" sx={{ borderRadius: "10px" }}>
             {variantError}
           </Alert>
         )}
 
         {loadingVariants ? (
           <Box sx={{ display: "flex", justifyContent: "center", py: 5 }}>
-            <CircularProgress color="warning" size={32} />
+            <CircularProgress sx={{ color: "#FF6700" }} size={32} />
           </Box>
         ) : variants.length === 0 ? (
           <Paper
@@ -378,16 +397,19 @@ const VariantSection = ({ productId, productName, disabled }: VariantSectionProp
               py: 5,
               px: 3,
               textAlign: "center",
-              backgroundColor: "rgba(255, 255, 255, 0.02)",
-              borderRadius: 2,
-              border: "1px dashed rgba(255, 255, 255, 0.1)",
+              backgroundColor: "#16161D",
+              borderRadius: "12px",
+              border: "1px dashed rgba(255, 255, 255, 0.14)",
             }}
           >
-            <Inventory sx={{ fontSize: 44, color: "#52525b", mb: 1 }} />
-            <Typography variant="subtitle1" sx={{ color: "#e4e4e7", fontWeight: 600 }}>
+            <Inventory sx={{ fontSize: 44, color: "#71717A", mb: 1 }} />
+            <Typography
+              variant="subtitle1"
+              sx={{ fontFamily: "var(--font-display)", color: "#F4F4F5", fontWeight: 700 }}
+            >
               No Variants Created Yet
             </Typography>
-            <Typography variant="body2" sx={{ color: "#71717a", mb: 2 }}>
+            <Typography variant="body2" sx={{ color: "#A1A1AA", mb: 2 }}>
               Add color variations, price adjustments, and stock levels for this motorcycle.
             </Typography>
             <Button
@@ -395,11 +417,11 @@ const VariantSection = ({ productId, productName, disabled }: VariantSectionProp
               startIcon={<Add />}
               onClick={handleOpenCreateModal}
               sx={{
-                borderColor: "#ff6b35",
-                color: "#ff6b35",
-                fontWeight: 600,
-                textTransform: "none",
-                "&:hover": { borderColor: "#e05a2b", backgroundColor: "rgba(255, 107, 53, 0.05)" },
+                borderColor: "#FF6700",
+                color: "#FF6700",
+                fontWeight: 700,
+                borderRadius: "8px",
+                "&:hover": { backgroundColor: "rgba(255, 103, 0, 0.08)" },
               }}
             >
               Add First Variant
@@ -410,22 +432,33 @@ const VariantSection = ({ productId, productName, disabled }: VariantSectionProp
             component={Paper}
             elevation={0}
             sx={{
-              backgroundColor: "rgba(255, 255, 255, 0.02)",
-              border: "1px solid rgba(255, 255, 255, 0.05)",
-              borderRadius: 2,
-              overflow: "hidden",
+              backgroundColor: "#0F0F14",
+              border: "1px solid rgba(255, 255, 255, 0.10)",
+              borderRadius: "12px",
+              overflowX: "auto",
             }}
           >
-            <Table size="medium">
+            <Table size="medium" sx={{ minWidth: 720 }}>
               <TableHead sx={{ backgroundColor: "rgba(255, 255, 255, 0.03)" }}>
-                <TableRow>
-                  <TableCell sx={{ color: "#71717a", fontWeight: 650, fontSize: "0.75rem" }}>IMAGE</TableCell>
-                  <TableCell sx={{ color: "#71717a", fontWeight: 650, fontSize: "0.75rem" }}>COLOR</TableCell>
-                  <TableCell sx={{ color: "#71717a", fontWeight: 650, fontSize: "0.75rem" }}>SKU</TableCell>
-                  <TableCell sx={{ color: "#71717a", fontWeight: 650, fontSize: "0.75rem" }}>ADDITIONAL PRICE</TableCell>
-                  <TableCell sx={{ color: "#71717a", fontWeight: 650, fontSize: "0.75rem" }}>STOCK</TableCell>
-                  <TableCell sx={{ color: "#71717a", fontWeight: 650, fontSize: "0.75rem" }}>STATUS</TableCell>
-                  <TableCell align="right" sx={{ color: "#71717a", fontWeight: 650, fontSize: "0.75rem" }}>ACTIONS</TableCell>
+                <TableRow
+                  sx={{
+                    "& th": {
+                      fontFamily: "var(--font-mono)",
+                      color: "#A1A1AA",
+                      fontWeight: 700,
+                      fontSize: "0.72rem",
+                      letterSpacing: "0.05em",
+                      borderColor: "rgba(255, 255, 255, 0.08)",
+                    },
+                  }}
+                >
+                  <TableCell>IMAGE</TableCell>
+                  <TableCell>COLOR</TableCell>
+                  <TableCell>SKU</TableCell>
+                  <TableCell>ADDITIONAL PRICE</TableCell>
+                  <TableCell>STOCK</TableCell>
+                  <TableCell>STATUS</TableCell>
+                  <TableCell align="right">ACTIONS</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -433,9 +466,9 @@ const VariantSection = ({ productId, productName, disabled }: VariantSectionProp
                   <TableRow
                     key={v.id}
                     sx={{
-                      "&:hover": { backgroundColor: "rgba(255, 255, 255, 0.03)" },
-                      borderBottom: "1px solid rgba(255, 255, 255, 0.05)",
-                      opacity: v.isActive ? 1 : 0.55,
+                      "& td": { borderColor: "rgba(255, 255, 255, 0.06)" },
+                      "&:hover": { backgroundColor: "rgba(255, 255, 255, 0.02)" },
+                      opacity: v.isActive ? 1 : 0.6,
                     }}
                   >
                     <TableCell>
@@ -444,15 +477,16 @@ const VariantSection = ({ productId, productName, disabled }: VariantSectionProp
                         src={v.variantImage}
                         alt={v.sku}
                         sx={{
-                          width: 64,
-                          height: 64,
-                          borderRadius: 2,
-                          backgroundColor: "#18181b",
+                          width: 68,
+                          height: 44,
+                          p: 0.5,
+                          borderRadius: "8px",
+                          backgroundColor: "#16161D",
                           border: "1px solid rgba(255, 255, 255, 0.12)",
-                          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.4)",
+                          "& img": { objectFit: "contain" },
                         }}
                       >
-                        <Style sx={{ color: "#71717a", fontSize: 24 }} />
+                        <Style sx={{ color: "#71717A", fontSize: 22 }} />
                       </Avatar>
                     </TableCell>
 
@@ -461,17 +495,16 @@ const VariantSection = ({ productId, productName, disabled }: VariantSectionProp
                         {v.color?.colorCode && (
                           <Box
                             sx={{
-                              width: 22,
-                              height: 22,
+                              width: 20,
+                              height: 20,
                               borderRadius: "50%",
                               backgroundColor: v.color.colorCode,
-                              border: "2px solid rgba(255, 255, 255, 0.4)",
-                              boxShadow: "0 2px 6px rgba(0, 0, 0, 0.5), inset 0 0 4px rgba(255, 255, 255, 0.2)",
+                              border: "2px solid rgba(255, 255, 255, 0.35)",
                               flexShrink: 0,
                             }}
                           />
                         )}
-                        <Typography variant="body2" sx={{ color: "#ffffff", fontWeight: 600 }}>
+                        <Typography variant="body2" sx={{ color: "#F4F4F5", fontWeight: 600 }}>
                           {v.color?.colorName || "—"}
                         </Typography>
                       </Box>
@@ -482,40 +515,57 @@ const VariantSection = ({ productId, productName, disabled }: VariantSectionProp
                         label={v.sku}
                         size="small"
                         sx={{
-                          fontFamily: "monospace",
+                          fontFamily: "var(--font-mono)",
                           fontWeight: 700,
-                          fontSize: "0.78rem",
-                          backgroundColor: "rgba(255, 107, 53, 0.1)",
-                          color: "#ff6b35",
-                          border: "1px solid rgba(255, 107, 53, 0.2)",
+                          fontSize: "0.75rem",
+                          borderRadius: "4px",
+                          backgroundColor: "rgba(255, 103, 0, 0.12)",
+                          color: "#FF6700",
+                          border: "1px solid rgba(255, 103, 0, 0.25)",
                         }}
                       />
                     </TableCell>
 
-                    <TableCell sx={{ color: v.additionalPrice > 0 ? "#10b981" : "#a1a1aa", fontWeight: 600, fontSize: "0.85rem" }}>
+                    <TableCell
+                      className="tabular-nums"
+                      sx={{
+                        fontFamily: "var(--font-mono)",
+                        color: v.additionalPrice > 0 ? "#4ADE80" : "#A1A1AA",
+                        fontWeight: 700,
+                        fontSize: "0.84rem",
+                      }}
+                    >
                       {v.additionalPrice > 0 ? `+${formatUSD(v.additionalPrice)}` : "$0"}
                     </TableCell>
 
                     <TableCell>
                       <Chip
+                        className="tabular-nums"
                         label={`${v.stockQuantity} units`}
                         size="small"
                         sx={{
-                          fontWeight: 600,
-                          fontSize: "0.75rem",
+                          fontFamily: "var(--font-mono)",
+                          fontWeight: 700,
+                          fontSize: "0.72rem",
+                          borderRadius: "100px",
                           backgroundColor:
                             v.stockQuantity > 10
-                              ? "rgba(16, 185, 129, 0.1)"
+                              ? "rgba(34, 197, 94, 0.10)"
                               : v.stockQuantity > 0
-                              ? "rgba(245, 158, 11, 0.1)"
-                              : "rgba(239, 68, 68, 0.1)",
-                          color: v.stockQuantity > 10 ? "#10b981" : v.stockQuantity > 0 ? "#f59e0b" : "#ef4444",
+                                ? "rgba(245, 158, 11, 0.12)"
+                                : "rgba(239, 68, 68, 0.12)",
+                          color:
+                            v.stockQuantity > 10
+                              ? "#4ADE80"
+                              : v.stockQuantity > 0
+                                ? "#FBBF24"
+                                : "#FCA5A5",
                           border: `1px solid ${
                             v.stockQuantity > 10
-                              ? "rgba(16, 185, 129, 0.2)"
+                              ? "rgba(34, 197, 94, 0.25)"
                               : v.stockQuantity > 0
-                              ? "rgba(245, 158, 11, 0.2)"
-                              : "rgba(239, 68, 68, 0.2)"
+                                ? "rgba(245, 158, 11, 0.25)"
+                                : "rgba(239, 68, 68, 0.25)"
                           }`,
                         }}
                       />
@@ -526,13 +576,19 @@ const VariantSection = ({ productId, productName, disabled }: VariantSectionProp
                     </TableCell>
 
                     <TableCell align="right">
-                      <Tooltip title="Edit Variant">
+                      <Tooltip title={`Edit ${v.sku}`} arrow>
                         <IconButton
-                          size="small"
+                          aria-label={`Edit variant ${v.sku}`}
                           onClick={() => handleOpenEditModal(v)}
                           sx={{
-                            color: "#a1a1aa",
-                            "&:hover": { color: "#ff6b35", backgroundColor: "rgba(255, 107, 53, 0.1)" },
+                            minWidth: 36,
+                            minHeight: 36,
+                            borderRadius: "8px",
+                            color: "#A1A1AA",
+                            "&:hover": {
+                              color: "#FF6700",
+                              backgroundColor: "rgba(255, 103, 0, 0.10)",
+                            },
                           }}
                         >
                           <Edit fontSize="small" />
@@ -547,7 +603,7 @@ const VariantSection = ({ productId, productName, disabled }: VariantSectionProp
         )}
       </Box>
 
-      {/* --- ADD / EDIT VARIANT DIALOG MODAL --- */}
+      {/* ADD / EDIT VARIANT DIALOG MODAL */}
       <Dialog
         open={openModal}
         onClose={handleCloseModal}
@@ -555,15 +611,23 @@ const VariantSection = ({ productId, productName, disabled }: VariantSectionProp
         fullWidth
         PaperProps={{
           sx: {
-            backgroundColor: "#121214",
+            backgroundColor: "#0F0F14",
             backgroundImage: "none",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
-            borderRadius: 3,
-            color: "#ffffff",
+            border: "1px solid rgba(255, 255, 255, 0.12)",
+            borderTop: "1px solid rgba(255, 255, 255, 0.22)",
+            borderRadius: "16px",
+            color: "#F4F4F5",
           },
         }}
       >
-        <DialogTitle sx={{ fontWeight: 700, fontSize: "1.1rem", borderBottom: "1px solid rgba(255, 255, 255, 0.05)" }}>
+        <DialogTitle
+          sx={{
+            fontFamily: "var(--font-display)",
+            fontWeight: 800,
+            fontSize: "1.1rem",
+            borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+          }}
+        >
           {editingVariant ? `Edit Variant: ${editingVariant.sku}` : "Add New Product Variant"}
         </DialogTitle>
 
@@ -578,7 +642,7 @@ const VariantSection = ({ productId, productName, disabled }: VariantSectionProp
         >
           <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2.5, pt: 3 }}>
             {variantSubmitError && (
-              <Alert severity="error" sx={{ backgroundColor: "rgba(239, 68, 68, 0.1)", color: "#fca5a5" }}>
+              <Alert severity="error" sx={{ borderRadius: "10px" }}>
                 {variantSubmitError}
               </Alert>
             )}
@@ -589,16 +653,16 @@ const VariantSection = ({ productId, productName, disabled }: VariantSectionProp
                 control={variantControl}
                 render={({ field, fieldState }) => (
                   <FormControl fullWidth error={Boolean(fieldState.error)}>
-                    <InputLabel sx={{ color: "#71717a", fontWeight: 600 }}>COLOR *</InputLabel>
+                    <InputLabel id="variant-color-label" sx={{ color: "#A1A1AA", fontWeight: 600 }}>
+                      COLOR *
+                    </InputLabel>
                     <Select
+                      labelId="variant-color-label"
                       value={field.value}
                       label="COLOR *"
                       onChange={field.onChange}
                       onBlur={field.onBlur}
-                      sx={{
-                        color: "#ffffff",
-                        "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255, 255, 255, 0.1)" },
-                      }}
+                      sx={{ color: "#F4F4F5" }}
                     >
                       {loadingColors ? (
                         <MenuItem disabled>Loading colors...</MenuItem>
@@ -611,12 +675,11 @@ const VariantSection = ({ productId, productName, disabled }: VariantSectionProp
                               {c.colorCode && (
                                 <Box
                                   sx={{
-                                    width: 20,
-                                    height: 20,
+                                    width: 18,
+                                    height: 18,
                                     borderRadius: "50%",
                                     backgroundColor: c.colorCode,
                                     border: "2px solid rgba(255, 255, 255, 0.35)",
-                                    boxShadow: "0 2px 5px rgba(0, 0, 0, 0.4)",
                                     flexShrink: 0,
                                   }}
                                 />
@@ -636,8 +699,9 @@ const VariantSection = ({ productId, productName, disabled }: VariantSectionProp
                 )}
               />
 
-              <Tooltip title="Add New Color option">
+              <Tooltip title="Add New Color option" arrow>
                 <Button
+                  aria-label="Add New Color option"
                   variant="outlined"
                   onClick={() => {
                     setColorSubmitError(null);
@@ -647,9 +711,13 @@ const VariantSection = ({ productId, productName, disabled }: VariantSectionProp
                   sx={{
                     minWidth: 48,
                     height: 56,
-                    borderColor: "rgba(255, 255, 255, 0.15)",
-                    color: "#ff6b35",
-                    "&:hover": { borderColor: "#ff6b35", backgroundColor: "rgba(255, 107, 53, 0.05)" },
+                    borderRadius: "8px",
+                    borderColor: "rgba(255, 255, 255, 0.18)",
+                    color: "#FF6700",
+                    "&:hover": {
+                      borderColor: "#FF6700",
+                      backgroundColor: "rgba(255, 103, 0, 0.08)",
+                    },
                   }}
                 >
                   <Palette />
@@ -668,13 +736,15 @@ const VariantSection = ({ productId, productName, disabled }: VariantSectionProp
                   placeholder="e.g. KTM-1390-ORG"
                   onChange={(e) => field.onChange(e.target.value.toUpperCase())}
                   error={Boolean(fieldState.error)}
-                  helperText={fieldState.error?.message || "Uppercase letters, numbers, and hyphens only"}
-                  sx={{ "& label": { color: "#71717a", fontWeight: 600 } }}
+                  helperText={
+                    fieldState.error?.message || "Uppercase letters, numbers, and hyphens only"
+                  }
+                  sx={{ "& label": { color: "#A1A1AA", fontWeight: 600 } }}
                 />
               )}
             />
 
-            <Box sx={{ display: "flex", gap: 2 }}>
+            <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 2 }}>
               <Controller
                 name="additionalPrice"
                 control={variantControl}
@@ -687,10 +757,12 @@ const VariantSection = ({ productId, productName, disabled }: VariantSectionProp
                     placeholder="0"
                     error={Boolean(fieldState.error)}
                     helperText={fieldState.error?.message || "Extra cost on top of base price"}
-                    InputProps={{
-                      startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                    slotProps={{
+                      input: {
+                        startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                      },
                     }}
-                    sx={{ "& label": { color: "#71717a", fontWeight: 600 } }}
+                    sx={{ "& label": { color: "#A1A1AA", fontWeight: 600 } }}
                   />
                 )}
               />
@@ -707,31 +779,40 @@ const VariantSection = ({ productId, productName, disabled }: VariantSectionProp
                     placeholder="0"
                     error={Boolean(fieldState.error)}
                     helperText={fieldState.error?.message}
-                    sx={{ "& label": { color: "#71717a", fontWeight: 600 } }}
+                    sx={{ "& label": { color: "#A1A1AA", fontWeight: 600 } }}
                   />
                 )}
               />
             </Box>
 
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-              <Typography variant="body2" sx={{ color: "#e4e4e7", fontWeight: 600 }}>
+              <Typography variant="body2" sx={{ color: "#F4F4F5", fontWeight: 600 }}>
                 Variant Image *
               </Typography>
 
-              <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2.5 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: { xs: "column", sm: "row" },
+                  alignItems: { xs: "stretch", sm: "flex-start" },
+                  gap: 2.5,
+                }}
+              >
                 <Avatar
                   variant="rounded"
                   src={currentVariantImage || undefined}
+                  alt="Variant preview"
                   sx={{
-                    width: 88,
-                    height: 88,
-                    borderRadius: 2.5,
-                    backgroundColor: "rgba(255, 255, 255, 0.04)",
-                    border: "1px dashed rgba(255, 255, 255, 0.2)",
-                    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.3)",
+                    width: { xs: "100%", sm: 140 },
+                    height: 100,
+                    p: 0.75,
+                    borderRadius: "10px",
+                    backgroundColor: "#16161D",
+                    border: "1px dashed rgba(255, 255, 255, 0.20)",
+                    "& img": { objectFit: "contain" },
                   }}
                 >
-                  <Style sx={{ color: "#71717a", fontSize: 32 }} />
+                  <Style sx={{ color: "#71717A", fontSize: 32 }} />
                 </Avatar>
 
                 <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 1.25 }}>
@@ -743,32 +824,43 @@ const VariantSection = ({ productId, productName, disabled }: VariantSectionProp
                         {...field}
                         size="small"
                         fullWidth
+                        aria-label="Variant image URL"
                         placeholder="https://... or /images/models/..."
                         error={Boolean(fieldState.error)}
                         helperText={fieldState.error?.message}
                       />
                     )}
                   />
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
                     <Button
                       variant="outlined"
                       component="label"
                       size="small"
                       disabled={uploadingImage}
-                      startIcon={uploadingImage ? <CircularProgress size={16} color="inherit" /> : <CloudUpload />}
+                      startIcon={
+                        uploadingImage ? <CircularProgress size={16} color="inherit" /> : <CloudUpload />
+                      }
                       sx={{
-                        borderColor: "rgba(255, 255, 255, 0.15)",
-                        color: "#e4e4e7",
+                        borderRadius: "8px",
+                        borderColor: "rgba(255, 255, 255, 0.18)",
+                        color: "#F4F4F5",
                         fontSize: "0.82rem",
-                        textTransform: "none",
                         fontWeight: 600,
-                        "&:hover": { borderColor: "#ff6b35", color: "#ff6b35" },
+                        "&:hover": { borderColor: "#FF6700", color: "#FF6700" },
                       }}
                     >
                       {uploadingImage ? "Uploading..." : "Upload Image"}
-                      <input type="file" hidden accept="image/*" onChange={handleVariantImageUpload} />
+                      <input
+                        type="file"
+                        hidden
+                        accept="image/*"
+                        onChange={(e) => void handleVariantImageUpload(e)}
+                      />
                     </Button>
-                    <Typography variant="caption" sx={{ color: "#71717a" }}>
+                    <Typography
+                      variant="caption"
+                      sx={{ fontFamily: "var(--font-mono)", color: "#71717A" }}
+                    >
                       JPG, PNG or WEBP
                     </Typography>
                   </Box>
@@ -782,10 +874,10 @@ const VariantSection = ({ productId, productName, disabled }: VariantSectionProp
                 alignItems: "center",
                 justifyContent: "space-between",
                 pt: 1,
-                borderTop: "1px solid rgba(255, 255, 255, 0.05)",
+                borderTop: "1px solid rgba(255, 255, 255, 0.08)",
               }}
             >
-              <Typography variant="body2" sx={{ color: "#e4e4e7", fontWeight: 600 }}>
+              <Typography variant="body2" sx={{ color: "#F4F4F5", fontWeight: 600 }}>
                 Active Status
               </Typography>
               <Controller
@@ -796,8 +888,10 @@ const VariantSection = ({ productId, productName, disabled }: VariantSectionProp
                     checked={Boolean(field.value)}
                     onChange={(e) => field.onChange(e.target.checked)}
                     sx={{
-                      "& .MuiSwitch-switchBase.Mui-checked": { color: "#ff6b35" },
-                      "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": { backgroundColor: "#ff6b35" },
+                      "& .MuiSwitch-switchBase.Mui-checked": { color: "#FF6700" },
+                      "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+                        backgroundColor: "#FF6700",
+                      },
                     }}
                   />
                 )}
@@ -805,11 +899,11 @@ const VariantSection = ({ productId, productName, disabled }: VariantSectionProp
             </Box>
           </DialogContent>
 
-          <DialogActions sx={{ p: 2.5, pt: 1, borderTop: "1px solid rgba(255, 255, 255, 0.05)" }}>
+          <DialogActions sx={{ p: 2.5, pt: 1.5, borderTop: "1px solid rgba(255, 255, 255, 0.08)" }}>
             <Button
               onClick={handleCloseModal}
               disabled={savingVariant}
-              sx={{ color: "#71717a", fontWeight: 600, textTransform: "none" }}
+              sx={{ color: "#A1A1AA", fontWeight: 600, borderRadius: "8px" }}
             >
               Cancel
             </Button>
@@ -819,13 +913,12 @@ const VariantSection = ({ productId, productName, disabled }: VariantSectionProp
               disabled={savingVariant || uploadingImage}
               startIcon={savingVariant ? <CircularProgress size={18} color="inherit" /> : null}
               sx={{
-                backgroundColor: "#ff6b35",
-                color: "#ffffff",
-                fontWeight: 650,
-                textTransform: "none",
+                backgroundColor: "#FF6700",
+                color: "#070709",
+                fontWeight: 800,
                 px: 3,
-                borderRadius: 2,
-                "&:hover": { backgroundColor: "#e05a2b" },
+                borderRadius: "8px",
+                "&:hover": { backgroundColor: "#FF7D24" },
               }}
             >
               {savingVariant ? "Saving..." : editingVariant ? "Save Changes" : "Create Variant"}
@@ -834,7 +927,7 @@ const VariantSection = ({ productId, productName, disabled }: VariantSectionProp
         </Box>
       </Dialog>
 
-      {/* --- QUICK CREATE COLOR MODAL --- */}
+      {/* QUICK CREATE COLOR MODAL */}
       <Dialog
         open={openColorModal}
         onClose={() => !savingColor && setOpenColorModal(false)}
@@ -842,14 +935,15 @@ const VariantSection = ({ productId, productName, disabled }: VariantSectionProp
         fullWidth
         PaperProps={{
           sx: {
-            backgroundColor: "#18181b",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
-            borderRadius: 3,
-            color: "#ffffff",
+            backgroundColor: "#0F0F14",
+            border: "1px solid rgba(255, 255, 255, 0.12)",
+            borderTop: "1px solid rgba(255, 255, 255, 0.22)",
+            borderRadius: "16px",
+            color: "#F4F4F5",
           },
         }}
       >
-        <DialogTitle sx={{ fontWeight: 700, fontSize: "1rem" }}>
+        <DialogTitle sx={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: "1rem" }}>
           Add New Color Option
         </DialogTitle>
         <Box
@@ -863,7 +957,7 @@ const VariantSection = ({ productId, productName, disabled }: VariantSectionProp
         >
           <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
             {colorSubmitError && (
-              <Alert severity="error" sx={{ backgroundColor: "rgba(239, 68, 68, 0.1)", color: "#fca5a5" }}>
+              <Alert severity="error" sx={{ borderRadius: "10px" }}>
                 {colorSubmitError}
               </Alert>
             )}
@@ -879,7 +973,7 @@ const VariantSection = ({ productId, productName, disabled }: VariantSectionProp
                   placeholder="e.g. KTM Electronic Orange"
                   error={Boolean(fieldState.error)}
                   helperText={fieldState.error?.message}
-                  sx={{ "& label": { color: "#71717a", fontWeight: 600 } }}
+                  sx={{ "& label": { color: "#A1A1AA", fontWeight: 600 } }}
                 />
               )}
             />
@@ -896,10 +990,11 @@ const VariantSection = ({ productId, productName, disabled }: VariantSectionProp
                     placeholder="#FF6700"
                     error={Boolean(fieldState.error)}
                     helperText={fieldState.error?.message}
-                    sx={{ "& label": { color: "#71717a", fontWeight: 600 } }}
+                    sx={{ "& label": { color: "#A1A1AA", fontWeight: 600 } }}
                   />
                   <input
                     type="color"
+                    aria-label="Pick color"
                     value={/^#[0-9A-Fa-f]{6}$/.test(field.value) ? field.value : "#FF6700"}
                     onChange={(e) => field.onChange(e.target.value.toUpperCase())}
                     style={{
@@ -920,7 +1015,7 @@ const VariantSection = ({ productId, productName, disabled }: VariantSectionProp
             <Button
               onClick={() => setOpenColorModal(false)}
               disabled={savingColor}
-              sx={{ color: "#71717a", textTransform: "none" }}
+              sx={{ color: "#A1A1AA", borderRadius: "8px" }}
             >
               Cancel
             </Button>
@@ -929,11 +1024,11 @@ const VariantSection = ({ productId, productName, disabled }: VariantSectionProp
               variant="contained"
               disabled={savingColor}
               sx={{
-                backgroundColor: "#ff6b35",
-                color: "#ffffff",
-                fontWeight: 650,
-                textTransform: "none",
-                "&:hover": { backgroundColor: "#e05a2b" },
+                backgroundColor: "#FF6700",
+                color: "#070709",
+                fontWeight: 800,
+                borderRadius: "8px",
+                "&:hover": { backgroundColor: "#FF7D24" },
               }}
             >
               {savingColor ? "Creating..." : "Save Color"}
@@ -941,6 +1036,21 @@ const VariantSection = ({ productId, productName, disabled }: VariantSectionProp
           </DialogActions>
         </Box>
       </Dialog>
+
+      <Snackbar
+        open={Boolean(toastMessage)}
+        autoHideDuration={3500}
+        onClose={() => setToastMessage(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      >
+        <Alert
+          severity="success"
+          onClose={() => setToastMessage(null)}
+          sx={{ borderRadius: "10px", fontWeight: 600 }}
+        >
+          {toastMessage}
+        </Alert>
+      </Snackbar>
     </SectionCard>
   );
 };

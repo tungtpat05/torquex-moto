@@ -1,28 +1,27 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
-  Grid,
-  TextField,
-  MenuItem,
-  InputAdornment,
-  Box,
-  Typography,
-  Select,
-  FormControl,
-  InputLabel,
-  CircularProgress,
   Alert,
+  Box,
+  CircularProgress,
+  FormControl,
   FormHelperText,
-  Avatar,
-  Button,
+  Grid,
+  InputAdornment,
+  InputLabel,
+  MenuItem,
+  Select,
+  TextField,
+  Typography,
 } from "@mui/material";
-import { CloudUpload } from "@mui/icons-material";
 import { Control, Controller, FieldErrors, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import SectionCard from "../common/SectionCard";
+import MediaPreviewStudio from "../common/MediaPreviewStudio";
 import { Brand } from "../../../types/brand";
 import { Category } from "../../../types/category";
 import { SpecDefinition, ProductSpecification } from "../../../types/specDefinition";
 import { getSpecDefinitionsByCategory } from "../../../services/specDefinitionService";
-import { getProductSpecifications, uploadProductImage } from "../../../services/productService";
+import { getProductSpecifications } from "../../../services/productService";
+import { uploadImage } from "../../../services/imageService";
 import { ProductFormValues } from "../../../schemas/productSchema";
 import { slugifyText } from "../../../schemas/common";
 
@@ -126,17 +125,14 @@ const BasicInfoSection = ({
     void loadData();
   }, [categoryId, productId, onSpecDefsLoaded, setValue]);
 
-  const handleThumbnailUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const handleThumbnailUpload = async (file: File) => {
     setUploadingThumbnail(true);
     setThumbnailError(null);
 
     try {
-      const response = await uploadProductImage(file);
+      const response = await uploadImage(file);
       setValue("thumbnail", response.url, { shouldValidate: true, shouldDirty: true });
-      setValue("thumbnailPublicId", response.publicId || "");
+      setValue("thumbnailPublicId", response.publicId || "", { shouldDirty: true });
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { message?: string } }; message?: string };
       setThumbnailError(
@@ -145,6 +141,12 @@ const BasicInfoSection = ({
     } finally {
       setUploadingThumbnail(false);
     }
+  };
+
+  const handleClearThumbnail = () => {
+    setValue("thumbnail", "", { shouldValidate: true, shouldDirty: true });
+    setValue("thumbnailPublicId", "", { shouldDirty: true });
+    setThumbnailError(null);
   };
 
   const handleSpecFieldChange = (
@@ -169,83 +171,7 @@ const BasicInfoSection = ({
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3.5 }}>
-      {/* 1. PRODUCT THUMBNAIL CARD */}
-      <SectionCard title="Product Thumbnail">
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: { xs: "column", sm: "row" },
-            alignItems: { xs: "center", sm: "flex-start" },
-            gap: 3,
-            py: 1,
-          }}
-        >
-          <Avatar
-            variant="rounded"
-            src={thumbnailVal.trim() || undefined}
-            sx={{
-              width: 140,
-              height: 140,
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-              backgroundColor: "#27272a",
-              fontSize: "2.5rem",
-              fontWeight: 600,
-              color: "#ff6b35",
-            }}
-          >
-            {!thumbnailVal.trim() && (productNameVal ? productNameVal.charAt(0).toUpperCase() : "?")}
-          </Avatar>
-          <Box sx={{ flex: 1, width: "100%", display: "flex", flexDirection: "column", gap: 2 }}>
-            <Controller
-              name="thumbnail"
-              control={control}
-              render={({ field, fieldState }) => (
-                <TextField
-                  {...field}
-                  required
-                  fullWidth
-                  label="THUMBNAIL IMAGE URL"
-                  placeholder="https://... or /images/models/ktm-1390-super-duke-r-evo.png"
-                  error={Boolean(fieldState.error)}
-                  helperText={fieldState.error?.message}
-                  disabled={disabled}
-                  sx={{
-                    "& label": { color: "#71717a", fontWeight: 600, fontSize: "0.85rem" },
-                    "& input": { fontSize: "0.95rem", color: "#e4e4e7" },
-                  }}
-                />
-              )}
-            />
-            <Box sx={{ display: "flex", gap: 2, alignItems: "center", flexWrap: "wrap" }}>
-              <Button
-                variant="outlined"
-                component="label"
-                disabled={disabled || uploadingThumbnail}
-                startIcon={uploadingThumbnail ? <CircularProgress size={18} color="inherit" /> : <CloudUpload />}
-                sx={{
-                  borderColor: "#71717a",
-                  color: "#ffffff",
-                  fontWeight: 600,
-                  "&:hover": {
-                    borderColor: "#ff6b35",
-                    backgroundColor: "rgba(255, 107, 53, 0.05)",
-                  },
-                }}
-              >
-                {uploadingThumbnail ? "Uploading..." : "Upload Thumbnail"}
-                <input type="file" hidden accept="image/*" onChange={handleThumbnailUpload} />
-              </Button>
-              {thumbnailError && (
-                <Typography color="error" variant="caption" sx={{ fontWeight: 550 }}>
-                  {thumbnailError}
-                </Typography>
-              )}
-            </Box>
-          </Box>
-        </Box>
-      </SectionCard>
-
-      {/* 2. PRODUCT IDENTITY CARD */}
+      {/* 1. PRODUCT IDENTITY CARD */}
       <SectionCard title="Product Identity">
         <Grid container spacing={2.5}>
           <Grid size={{ xs: 12 }}>
@@ -270,7 +196,7 @@ const BasicInfoSection = ({
                   helperText={fieldState.error?.message}
                   disabled={disabled}
                   sx={{
-                    "& label": { color: "#71717a", fontWeight: 600, fontSize: "0.85rem" },
+                    "& label": { color: "#A1A1AA", fontWeight: 600, fontSize: "0.85rem" },
                     "& input": { fontSize: "0.95rem" },
                   }}
                 />
@@ -296,7 +222,7 @@ const BasicInfoSection = ({
                   helperText={fieldState.error?.message}
                   disabled={disabled}
                   sx={{
-                    "& label": { color: "#71717a", fontWeight: 600, fontSize: "0.85rem" },
+                    "& label": { color: "#A1A1AA", fontWeight: 600, fontSize: "0.85rem" },
                   }}
                 />
               )}
@@ -317,7 +243,7 @@ const BasicInfoSection = ({
                   helperText={fieldState.error?.message}
                   disabled={disabled}
                   sx={{
-                    "& label": { color: "#71717a", fontWeight: 600, fontSize: "0.85rem" },
+                    "& label": { color: "#A1A1AA", fontWeight: 600, fontSize: "0.85rem" },
                   }}
                 >
                   {brands.map((b) => (
@@ -344,7 +270,7 @@ const BasicInfoSection = ({
                   helperText={fieldState.error?.message}
                   disabled={disabled}
                   sx={{
-                    "& label": { color: "#71717a", fontWeight: 600, fontSize: "0.85rem" },
+                    "& label": { color: "#A1A1AA", fontWeight: 600, fontSize: "0.85rem" },
                   }}
                 >
                   {categories.map((c) => (
@@ -373,13 +299,52 @@ const BasicInfoSection = ({
                   helperText={fieldState.error?.message}
                   disabled={disabled}
                   sx={{
-                    "& label": { color: "#71717a", fontWeight: 600, fontSize: "0.85rem" },
+                    "& label": { color: "#A1A1AA", fontWeight: 600, fontSize: "0.85rem" },
                   }}
                 />
               )}
             />
           </Grid>
         </Grid>
+      </SectionCard>
+
+      {/* 2. PRODUCT THUMBNAIL STUDIO CARD */}
+      <SectionCard title="Product Thumbnail">
+        <MediaPreviewStudio
+          imageUrl={thumbnailVal}
+          alt={productNameVal || "Product thumbnail preview"}
+          fallbackText={productNameVal ? productNameVal.charAt(0).toUpperCase() : "?"}
+          uploading={uploadingThumbnail}
+          uploadError={thumbnailError}
+          disabled={disabled}
+          uploadLabel="Upload Thumbnail"
+          clearLabel="Clear Thumbnail"
+          specHint="PNG, JPG, WEBP • Studio side profile (contain)"
+          onUploadFile={handleThumbnailUpload}
+          onClear={handleClearThumbnail}
+          urlInput={
+            <Controller
+              name="thumbnail"
+              control={control}
+              render={({ field, fieldState }) => (
+                <TextField
+                  {...field}
+                  required
+                  fullWidth
+                  label="THUMBNAIL IMAGE URL"
+                  placeholder="https://... or /images/models/ktm-1390-super-duke-r-evo.png"
+                  error={Boolean(fieldState.error)}
+                  helperText={fieldState.error?.message}
+                  disabled={disabled}
+                  sx={{
+                    "& label": { color: "#A1A1AA", fontWeight: 600, fontSize: "0.85rem" },
+                    "& input": { fontSize: "0.95rem", color: "#F4F4F5" },
+                  }}
+                />
+              )}
+            />
+          }
+        />
       </SectionCard>
 
       {/* 3. PRICING DETAILS CARD */}
@@ -406,7 +371,7 @@ const BasicInfoSection = ({
                     },
                   }}
                   sx={{
-                    "& label": { color: "#71717a", fontWeight: 600, fontSize: "0.85rem" },
+                    "& label": { color: "#A1A1AA", fontWeight: 600, fontSize: "0.85rem" },
                   }}
                 />
               )}
@@ -432,7 +397,7 @@ const BasicInfoSection = ({
                     },
                   }}
                   sx={{
-                    "& label": { color: "#71717a", fontWeight: 600, fontSize: "0.85rem" },
+                    "& label": { color: "#A1A1AA", fontWeight: 600, fontSize: "0.85rem" },
                   }}
                 />
               )}
@@ -459,7 +424,7 @@ const BasicInfoSection = ({
               helperText={fieldState.error?.message}
               disabled={disabled}
               sx={{
-                "& label": { color: "#71717a", fontWeight: 600, fontSize: "0.85rem" },
+                "& label": { color: "#A1A1AA", fontWeight: 600, fontSize: "0.85rem" },
                 "& .MuiInputBase-root": { fontSize: "0.95rem" },
               }}
             />
@@ -470,93 +435,106 @@ const BasicInfoSection = ({
       {/* 5. CATEGORY SPECIFICATIONS CARD */}
       <SectionCard title="Category Specifications">
         {!categoryId ? (
-          <Alert severity="warning" sx={{ backgroundColor: "rgba(234, 179, 8, 0.1)", color: "#facc15" }}>
+          <Alert
+            severity="warning"
+            sx={{ backgroundColor: "rgba(234, 179, 8, 0.10)", color: "#FACC15", borderRadius: "10px" }}
+          >
             Please select a category in <strong>Product Identity</strong> above to load specification fields.
           </Alert>
         ) : loadingSpecs ? (
           <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-            <CircularProgress color="warning" />
+            <CircularProgress sx={{ color: "#FF6700" }} />
           </Box>
         ) : specsError ? (
-          <Alert severity="error">{specsError}</Alert>
+          <Alert severity="error" sx={{ borderRadius: "10px" }}>
+            {specsError}
+          </Alert>
         ) : specDefs.length === 0 ? (
-          <Typography variant="body2" sx={{ color: "#71717a", fontStyle: "italic", py: 1 }}>
+          <Typography variant="body2" sx={{ color: "#A1A1AA", fontStyle: "italic", py: 1 }}>
             No custom specification fields configured for this category yet. You can configure them in Category Management.
           </Typography>
         ) : (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
-            <Grid container spacing={2.5}>
-              {specDefs.map((def) => {
-                const curVal = specsMap[String(def.id)] || { value: "", valueNumber: "", optionId: "" };
-                const specErr = errors.specs?.[String(def.id)]?.message;
+          <Grid container spacing={2.5}>
+            {specDefs.map((def) => {
+              const curVal = specsMap[String(def.id)] || { value: "", valueNumber: "", optionId: "" };
+              const specErr = errors.specs?.[String(def.id)]?.message;
+              const fieldLabel = `${def.displayName.toUpperCase()}${def.isRequired ? " *" : ""}`;
 
-                return (
-                  <Grid key={def.id} size={{ xs: 12, sm: 6 }}>
-                    {def.dataType === "select" ? (
-                      <FormControl fullWidth size="small" error={Boolean(specErr)}>
-                        <InputLabel sx={{ color: "#71717a", fontWeight: 600, fontSize: "0.85rem" }}>
-                          {def.displayName.toUpperCase()}{def.isRequired ? " *" : ""}
-                        </InputLabel>
-                        <Select
-                          value={curVal.optionId}
-                          label={`${def.displayName.toUpperCase()}${def.isRequired ? " *" : ""}`}
-                          onChange={(e) => handleSpecFieldChange(def.id, "optionId", e.target.value)}
-                          disabled={disabled}
-                          sx={{ color: "#ffffff", fontSize: "0.95rem" }}
-                        >
-                          <MenuItem value="">
-                            <em>-- Select {def.displayName} --</em>
-                          </MenuItem>
-                          {def.options?.map((opt) => (
-                            <MenuItem key={opt.id} value={String(opt.id)}>
-                              {opt.optionValue}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                        {specErr && <FormHelperText error>{specErr}</FormHelperText>}
-                      </FormControl>
-                    ) : def.dataType === "number" ? (
-                      <TextField
-                        fullWidth
-                        type="number"
-                        label={`${def.displayName.toUpperCase()}${def.isRequired ? " *" : ""}`}
-                        placeholder="e.g. 1350"
-                        value={curVal.valueNumber}
-                        onChange={(e) => handleSpecFieldChange(def.id, "valueNumber", e.target.value)}
-                        error={Boolean(specErr)}
-                        helperText={specErr}
+              return (
+                <Grid key={def.id} size={{ xs: 12, sm: 6 }}>
+                  {def.dataType === "select" ? (
+                    <FormControl fullWidth error={Boolean(specErr)}>
+                      <InputLabel
+                        id={`spec-select-label-${def.id}`}
+                        sx={{ color: "#A1A1AA", fontWeight: 600, fontSize: "0.85rem" }}
+                      >
+                        {fieldLabel}
+                      </InputLabel>
+                      <Select
+                        labelId={`spec-select-label-${def.id}`}
+                        value={curVal.optionId}
+                        label={fieldLabel}
+                        onChange={(e) => handleSpecFieldChange(def.id, "optionId", e.target.value)}
                         disabled={disabled}
-                        InputProps={{
+                        sx={{ color: "#F4F4F5", fontSize: "0.95rem" }}
+                      >
+                        <MenuItem value="">
+                          <em>-- Select {def.displayName} --</em>
+                        </MenuItem>
+                        {def.options?.map((opt) => (
+                          <MenuItem key={opt.id} value={String(opt.id)}>
+                            {opt.optionValue}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                      {specErr && <FormHelperText error>{specErr}</FormHelperText>}
+                    </FormControl>
+                  ) : def.dataType === "number" ? (
+                    <TextField
+                      fullWidth
+                      type="number"
+                      label={fieldLabel}
+                      placeholder="e.g. 1350"
+                      value={curVal.valueNumber}
+                      onChange={(e) => handleSpecFieldChange(def.id, "valueNumber", e.target.value)}
+                      error={Boolean(specErr)}
+                      helperText={specErr}
+                      disabled={disabled}
+                      slotProps={{
+                        input: {
                           endAdornment: def.unit ? (
-                            <InputAdornment position="end" sx={{ "& p": { color: "#a1a1aa", fontWeight: 600 } }}>
+                            <InputAdornment
+                              position="end"
+                              sx={{ "& p": { color: "#A1A1AA", fontWeight: 600 } }}
+                            >
                               {def.unit}
                             </InputAdornment>
                           ) : undefined,
-                        }}
-                        sx={{
-                          "& label": { color: "#71717a", fontWeight: 600, fontSize: "0.85rem" },
-                        }}
-                      />
-                    ) : (
-                      <TextField
-                        fullWidth
-                        label={`${def.displayName.toUpperCase()}${def.isRequired ? " *" : ""}`}
-                        placeholder="Enter specification value"
-                        value={curVal.value}
-                        onChange={(e) => handleSpecFieldChange(def.id, "value", e.target.value)}
-                        error={Boolean(specErr)}
-                        helperText={specErr}
-                        disabled={disabled}
-                        sx={{
-                          "& label": { color: "#71717a", fontWeight: 600, fontSize: "0.85rem" },
-                        }}
-                      />
-                    )}
-                  </Grid>
-                );
-              })}
-            </Grid>
-          </Box>
+                        },
+                      }}
+                      sx={{
+                        "& label": { color: "#A1A1AA", fontWeight: 600, fontSize: "0.85rem" },
+                      }}
+                    />
+                  ) : (
+                    <TextField
+                      fullWidth
+                      label={fieldLabel}
+                      placeholder="Enter specification value"
+                      value={curVal.value}
+                      onChange={(e) => handleSpecFieldChange(def.id, "value", e.target.value)}
+                      error={Boolean(specErr)}
+                      helperText={specErr}
+                      disabled={disabled}
+                      sx={{
+                        "& label": { color: "#A1A1AA", fontWeight: 600, fontSize: "0.85rem" },
+                      }}
+                    />
+                  )}
+                </Grid>
+              );
+            })}
+          </Grid>
         )}
       </SectionCard>
 
@@ -578,7 +556,7 @@ const BasicInfoSection = ({
                   helperText={fieldState.error?.message}
                   disabled={disabled}
                   sx={{
-                    "& label": { color: "#71717a", fontWeight: 600, fontSize: "0.85rem" },
+                    "& label": { color: "#A1A1AA", fontWeight: 600, fontSize: "0.85rem" },
                   }}
                 />
               )}
@@ -599,7 +577,7 @@ const BasicInfoSection = ({
                   helperText={fieldState.error?.message}
                   disabled={disabled}
                   sx={{
-                    "& label": { color: "#71717a", fontWeight: 600, fontSize: "0.85rem" },
+                    "& label": { color: "#A1A1AA", fontWeight: 600, fontSize: "0.85rem" },
                   }}
                 />
               )}
@@ -620,7 +598,7 @@ const BasicInfoSection = ({
                   helperText={fieldState.error?.message}
                   disabled={disabled}
                   sx={{
-                    "& label": { color: "#71717a", fontWeight: 600, fontSize: "0.85rem" },
+                    "& label": { color: "#A1A1AA", fontWeight: 600, fontSize: "0.85rem" },
                   }}
                 />
               )}
@@ -641,7 +619,7 @@ const BasicInfoSection = ({
                   helperText={fieldState.error?.message}
                   disabled={disabled}
                   sx={{
-                    "& label": { color: "#71717a", fontWeight: 600, fontSize: "0.85rem" },
+                    "& label": { color: "#A1A1AA", fontWeight: 600, fontSize: "0.85rem" },
                   }}
                 />
               )}

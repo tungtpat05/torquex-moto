@@ -1,84 +1,61 @@
-import { Chip } from "@mui/material";
+import { Box, Chip } from "@mui/material";
 
-export type StatusType =
-  | "completed"
-  | "processing"
-  | "shipped"
-  | "cancelled"
-  | "published"
-  | "draft"
-  | string;
+export type StatusType = "Active" | "Inactive" | string;
 
 interface StatusChipProps {
   status: StatusType;
 }
 
 const StatusChip = ({ status }: StatusChipProps) => {
-  const normalized = status.toLowerCase();
+  const isActive = status.toLowerCase() === "active";
 
-  let colorSetting = {
-    bg: "rgba(113, 113, 122, 0.08)",
-    text: "#a1a1aa",
-    border: "rgba(113, 113, 122, 0.15)",
-  };
-
-  switch (normalized) {
-    case "completed":
-    case "published":
-    case "active":
-      colorSetting = {
-        bg: "rgba(34, 197, 94, 0.08)",
-        text: "#22c55e",
-        border: "rgba(34, 197, 94, 0.15)",
+  const colorSetting = isActive
+    ? {
+        bg: "rgba(34, 197, 94, 0.10)",
+        text: "#4ADE80",
+        dot: "#22C55E",
+        border: "rgba(34, 197, 94, 0.25)",
+      }
+    : {
+        bg: "rgba(239, 68, 68, 0.10)",
+        text: "#FCA5A5",
+        dot: "#EF4444",
+        border: "rgba(239, 68, 68, 0.25)",
       };
-      break;
-    case "processing":
-      colorSetting = {
-        bg: "rgba(59, 130, 246, 0.08)",
-        text: "#3b82f6",
-        border: "rgba(59, 130, 246, 0.15)",
-      };
-      break;
-    case "shipped":
-      colorSetting = {
-        bg: "rgba(168, 85, 247, 0.08)",
-        text: "#a855f7",
-        border: "rgba(168, 85, 247, 0.15)",
-      };
-      break;
-    case "cancelled":
-    case "inactive":
-      colorSetting = {
-        bg: "rgba(239, 68, 68, 0.08)",
-        text: "#ef4444",
-        border: "rgba(239, 68, 68, 0.15)",
-      };
-      break;
-    case "draft":
-      colorSetting = {
-        bg: "rgba(245, 158, 11, 0.08)", // golden/amber
-        text: "#f59e0b",
-        border: "rgba(245, 158, 11, 0.15)",
-      };
-      break;
-  }
 
   return (
     <Chip
-      label={status}
       variant="outlined"
       size="small"
+      label={
+        <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.75 }}>
+          <Box
+            component="span"
+            aria-hidden="true"
+            sx={{
+              width: 6,
+              height: 6,
+              borderRadius: "50%",
+              backgroundColor: colorSetting.dot,
+              flexShrink: 0,
+            }}
+          />
+          {status}
+        </Box>
+      }
       sx={{
         backgroundColor: colorSetting.bg,
         color: colorSetting.text,
         borderColor: colorSetting.border,
-        fontWeight: 600,
-        textTransform: "capitalize",
-        fontSize: "0.75rem",
+        fontFamily: "var(--font-mono)",
+        fontWeight: 700,
+        textTransform: "uppercase",
+        letterSpacing: "0.06em",
+        fontSize: "0.7rem",
         height: 24,
-        borderRadius: 1.5,
+        borderRadius: "100px",
         "& .MuiChip-label": {
-          px: 1,
+          px: 1.25,
         },
       }}
     />

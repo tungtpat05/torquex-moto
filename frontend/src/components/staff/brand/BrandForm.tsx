@@ -1,12 +1,25 @@
-import React, { useState, useEffect } from "react";
-import { Box, Grid, Button, Switch, FormControlLabel, TextField, Typography, Avatar } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import {
+  Alert,
+  Box,
+  Button,
+  FormControlLabel,
+  Grid,
+  Snackbar,
+  Switch,
+  TextField,
+} from "@mui/material";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import SectionCard from "../common/SectionCard";
+import StaffBreadcrumbs from "../common/StaffBreadcrumbs";
+import ConfirmDialog from "../common/ConfirmDialog";
+import MediaPreviewStudio from "../common/MediaPreviewStudio";
 import { Brand } from "../../../types/brand";
 import { ApiErrorResponse } from "../../../types/apiError";
-import { createBrand, updateBrand, uploadLogoImage } from "../../../services/brandService";
+import { createBrand, updateBrand } from "../../../services/brandService";
+import { uploadImage } from "../../../services/imageService";
 import { brandSchema, BrandFormValues } from "../../../schemas/brandSchema";
 import { applyServerValidationErrors } from "../../../schemas/common";
 
@@ -18,10 +31,15 @@ interface BrandFormProps {
 
 const BrandForm = ({ mode, brandId, initialData }: BrandFormProps) => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [confirmLeaveOpen, setConfirmLeaveOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(
+    (location.state as { toast?: string } | null)?.toast || null
+  );
 
   const {
     control,
@@ -30,7 +48,7 @@ const BrandForm = ({ mode, brandId, initialData }: BrandFormProps) => {
     watch,
     setValue,
     setError,
-    formState: { isSubmitting },
+    formState: { isSubmitting, isDirty },
   } = useForm<BrandFormValues>({
     resolver: zodResolver(brandSchema),
     mode: "onTouched",
@@ -58,28 +76,37 @@ const BrandForm = ({ mode, brandId, initialData }: BrandFormProps) => {
   const brandName = watch("brandName");
   const logoUrl = watch("logoUrl");
 
-  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const handleLogoUpload = async (file: File) => {
     setUploading(true);
     setUploadError(null);
 
     try {
-      const response = await uploadLogoImage(file);
+      const response = await uploadImage(file);
       setValue("logoUrl", response.url, { shouldValidate: true, shouldDirty: true });
-      setValue("logoPublicId", response.publicId || "");
+      setValue("logoPublicId", response.publicId || "", { shouldDirty: true });
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { message?: string } }; message?: string };
       setUploadError(
-        axiosErr?.response?.data?.message || axiosErr?.message || "Failed to upload image. Please try again."
+        axiosErr?.response?.data?.message ||
+          axiosErr?.message ||
+          "Failed to upload image. Please try again."
       );
     } finally {
       setUploading(false);
     }
   };
 
-  const handleCancel = () => {
+  const handleClearLogo = () => {
+    setValue("logoUrl", "", { shouldValidate: true, shouldDirty: true });
+    setValue("logoPublicId", "", { shouldDirty: true });
+    setUploadError(null);
+  };
+
+  const handleAttemptLeave = () => {
+    if (isDirty && !isSubmitting) {
+      setConfirmLeaveOpen(true);
+      return;
+    }
     navigate("/staff/brands");
   };
 
@@ -95,15 +122,18 @@ const BrandForm = ({ mode, brandId, initialData }: BrandFormProps) => {
     };
 
     try {
-      let targetBrandId: number;
+      const message =
+        mode === "add" ? "Brand created successfully." : "Brand changes saved successfully.";
+
       if (mode === "add") {
         const created = await createBrand(payload);
-        targetBrandId = created.id;
+        navigate(`/staff/brands/edit/${created.id}`, { state: { toast: message } });
       } else {
-        targetBrandId = Number(brandId);
+        const targetBrandId = Number(brandId);
         await updateBrand(targetBrandId, payload);
+        reset(values);
+        setToastMessage(message);
       }
-      navigate(`/staff/brands/edit/${targetBrandId}`);
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: ApiErrorResponse }; message?: string };
       const apiData = axiosErr?.response?.data;
@@ -118,21 +148,29 @@ const BrandForm = ({ mode, brandId, initialData }: BrandFormProps) => {
 
   return (
     <Box component="form" noValidate onSubmit={handleSubmit(onSave)} sx={{ width: "100%" }}>
-      {/* Breadcrumbs */}
-      <Box sx={{ color: "#71717a", fontSize: "0.85rem", fontWeight: 550, mb: 3 }}>
-        <span style={{ cursor: "pointer" }} onClick={handleCancel}>Brands</span>
-        {" > "}
-        <span style={{ color: "#ffffff" }}>
-          {mode === "add" ? "Add New Brand" : `Edit Brand : ${initialData?.brandName || ""}`}
-        </span>
-      </Box>
+      <StaffBreadcrumbs
+        items={[
+          { label: "Brands", onClick: handleAttemptLeave },
+          {
+            label:
+              mode === "add" ? "Add New Brand" : `Edit Brand : ${initialData?.brandName || ""}`,
+          },
+        ]}
+      />
 
       {submitError && (
-        <Box sx={{ mb: 3, p: 2, borderRadius: 2, backgroundColor: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)" }}>
-          <Typography color="error" variant="body2" sx={{ fontWeight: 600 }}>
-            {submitError}
-          </Typography>
-        </Box>
+        <Alert
+          severity="error"
+          sx={{
+            mb: 3,
+            borderRadius: "12px",
+            backgroundColor: "rgba(239, 68, 68, 0.10)",
+            color: "#FCA5A5",
+            border: "1px solid rgba(239, 68, 68, 0.28)",
+          }}
+        >
+          {submitError}
+        </Alert>
       )}
 
       <Grid container spacing={3.5}>
@@ -154,7 +192,7 @@ const BrandForm = ({ mode, brandId, initialData }: BrandFormProps) => {
                       helperText={fieldState.error?.message}
                       disabled={isSubmitting}
                       sx={{
-                        "& label": { color: "#71717a", fontWeight: 600, fontSize: "0.85rem" },
+                        "& label": { color: "#A1A1AA", fontWeight: 600, fontSize: "0.85rem" },
                         "& input": { fontSize: "0.95rem" },
                       }}
                     />
@@ -178,7 +216,7 @@ const BrandForm = ({ mode, brandId, initialData }: BrandFormProps) => {
                       helperText={fieldState.error?.message}
                       disabled={isSubmitting}
                       sx={{
-                        "& label": { color: "#71717a", fontWeight: 600, fontSize: "0.85rem" },
+                        "& label": { color: "#A1A1AA", fontWeight: 600, fontSize: "0.85rem" },
                         "& .MuiInputBase-root": { fontSize: "0.95rem" },
                       }}
                     />
@@ -189,26 +227,19 @@ const BrandForm = ({ mode, brandId, initialData }: BrandFormProps) => {
           </SectionCard>
 
           <SectionCard title="Logo Preview">
-            <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, alignItems: { xs: "center", sm: "flex-start" }, gap: 3, py: 1 }}>
-              <Avatar
-                variant="rounded"
-                src={logoUrl?.trim() || undefined}
-                alt={brandName || "Brand logo preview"}
-                sx={{
-                  width: 140,
-                  height: 140,
-                  p: 1.5,
-                  border: "1px solid rgba(255, 255, 255, 0.08)",
-                  backgroundColor: "#0f0f14",
-                  fontSize: "2.5rem",
-                  fontWeight: 600,
-                  color: "#FF6700",
-                  "& img": { objectFit: "contain" },
-                }}
-              >
-                {!logoUrl?.trim() && (brandName ? brandName.charAt(0).toUpperCase() : "?")}
-              </Avatar>
-              <Box sx={{ flex: 1, width: "100%", display: "flex", flexDirection: "column", gap: 2 }}>
+            <MediaPreviewStudio
+              imageUrl={logoUrl}
+              alt={brandName || "Brand logo preview"}
+              fallbackText={brandName ? brandName.charAt(0).toUpperCase() : "?"}
+              uploading={uploading}
+              uploadError={uploadError}
+              disabled={isSubmitting}
+              uploadLabel="Upload Logo Image"
+              clearLabel="Clear Logo"
+              specHint="PNG, SVG, WEBP • Transparent background"
+              onUploadFile={handleLogoUpload}
+              onClear={handleClearLogo}
+              urlInput={
                 <Controller
                   name="logoUrl"
                   control={control}
@@ -223,43 +254,14 @@ const BrandForm = ({ mode, brandId, initialData }: BrandFormProps) => {
                       helperText={fieldState.error?.message}
                       disabled={isSubmitting}
                       sx={{
-                        "& label": { color: "#71717a", fontWeight: 600, fontSize: "0.85rem" },
-                        "& input": { fontSize: "0.95rem", color: "#e4e4e7" },
+                        "& label": { color: "#A1A1AA", fontWeight: 600, fontSize: "0.85rem" },
+                        "& input": { fontSize: "0.95rem", color: "#F4F4F5" },
                       }}
                     />
                   )}
                 />
-                <Box sx={{ display: "flex", gap: 2, alignItems: "center", flexWrap: "wrap" }}>
-                  <Button
-                    variant="outlined"
-                    component="label"
-                    disabled={isSubmitting || uploading}
-                    sx={{
-                      borderColor: "#71717a",
-                      color: "#ffffff",
-                      fontWeight: 600,
-                      "&:hover": {
-                        borderColor: "#ff6b35",
-                        backgroundColor: "rgba(255, 107, 53, 0.05)",
-                      },
-                    }}
-                  >
-                    {uploading ? "Uploading..." : "Upload Logo Image"}
-                    <input
-                      type="file"
-                      hidden
-                      accept="image/*"
-                      onChange={handleLogoUpload}
-                    />
-                  </Button>
-                  {uploadError && (
-                    <Typography color="error" variant="caption" sx={{ fontWeight: 550 }}>
-                      {uploadError}
-                    </Typography>
-                  )}
-                </Box>
-              </Box>
-            </Box>
+              }
+            />
           </SectionCard>
         </Grid>
 
@@ -278,10 +280,10 @@ const BrandForm = ({ mode, brandId, initialData }: BrandFormProps) => {
                         disabled={isSubmitting}
                         sx={{
                           "& .MuiSwitch-switchBase.Mui-checked": {
-                            color: "#ff6b35",
+                            color: "#FF6700",
                           },
                           "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
-                            backgroundColor: "#ff6b35",
+                            backgroundColor: "#FF6700",
                           },
                         }}
                       />
@@ -292,7 +294,7 @@ const BrandForm = ({ mode, brandId, initialData }: BrandFormProps) => {
                       display: "flex",
                       justifyContent: "space-between",
                       mx: 0,
-                      color: "#e4e4e7",
+                      color: "#F4F4F5",
                       "& .MuiTypography-root": { fontSize: "0.9rem", fontWeight: 600 },
                     }}
                   />
@@ -306,16 +308,15 @@ const BrandForm = ({ mode, brandId, initialData }: BrandFormProps) => {
               type="submit"
               fullWidth
               variant="contained"
-              disabled={isSubmitting}
+              disabled={isSubmitting || uploading}
               sx={{
                 py: 1.25,
-                backgroundColor: "#ff6b35",
-                color: "#ffffff",
-                fontWeight: 700,
-                borderRadius: 2,
-                boxShadow: "0 4px 12px rgba(255, 107, 53, 0.15)",
+                backgroundColor: "#FF6700",
+                color: "#070709",
+                fontWeight: 800,
+                borderRadius: "8px",
                 "&:hover": {
-                  backgroundColor: "#e05a2b",
+                  backgroundColor: "#FF7D24",
                 },
               }}
             >
@@ -325,15 +326,15 @@ const BrandForm = ({ mode, brandId, initialData }: BrandFormProps) => {
             <Button
               fullWidth
               disabled={isSubmitting}
-              onClick={handleCancel}
+              onClick={handleAttemptLeave}
               sx={{
                 py: 1.25,
-                color: "#71717a",
+                color: "#A1A1AA",
                 fontWeight: 600,
-                borderRadius: 2,
+                borderRadius: "8px",
                 "&:hover": {
-                  color: "#ef4444",
-                  backgroundColor: "rgba(239, 68, 68, 0.05)",
+                  color: "#EF4444",
+                  backgroundColor: "rgba(239, 68, 68, 0.08)",
                 },
               }}
             >
@@ -342,6 +343,35 @@ const BrandForm = ({ mode, brandId, initialData }: BrandFormProps) => {
           </Box>
         </Grid>
       </Grid>
+
+      <ConfirmDialog
+        open={confirmLeaveOpen}
+        title="Discard unsaved changes?"
+        description="You have modified fields on this brand. Leaving now will discard your unsaved edits."
+        confirmLabel="Discard"
+        cancelLabel="Keep Editing"
+        tone="warning"
+        onConfirm={() => {
+          setConfirmLeaveOpen(false);
+          navigate("/staff/brands");
+        }}
+        onCancel={() => setConfirmLeaveOpen(false)}
+      />
+
+      <Snackbar
+        open={Boolean(toastMessage)}
+        autoHideDuration={4000}
+        onClose={() => setToastMessage(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      >
+        <Alert
+          severity="success"
+          onClose={() => setToastMessage(null)}
+          sx={{ borderRadius: "10px", fontWeight: 600 }}
+        >
+          {toastMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

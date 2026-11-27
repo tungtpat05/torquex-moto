@@ -5,62 +5,51 @@ interface SectionCardProps {
   title?: string;
   subtitle?: string;
   children: ReactNode;
-  headerAction?: ReactNode;
   sx?: object;
 }
 
-const SectionCard = ({ title, subtitle, children, headerAction, sx = {} }: SectionCardProps) => {
+const SectionCard = ({ title, subtitle, children, sx = {} }: SectionCardProps) => {
   return (
     <Paper
       elevation={0}
       sx={{
-        backgroundColor: "#18181b", // zinc 900 Background in MUI darkTheme palette config
-        border: "1px solid rgba(255, 255, 255, 0.05)",
-        borderRadius: 3,
+        backgroundColor: "rgba(15, 15, 20, 0.92)",
+        border: "1px solid rgba(255, 255, 255, 0.10)",
+        borderTop: "1px solid rgba(255, 255, 255, 0.22)",
+        borderRadius: "16px",
         p: { xs: 2, md: 3 },
         overflow: "hidden",
         position: "relative",
         ...sx,
       }}
     >
-      {(title || headerAction) && (
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            mb: 2.5,
-            flexWrap: "wrap",
-            gap: 1.5,
-          }}
-        >
-          <Box>
-            {title && (
-              <Typography
-                variant="h6"
-                sx={{
-                  fontWeight: 700,
-                  fontSize: "1.05rem",
-                  color: "#ffffff",
-                }}
-              >
-                {title}
-              </Typography>
-            )}
-            {subtitle && (
-              <Typography
-                variant="body2"
-                sx={{
-                  color: "#71717a",
-                  fontSize: "0.85rem",
-                  mt: 0.25,
-                }}
-              >
-                {subtitle}
-              </Typography>
-            )}
-          </Box>
-          {headerAction && <Box>{headerAction}</Box>}
+      {title && (
+        <Box sx={{ mb: 2.5 }}>
+          <Typography
+            variant="h6"
+            sx={{
+              fontFamily: "var(--font-display)",
+              fontWeight: 800,
+              fontSize: "1.05rem",
+              letterSpacing: "-0.01em",
+              color: "#F4F4F5",
+            }}
+          >
+            {title}
+          </Typography>
+          {subtitle && (
+            <Typography
+              variant="body2"
+              sx={{
+                fontFamily: "var(--font-body)",
+                color: "#A1A1AA",
+                fontSize: "0.85rem",
+                mt: 0.25,
+              }}
+            >
+              {subtitle}
+            </Typography>
+          )}
         </Box>
       )}
       <Box sx={{ width: "100%" }}>{children}</Box>

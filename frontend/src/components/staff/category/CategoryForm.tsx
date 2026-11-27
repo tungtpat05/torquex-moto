@@ -1,13 +1,26 @@
-import React, { useState, useEffect } from "react";
-import { Box, Grid, Button, Switch, FormControlLabel, TextField, Typography, Avatar } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import {
+  Alert,
+  Box,
+  Button,
+  FormControlLabel,
+  Grid,
+  Snackbar,
+  Switch,
+  TextField,
+} from "@mui/material";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import SectionCard from "../common/SectionCard";
+import StaffBreadcrumbs from "../common/StaffBreadcrumbs";
+import ConfirmDialog from "../common/ConfirmDialog";
+import MediaPreviewStudio from "../common/MediaPreviewStudio";
 import SpecDefinitionManager from "./SpecDefinitionManager";
 import { Category } from "../../../types/category";
 import { ApiErrorResponse } from "../../../types/apiError";
-import { createCategory, updateCategory, uploadCategoryImage } from "../../../services/categoryService";
+import { createCategory, updateCategory } from "../../../services/categoryService";
+import { uploadImage } from "../../../services/imageService";
 import { categorySchema, CategoryFormValues } from "../../../schemas/categorySchema";
 import { applyServerValidationErrors, slugifyText } from "../../../schemas/common";
 
@@ -19,11 +32,16 @@ interface CategoryFormProps {
 
 const CategoryForm = ({ mode, categoryId, initialData }: CategoryFormProps) => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(mode === "edit");
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [confirmLeaveOpen, setConfirmLeaveOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(
+    (location.state as { toast?: string } | null)?.toast || null
+  );
 
   const {
     control,
@@ -32,7 +50,7 @@ const CategoryForm = ({ mode, categoryId, initialData }: CategoryFormProps) => {
     watch,
     setValue,
     setError,
-    formState: { isSubmitting, isSubmitted },
+    formState: { isSubmitting, isSubmitted, isDirty },
   } = useForm<CategoryFormValues>({
     resolver: zodResolver(categorySchema),
     mode: "onTouched",
@@ -61,27 +79,35 @@ const CategoryForm = ({ mode, categoryId, initialData }: CategoryFormProps) => {
   const categoryName = watch("categoryName");
   const categoryImage = watch("categoryImage");
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const handleImageUpload = async (file: File) => {
     setUploading(true);
     setUploadError(null);
 
     try {
-      const response = await uploadCategoryImage(file);
+      const response = await uploadImage(file);
       setValue("categoryImage", response.url, { shouldValidate: true, shouldDirty: true });
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { message?: string } }; message?: string };
       setUploadError(
-        axiosErr?.response?.data?.message || axiosErr?.message || "Failed to upload image. Please try again."
+        axiosErr?.response?.data?.message ||
+        axiosErr?.message ||
+        "Failed to upload image. Please try again."
       );
     } finally {
       setUploading(false);
     }
   };
 
-  const handleCancel = () => {
+  const handleClearImage = () => {
+    setValue("categoryImage", "", { shouldValidate: true, shouldDirty: true });
+    setUploadError(null);
+  };
+
+  const handleAttemptLeave = () => {
+    if (isDirty && !isSubmitting) {
+      setConfirmLeaveOpen(true);
+      return;
+    }
     navigate("/staff/categories");
   };
 
@@ -97,15 +123,20 @@ const CategoryForm = ({ mode, categoryId, initialData }: CategoryFormProps) => {
     };
 
     try {
-      let targetCategoryId: number;
+      const message =
+        mode === "add"
+          ? "Category created successfully."
+          : "Category changes saved successfully.";
+
       if (mode === "add") {
         const created = await createCategory(payload);
-        targetCategoryId = created.id;
+        navigate(`/staff/categories/edit/${created.id}`, { state: { toast: message } });
       } else {
-        targetCategoryId = Number(categoryId);
+        const targetCategoryId = Number(categoryId);
         await updateCategory(targetCategoryId, payload);
+        reset(values);
+        setToastMessage(message);
       }
-      navigate(`/staff/categories/edit/${targetCategoryId}`);
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: ApiErrorResponse }; message?: string };
       const apiData = axiosErr?.response?.data;
@@ -120,21 +151,31 @@ const CategoryForm = ({ mode, categoryId, initialData }: CategoryFormProps) => {
 
   return (
     <Box component="form" noValidate onSubmit={handleSubmit(onSave)} sx={{ width: "100%" }}>
-      {/* Breadcrumbs */}
-      <Box sx={{ color: "#71717a", fontSize: "0.85rem", fontWeight: 550, mb: 3 }}>
-        <span style={{ cursor: "pointer" }} onClick={handleCancel}>Categories</span>
-        {" > "}
-        <span style={{ color: "#ffffff" }}>
-          {mode === "add" ? "Add New Category" : `Edit Category : ${initialData?.categoryName || ""}`}
-        </span>
-      </Box>
+      <StaffBreadcrumbs
+        items={[
+          { label: "Categories", onClick: handleAttemptLeave },
+          {
+            label:
+              mode === "add"
+                ? "Add New Category"
+                : `Edit Category : ${initialData?.categoryName || ""}`,
+          },
+        ]}
+      />
 
       {submitError && (
-        <Box sx={{ mb: 3, p: 2, borderRadius: 2, backgroundColor: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)" }}>
-          <Typography color="error" variant="body2" sx={{ fontWeight: 600 }}>
-            {submitError}
-          </Typography>
-        </Box>
+        <Alert
+          severity="error"
+          sx={{
+            mb: 3,
+            borderRadius: "12px",
+            backgroundColor: "rgba(239, 68, 68, 0.10)",
+            color: "#FCA5A5",
+            border: "1px solid rgba(239, 68, 68, 0.28)",
+          }}
+        >
+          {submitError}
+        </Alert>
       )}
 
       <Grid container spacing={3.5}>
@@ -163,7 +204,7 @@ const CategoryForm = ({ mode, categoryId, initialData }: CategoryFormProps) => {
                       helperText={fieldState.error?.message}
                       disabled={isSubmitting}
                       sx={{
-                        "& label": { color: "#71717a", fontWeight: 600, fontSize: "0.85rem" },
+                        "& label": { color: "#A1A1AA", fontWeight: 600, fontSize: "0.85rem" },
                         "& input": { fontSize: "0.95rem" },
                       }}
                     />
@@ -190,7 +231,7 @@ const CategoryForm = ({ mode, categoryId, initialData }: CategoryFormProps) => {
                       helperText={fieldState.error?.message || "Used in URL configuration"}
                       disabled={isSubmitting}
                       sx={{
-                        "& label": { color: "#71717a", fontWeight: 600, fontSize: "0.85rem" },
+                        "& label": { color: "#A1A1AA", fontWeight: 600, fontSize: "0.85rem" },
                         "& input": { fontSize: "0.95rem" },
                       }}
                     />
@@ -214,7 +255,7 @@ const CategoryForm = ({ mode, categoryId, initialData }: CategoryFormProps) => {
                       helperText={fieldState.error?.message}
                       disabled={isSubmitting}
                       sx={{
-                        "& label": { color: "#71717a", fontWeight: 600, fontSize: "0.85rem" },
+                        "& label": { color: "#A1A1AA", fontWeight: 600, fontSize: "0.85rem" },
                         "& .MuiInputBase-root": { fontSize: "0.95rem" },
                       }}
                     />
@@ -225,23 +266,19 @@ const CategoryForm = ({ mode, categoryId, initialData }: CategoryFormProps) => {
           </SectionCard>
 
           <SectionCard title="Image Preview">
-            <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, alignItems: { xs: "center", sm: "flex-start" }, gap: 3, py: 1 }}>
-              <Avatar
-                variant="rounded"
-                src={categoryImage?.trim() || undefined}
-                sx={{
-                  width: 180,
-                  height: 120,
-                  border: "1px solid rgba(255, 255, 255, 0.08)",
-                  backgroundColor: "#27272a",
-                  fontSize: "3rem",
-                  fontWeight: 600,
-                  color: "#ff6b35",
-                }}
-              >
-                {!categoryImage?.trim() && (categoryName ? categoryName.charAt(0).toUpperCase() : "?")}
-              </Avatar>
-              <Box sx={{ flex: 1, width: "100%", display: "flex", flexDirection: "column", gap: 2 }}>
+            <MediaPreviewStudio
+              imageUrl={categoryImage}
+              alt={categoryName || "Category image preview"}
+              fallbackText={categoryName ? categoryName.charAt(0).toUpperCase() : "?"}
+              uploading={uploading}
+              uploadError={uploadError}
+              disabled={isSubmitting}
+              uploadLabel="Upload Category Image"
+              clearLabel="Clear Image"
+              specHint="PNG, JPG, WEBP • Landscape studio shot recommended"
+              onUploadFile={handleImageUpload}
+              onClear={handleClearImage}
+              urlInput={
                 <Controller
                   name="categoryImage"
                   control={control}
@@ -256,43 +293,14 @@ const CategoryForm = ({ mode, categoryId, initialData }: CategoryFormProps) => {
                       helperText={fieldState.error?.message}
                       disabled={isSubmitting}
                       sx={{
-                        "& label": { color: "#71717a", fontWeight: 600, fontSize: "0.85rem" },
-                        "& input": { fontSize: "0.95rem", color: "#e4e4e7" },
+                        "& label": { color: "#A1A1AA", fontWeight: 600, fontSize: "0.85rem" },
+                        "& input": { fontSize: "0.95rem", color: "#F4F4F5" },
                       }}
                     />
                   )}
                 />
-                <Box sx={{ display: "flex", gap: 2, alignItems: "center", flexWrap: "wrap" }}>
-                  <Button
-                    variant="outlined"
-                    component="label"
-                    disabled={isSubmitting || uploading}
-                    sx={{
-                      borderColor: "#71717a",
-                      color: "#ffffff",
-                      fontWeight: 600,
-                      "&:hover": {
-                        borderColor: "#ff6b35",
-                        backgroundColor: "rgba(255, 107, 53, 0.05)",
-                      },
-                    }}
-                  >
-                    {uploading ? "Uploading..." : "Upload Category Image"}
-                    <input
-                      type="file"
-                      hidden
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                    />
-                  </Button>
-                  {uploadError && (
-                    <Typography color="error" variant="caption" sx={{ fontWeight: 550 }}>
-                      {uploadError}
-                    </Typography>
-                  )}
-                </Box>
-              </Box>
-            </Box>
+              }
+            />
           </SectionCard>
 
           <SpecDefinitionManager categoryId={categoryId ? Number(categoryId) : undefined} />
@@ -313,10 +321,10 @@ const CategoryForm = ({ mode, categoryId, initialData }: CategoryFormProps) => {
                         disabled={isSubmitting}
                         sx={{
                           "& .MuiSwitch-switchBase.Mui-checked": {
-                            color: "#ff6b35",
+                            color: "#FF6700",
                           },
                           "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
-                            backgroundColor: "#ff6b35",
+                            backgroundColor: "#FF6700",
                           },
                         }}
                       />
@@ -327,7 +335,7 @@ const CategoryForm = ({ mode, categoryId, initialData }: CategoryFormProps) => {
                       display: "flex",
                       justifyContent: "space-between",
                       mx: 0,
-                      color: "#e4e4e7",
+                      color: "#F4F4F5",
                       "& .MuiTypography-root": { fontSize: "0.9rem", fontWeight: 600 },
                     }}
                   />
@@ -341,16 +349,15 @@ const CategoryForm = ({ mode, categoryId, initialData }: CategoryFormProps) => {
               type="submit"
               fullWidth
               variant="contained"
-              disabled={isSubmitting}
+              disabled={isSubmitting || uploading}
               sx={{
                 py: 1.25,
-                backgroundColor: "#ff6b35",
-                color: "#ffffff",
-                fontWeight: 700,
-                borderRadius: 2,
-                boxShadow: "0 4px 12px rgba(255, 107, 53, 0.15)",
+                backgroundColor: "#FF6700",
+                color: "#070709",
+                fontWeight: 800,
+                borderRadius: "8px",
                 "&:hover": {
-                  backgroundColor: "#e05a2b",
+                  backgroundColor: "#FF7D24",
                 },
               }}
             >
@@ -360,15 +367,15 @@ const CategoryForm = ({ mode, categoryId, initialData }: CategoryFormProps) => {
             <Button
               fullWidth
               disabled={isSubmitting}
-              onClick={handleCancel}
+              onClick={handleAttemptLeave}
               sx={{
                 py: 1.25,
-                color: "#71717a",
+                color: "#A1A1AA",
                 fontWeight: 600,
-                borderRadius: 2,
+                borderRadius: "8px",
                 "&:hover": {
-                  color: "#ef4444",
-                  backgroundColor: "rgba(239, 68, 68, 0.05)",
+                  color: "#EF4444",
+                  backgroundColor: "rgba(239, 68, 68, 0.08)",
                 },
               }}
             >
@@ -377,6 +384,35 @@ const CategoryForm = ({ mode, categoryId, initialData }: CategoryFormProps) => {
           </Box>
         </Grid>
       </Grid>
+
+      <ConfirmDialog
+        open={confirmLeaveOpen}
+        title="Discard unsaved changes?"
+        description="You have modified fields on this category. Leaving now will discard your unsaved edits."
+        confirmLabel="Discard"
+        cancelLabel="Keep Editing"
+        tone="warning"
+        onConfirm={() => {
+          setConfirmLeaveOpen(false);
+          navigate("/staff/categories");
+        }}
+        onCancel={() => setConfirmLeaveOpen(false)}
+      />
+
+      <Snackbar
+        open={Boolean(toastMessage)}
+        autoHideDuration={4000}
+        onClose={() => setToastMessage(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      >
+        <Alert
+          severity="success"
+          onClose={() => setToastMessage(null)}
+          sx={{ borderRadius: "10px", fontWeight: 600 }}
+        >
+          {toastMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

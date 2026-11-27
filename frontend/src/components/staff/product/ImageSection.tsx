@@ -1,32 +1,35 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
+  Alert,
   Box,
-  Typography,
   Button,
+  Chip,
   CircularProgress,
   IconButton,
-  Tooltip,
   Paper,
-  Chip,
+  Snackbar,
+  Tooltip,
+  Typography,
 } from "@mui/material";
 import {
-  ArrowUpward,
+  AddPhotoAlternate,
   ArrowDownward,
+  ArrowUpward,
   Delete,
   DragIndicator,
-  AddPhotoAlternate,
-  Refresh,
   PhotoLibrary,
+  Refresh,
 } from "@mui/icons-material";
 import SectionCard from "../common/SectionCard";
+import ConfirmDialog from "../common/ConfirmDialog";
 import {
-  uploadProductImage,
-  getProductImages,
   addProductImage,
-  updateProductImage,
   deleteProductImage,
+  getProductImages,
   reorderProductImages,
+  updateProductImage,
 } from "../../../services/productService";
+import { uploadImage } from "../../../services/imageService";
 import { ProductImage } from "../../../types/product";
 
 interface ImageSectionProps {
@@ -35,24 +38,19 @@ interface ImageSectionProps {
   productName?: string;
 }
 
-const ImageSection = ({
-  productId,
-  disabled,
-  productName,
-}: ImageSectionProps) => {
-  // Gallery Images State
+const ImageSection = ({ productId, disabled, productName }: ImageSectionProps) => {
   const [images, setImages] = useState<ProductImage[]>([]);
   const [loadingImages, setLoadingImages] = useState(false);
   const [addingImage, setAddingImage] = useState(false);
   const [replacingImageId, setReplacingImageId] = useState<number | null>(null);
   const [deletingImageId, setDeletingImageId] = useState<number | null>(null);
+  const [pendingDeleteImageId, setPendingDeleteImageId] = useState<number | null>(null);
   const [galleryError, setGalleryError] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Drag and drop state
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
-  // Fetch gallery images when productId is available
   useEffect(() => {
     if (!productId) return;
     const fetchImages = async () => {
@@ -60,9 +58,8 @@ const ImageSection = ({
       setGalleryError(null);
       try {
         const data = await getProductImages(productId);
-        // Sort by display order
         setImages(data.sort((a, b) => a.displayOrder - b.displayOrder));
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Failed to fetch product images:", err);
         setGalleryError("Failed to load product gallery images.");
       } finally {
@@ -72,64 +69,63 @@ const ImageSection = ({
     void fetchImages();
   }, [productId]);
 
-  // Add New Gallery Image Handler
   const handleAddGalleryImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = "";
     if (!file || !productId) return;
 
     setAddingImage(true);
     setGalleryError(null);
 
     try {
-      const uploadRes = await uploadProductImage(file);
+      const uploadRes = await uploadImage(file);
       const newImage = await addProductImage(productId, uploadRes.url, uploadRes.publicId);
       setImages((prev) => [...prev, newImage].sort((a, b) => a.displayOrder - b.displayOrder));
-    } catch (err: any) {
+      setToastMessage("Gallery image added.");
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { message?: string } }; message?: string };
       console.error("Failed to add image:", err);
       setGalleryError(
-        err?.response?.data?.message || err?.message || "Failed to add image. Please try again."
+        axiosErr?.response?.data?.message || axiosErr?.message || "Failed to add image. Please try again."
       );
     } finally {
       setAddingImage(false);
-      e.target.value = "";
     }
   };
 
-  // Replace Gallery Image Handler
   const handleReplaceGalleryImage = async (
     imageId: number,
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = e.target.files?.[0];
+    e.target.value = "";
     if (!file || !productId) return;
 
     setReplacingImageId(imageId);
     setGalleryError(null);
 
     try {
-      const uploadRes = await uploadProductImage(file);
+      const uploadRes = await uploadImage(file);
       const updated = await updateProductImage(productId, imageId, {
         imageUrl: uploadRes.url,
         imagePublicId: uploadRes.publicId,
       });
-      setImages((prev) =>
-        prev.map((img) => (img.id === imageId ? updated : img))
-      );
-    } catch (err: any) {
+      setImages((prev) => prev.map((img) => (img.id === imageId ? updated : img)));
+      setToastMessage("Gallery image replaced.");
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { message?: string } }; message?: string };
       console.error("Failed to replace image:", err);
       setGalleryError(
-        err?.response?.data?.message || err?.message || "Failed to replace image."
+        axiosErr?.response?.data?.message || axiosErr?.message || "Failed to replace image."
       );
     } finally {
       setReplacingImageId(null);
-      e.target.value = "";
     }
   };
 
-  // Delete Gallery Image Handler
-  const handleDeleteGalleryImage = async (imageId: number) => {
-    if (!productId) return;
-    if (!window.confirm("Are you sure you want to delete this product image?")) return;
+  const handleConfirmDeleteImage = async () => {
+    if (!productId || !pendingDeleteImageId) return;
+    const imageId = pendingDeleteImageId;
 
     setDeletingImageId(imageId);
     setGalleryError(null);
@@ -145,17 +141,20 @@ const ImageSection = ({
         );
         setImages(reordered.sort((a, b) => a.displayOrder - b.displayOrder));
       }
-    } catch (err: any) {
+      setPendingDeleteImageId(null);
+      setToastMessage("Gallery image deleted.");
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { message?: string } }; message?: string };
       console.error("Failed to delete image:", err);
       setGalleryError(
-        err?.response?.data?.message || err?.message || "Failed to delete image."
+        axiosErr?.response?.data?.message || axiosErr?.message || "Failed to delete image."
       );
+      setPendingDeleteImageId(null);
     } finally {
       setDeletingImageId(null);
     }
   };
 
-  // Move image up/down manually
   const handleMoveImage = async (index: number, direction: "up" | "down") => {
     if (!productId) return;
     const targetIndex = direction === "up" ? index - 1 : index + 1;
@@ -174,13 +173,13 @@ const ImageSection = ({
         newImages.map((img) => img.id)
       );
       setImages(reordered.sort((a, b) => a.displayOrder - b.displayOrder));
-    } catch (err: any) {
+      setToastMessage("Gallery order updated.");
+    } catch (err: unknown) {
       console.error("Failed to reorder images:", err);
       setGalleryError("Failed to update image display order.");
     }
   };
 
-  // Drag and Drop Handlers
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, index: number) => {
     setDraggedIndex(index);
     e.dataTransfer.effectAllowed = "move";
@@ -217,7 +216,8 @@ const ImageSection = ({
         newImages.map((img) => img.id)
       );
       setImages(reordered.sort((a, b) => a.displayOrder - b.displayOrder));
-    } catch (err: any) {
+      setToastMessage("Gallery order updated.");
+    } catch (err: unknown) {
       console.error("Failed to reorder images on drop:", err);
       setGalleryError("Failed to update image display order.");
     }
@@ -231,22 +231,25 @@ const ImageSection = ({
             py: 6,
             px: 3,
             textAlign: "center",
-            backgroundColor: "rgba(255, 255, 255, 0.02)",
-            borderRadius: 2,
-            border: "1px dashed rgba(255, 255, 255, 0.12)",
+            backgroundColor: "#16161D",
+            borderRadius: "12px",
+            border: "1px dashed rgba(255, 255, 255, 0.14)",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
           }}
         >
-          <PhotoLibrary sx={{ fontSize: 48, color: "#71717a", mb: 1.5 }} />
-          <Typography variant="h6" sx={{ color: "#ffffff", fontWeight: 650, mb: 1 }}>
+          <PhotoLibrary sx={{ fontSize: 48, color: "#71717A", mb: 1.5 }} />
+          <Typography
+            variant="h6"
+            sx={{ fontFamily: "var(--font-display)", color: "#F4F4F5", fontWeight: 700, mb: 1 }}
+          >
             Save Basic Info First
           </Typography>
-          <Typography variant="body2" sx={{ color: "#71717a", maxWidth: 480, mx: "auto", lineHeight: 1.6 }}>
+          <Typography variant="body2" sx={{ color: "#A1A1AA", maxWidth: 480, mx: "auto", lineHeight: 1.6 }}>
             Please publish or save the product basic information first. After creation, you will be able to manage gallery images for{" "}
-            <strong style={{ color: "#e4e4e7" }}>{productName || "this product"}</strong> here.
+            <strong style={{ color: "#F4F4F5" }}>{productName || "this product"}</strong> here.
           </Typography>
         </Box>
       </SectionCard>
@@ -255,40 +258,23 @@ const ImageSection = ({
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3.5 }}>
-      {/* PRODUCT GALLERY IMAGES (ORDERING & MANAGEMENT) */}
       <SectionCard title="Product Gallery Images & Display Order">
-        <Typography variant="body2" sx={{ color: "#71717a", mb: 2.5, fontWeight: 500 }}>
+        <Typography variant="body2" sx={{ color: "#A1A1AA", mb: 2.5, fontWeight: 500 }}>
           Manage additional product gallery images below for {productName || "this product"}. Drag and drop cards or use the Up/Down buttons to adjust display order.
         </Typography>
 
         {galleryError && (
-          <Box
-            sx={{
-              mb: 2.5,
-              p: 1.5,
-              borderRadius: 2,
-              backgroundColor: "rgba(239, 68, 68, 0.1)",
-              border: "1px solid rgba(239, 68, 68, 0.2)",
-            }}
-          >
-            <Typography color="error" variant="caption" sx={{ fontWeight: 600 }}>
-              {galleryError}
-            </Typography>
-          </Box>
+          <Alert severity="error" sx={{ mb: 2.5, borderRadius: "10px" }}>
+            {galleryError}
+          </Alert>
         )}
 
         {loadingImages ? (
           <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-            <CircularProgress color="warning" size={32} />
+            <CircularProgress sx={{ color: "#FF6700" }} size={32} />
           </Box>
         ) : (
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 2,
-            }}
-          >
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             {images.map((img, index) => {
               const isDragging = draggedIndex === index;
               const isDragOver = dragOverIndex === index;
@@ -300,86 +286,96 @@ const ImageSection = ({
                   onDragStart={(e) => handleDragStart(e, index)}
                   onDragOver={(e) => handleDragOver(e, index)}
                   onDragEnd={handleDragEnd}
-                  onDrop={(e) => handleDrop(e, index)}
+                  onDrop={(e) => void handleDrop(e, index)}
                   elevation={0}
                   sx={{
                     display: "flex",
                     alignItems: "center",
+                    flexWrap: "wrap",
                     gap: 2,
                     p: 2,
-                    borderRadius: 2,
-                    backgroundColor: isDragging ? "rgba(255, 107, 53, 0.08)" : "#18181b",
+                    borderRadius: "12px",
+                    backgroundColor: isDragging ? "rgba(255, 103, 0, 0.08)" : "#16161D",
                     border: isDragOver
-                      ? "2px dashed #ff6b35"
+                      ? "2px dashed #FF6700"
                       : isDragging
-                      ? "1px dashed rgba(255, 107, 53, 0.5)"
-                      : "1px solid rgba(255, 255, 255, 0.08)",
+                        ? "1px dashed rgba(255, 103, 0, 0.5)"
+                        : "1px solid rgba(255, 255, 255, 0.10)",
                     opacity: isDragging ? 0.6 : 1,
-                    transition: "all 0.2s ease",
+                    transition: "border-color 0.2s ease, background-color 0.2s ease",
                     cursor: "grab",
                     "&:hover": {
-                      borderColor: "rgba(255, 107, 53, 0.4)",
-                      boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+                      borderColor: "rgba(255, 103, 0, 0.45)",
                     },
                   }}
                 >
-                  {/* Drag Handle & Order Badge */}
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <DragIndicator sx={{ color: "#71717a", cursor: "grab" }} />
+                    <DragIndicator sx={{ color: "#71717A", cursor: "grab" }} />
                     <Chip
                       label={`#${index + 1}`}
                       size="small"
+                      className="tabular-nums"
                       sx={{
-                        backgroundColor: "rgba(255, 107, 53, 0.15)",
-                        color: "#ff6b35",
+                        fontFamily: "var(--font-mono)",
+                        backgroundColor: "rgba(255, 103, 0, 0.14)",
+                        color: "#FF6700",
                         fontWeight: 700,
-                        fontSize: "0.75rem",
+                        fontSize: "0.74rem",
+                        borderRadius: "4px",
                         height: 24,
                       }}
                     />
                   </Box>
 
-                  {/* Image Preview */}
                   <Box
                     component="img"
                     src={img.imageUrl}
-                    alt={`Product image ${index + 1}`}
+                    alt={`Product gallery image ${index + 1}`}
                     sx={{
-                      width: 64,
-                      height: 64,
-                      objectFit: "cover",
-                      borderRadius: 1.5,
-                      border: "1px solid rgba(255, 255, 255, 0.1)",
-                      backgroundColor: "#27272a",
+                      width: 112,
+                      height: 74,
+                      p: 0.5,
+                      objectFit: "contain",
+                      borderRadius: "8px",
+                      border: "1px solid rgba(255, 255, 255, 0.12)",
+                      backgroundColor: "#0F0F14",
+                      flexShrink: 0,
                     }}
                   />
 
-                  {/* Image URL info */}
-                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Box sx={{ flex: 1, minWidth: 160 }}>
                     <Typography
                       variant="body2"
                       noWrap
-                      sx={{ color: "#e4e4e7", fontWeight: 500, fontSize: "0.85rem" }}
+                      sx={{ color: "#F4F4F5", fontWeight: 500, fontSize: "0.85rem" }}
                     >
                       {img.imageUrl}
                     </Typography>
-                    <Typography variant="caption" sx={{ color: "#71717a" }}>
-                      Display Order Priority: {index + 1}
+                    <Typography
+                      variant="caption"
+                      className="tabular-nums"
+                      sx={{ fontFamily: "var(--font-mono)", color: "#71717A" }}
+                    >
+                      DISPLAY PRIORITY: {index + 1}
                     </Typography>
                   </Box>
 
-                  {/* Action Controls */}
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    {/* Up Button */}
-                    <Tooltip title="Move Up (Increase Priority)">
+                    <Tooltip title="Move Up (Increase Priority)" arrow>
                       <span>
                         <IconButton
-                          size="small"
+                          aria-label={`Move image ${index + 1} up`}
                           disabled={index === 0}
-                          onClick={() => handleMoveImage(index, "up")}
+                          onClick={() => void handleMoveImage(index, "up")}
                           sx={{
-                            color: index === 0 ? "#3f3f46" : "#a1a1aa",
-                            "&:hover": { color: "#ff6b35", backgroundColor: "rgba(255, 107, 53, 0.1)" },
+                            minWidth: { xs: 40, sm: 36 },
+                            minHeight: { xs: 40, sm: 36 },
+                            borderRadius: "8px",
+                            color: index === 0 ? "#3F3F46" : "#A1A1AA",
+                            "&:hover": {
+                              color: "#FF6700",
+                              backgroundColor: "rgba(255, 103, 0, 0.10)",
+                            },
                           }}
                         >
                           <ArrowUpward fontSize="small" />
@@ -387,16 +383,21 @@ const ImageSection = ({
                       </span>
                     </Tooltip>
 
-                    {/* Down Button */}
-                    <Tooltip title="Move Down (Lower Priority)">
+                    <Tooltip title="Move Down (Lower Priority)" arrow>
                       <span>
                         <IconButton
-                          size="small"
+                          aria-label={`Move image ${index + 1} down`}
                           disabled={index === images.length - 1}
-                          onClick={() => handleMoveImage(index, "down")}
+                          onClick={() => void handleMoveImage(index, "down")}
                           sx={{
-                            color: index === images.length - 1 ? "#3f3f46" : "#a1a1aa",
-                            "&:hover": { color: "#ff6b35", backgroundColor: "rgba(255, 107, 53, 0.1)" },
+                            minWidth: { xs: 40, sm: 36 },
+                            minHeight: { xs: 40, sm: 36 },
+                            borderRadius: "8px",
+                            color: index === images.length - 1 ? "#3F3F46" : "#A1A1AA",
+                            "&:hover": {
+                              color: "#FF6700",
+                              backgroundColor: "rgba(255, 103, 0, 0.10)",
+                            },
                           }}
                         >
                           <ArrowDownward fontSize="small" />
@@ -404,8 +405,7 @@ const ImageSection = ({
                       </span>
                     </Tooltip>
 
-                    {/* Replace / Upload Button */}
-                    <Tooltip title="Replace this Image">
+                    <Tooltip title="Replace this Image" arrow>
                       <Button
                         variant="outlined"
                         component="label"
@@ -419,15 +419,17 @@ const ImageSection = ({
                           )
                         }
                         sx={{
-                          borderColor: "rgba(255, 255, 255, 0.15)",
-                          color: "#e4e4e7",
-                          fontSize: "0.75rem",
+                          borderRadius: "8px",
+                          borderColor: "rgba(255, 255, 255, 0.16)",
+                          color: "#F4F4F5",
+                          fontSize: "0.78rem",
                           fontWeight: 600,
                           px: 1.5,
+                          minHeight: 36,
                           "&:hover": {
-                            borderColor: "#ff6b35",
-                            color: "#ff6b35",
-                            backgroundColor: "rgba(255, 107, 53, 0.05)",
+                            borderColor: "#FF6700",
+                            color: "#FF6700",
+                            backgroundColor: "rgba(255, 103, 0, 0.06)",
                           },
                         }}
                       >
@@ -436,49 +438,54 @@ const ImageSection = ({
                           type="file"
                           hidden
                           accept="image/*"
-                          onChange={(e) => handleReplaceGalleryImage(img.id, e)}
+                          onChange={(e) => void handleReplaceGalleryImage(img.id, e)}
                         />
                       </Button>
                     </Tooltip>
 
-                    {/* Delete Button */}
-                    <Tooltip title="Delete Image">
-                      <IconButton
-                        size="small"
-                        disabled={deletingImageId === img.id}
-                        onClick={() => handleDeleteGalleryImage(img.id)}
-                        sx={{
-                          color: "#ef4444",
-                          "&:hover": { backgroundColor: "rgba(239, 68, 68, 0.1)" },
-                        }}
-                      >
-                        {deletingImageId === img.id ? (
-                          <CircularProgress size={16} color="error" />
-                        ) : (
-                          <Delete fontSize="small" />
-                        )}
-                      </IconButton>
+                    <Tooltip title="Delete Image" arrow>
+                      <span>
+                        <IconButton
+                          aria-label={`Delete image ${index + 1}`}
+                          disabled={deletingImageId === img.id}
+                          onClick={() => setPendingDeleteImageId(img.id)}
+                          sx={{
+                            minWidth: { xs: 40, sm: 36 },
+                            minHeight: { xs: 40, sm: 36 },
+                            borderRadius: "8px",
+                            color: "#A1A1AA",
+                            "&:hover": {
+                              color: "#EF4444",
+                              backgroundColor: "rgba(239, 68, 68, 0.12)",
+                            },
+                          }}
+                        >
+                          {deletingImageId === img.id ? (
+                            <CircularProgress size={16} color="error" />
+                          ) : (
+                            <Delete fontSize="small" />
+                          )}
+                        </IconButton>
+                      </span>
                     </Tooltip>
                   </Box>
                 </Paper>
               );
             })}
 
-            {/* Upload New Image Button Card */}
             <Box
               sx={{
                 p: 2.5,
-                borderRadius: 2,
-                border: "2px dashed rgba(255, 255, 255, 0.15)",
-                backgroundColor: "rgba(24, 24, 27, 0.5)",
+                borderRadius: "12px",
+                border: "1px dashed rgba(255, 255, 255, 0.18)",
+                backgroundColor: "#16161D",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                gap: 1.5,
-                transition: "all 0.2s ease",
+                transition: "border-color 0.2s ease, background-color 0.2s ease",
                 "&:hover": {
-                  borderColor: "#ff6b35",
-                  backgroundColor: "rgba(255, 107, 53, 0.03)",
+                  borderColor: "#FF6700",
+                  backgroundColor: "rgba(255, 103, 0, 0.04)",
                 },
               }}
             >
@@ -487,25 +494,57 @@ const ImageSection = ({
                 disabled={disabled || addingImage}
                 startIcon={
                   addingImage ? (
-                    <CircularProgress size={18} color="inherit" />
+                    <CircularProgress size={18} sx={{ color: "#FF6700" }} />
                   ) : (
-                    <AddPhotoAlternate sx={{ color: "#ff6b35" }} />
+                    <AddPhotoAlternate sx={{ color: "#FF6700" }} />
                   )
                 }
                 sx={{
-                  color: "#ffffff",
-                  fontWeight: 650,
+                  color: "#F4F4F5",
+                  fontWeight: 700,
                   fontSize: "0.9rem",
-                  textTransform: "none",
+                  borderRadius: "8px",
                 }}
               >
                 {addingImage ? "Uploading new image..." : "+ Add New Product Image"}
-                <input type="file" hidden accept="image/*" onChange={handleAddGalleryImage} />
+                <input
+                  type="file"
+                  hidden
+                  accept="image/*"
+                  onChange={(e) => void handleAddGalleryImage(e)}
+                />
               </Button>
             </Box>
           </Box>
         )}
       </SectionCard>
+
+      <ConfirmDialog
+        open={Boolean(pendingDeleteImageId)}
+        title="Delete gallery image?"
+        description="Are you sure you want to delete this product gallery image? Remaining images will be reordered."
+        confirmLabel="Delete Image"
+        cancelLabel="Cancel"
+        tone="danger"
+        loading={Boolean(deletingImageId)}
+        onConfirm={() => void handleConfirmDeleteImage()}
+        onCancel={() => setPendingDeleteImageId(null)}
+      />
+
+      <Snackbar
+        open={Boolean(toastMessage)}
+        autoHideDuration={3500}
+        onClose={() => setToastMessage(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      >
+        <Alert
+          severity="success"
+          onClose={() => setToastMessage(null)}
+          sx={{ borderRadius: "10px", fontWeight: 600 }}
+        >
+          {toastMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

@@ -1,6 +1,16 @@
 import { axiosClient } from "../lib/axiosClient";
-import { Product, ProductImage, ProductVariant, ProductVariantCreateRequest, ProductVariantUpdateRequest } from "../types/product";
-import { ProductSpecification, ProductSpecificationCreateRequest, ProductSpecificationUpdateRequest } from "../types/specDefinition";
+import {
+  Product,
+  ProductImage,
+  ProductVariant,
+  ProductVariantCreateRequest,
+  ProductVariantUpdateRequest,
+} from "../types/product";
+import {
+  ProductSpecification,
+  ProductSpecificationCreateRequest,
+  ProductSpecificationUpdateRequest,
+} from "../types/specDefinition";
 
 export interface ProductCreateRequest {
   productName: string;
@@ -39,11 +49,6 @@ export interface ProductUpdateRequest {
   isActive?: boolean;
 }
 
-export interface ImageUploadResponse {
-  url: string;
-  publicId: string;
-}
-
 export const getProducts = async (): Promise<Product[]> => {
   const response = await axiosClient.get<Product[]>("/products");
   return response.data;
@@ -71,24 +76,20 @@ export const updateProduct = async (id: number, payload: ProductUpdateRequest): 
   return response.data;
 };
 
-export const uploadProductImage = async (file: File): Promise<ImageUploadResponse> => {
-  const formData = new FormData();
-  formData.append("file", file);
-  const response = await axiosClient.post<ImageUploadResponse>("/images/upload", formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  });
-  return response.data;
-};
-
 export const getProductImages = async (productId: number): Promise<ProductImage[]> => {
   const response = await axiosClient.get<ProductImage[]>(`/products/${productId}/images`);
   return response.data;
 };
 
-export const addProductImage = async (productId: number, imageUrl: string, imagePublicId?: string): Promise<ProductImage> => {
-  const response = await axiosClient.post<ProductImage>(`/products/${productId}/images`, { imageUrl, imagePublicId });
+export const addProductImage = async (
+  productId: number,
+  imageUrl: string,
+  imagePublicId?: string
+): Promise<ProductImage> => {
+  const response = await axiosClient.post<ProductImage>(`/products/${productId}/images`, {
+    imageUrl,
+    imagePublicId,
+  });
   return response.data;
 };
 
@@ -97,7 +98,10 @@ export const updateProductImage = async (
   imageId: number,
   payload: { imageUrl?: string; imagePublicId?: string; displayOrder?: number }
 ): Promise<ProductImage> => {
-  const response = await axiosClient.put<ProductImage>(`/products/${productId}/images/${imageId}`, payload);
+  const response = await axiosClient.put<ProductImage>(
+    `/products/${productId}/images/${imageId}`,
+    payload
+  );
   return response.data;
 };
 
@@ -105,8 +109,14 @@ export const deleteProductImage = async (productId: number, imageId: number): Pr
   await axiosClient.delete(`/products/${productId}/images/${imageId}`);
 };
 
-export const reorderProductImages = async (productId: number, imageIds: number[]): Promise<ProductImage[]> => {
-  const response = await axiosClient.put<ProductImage[]>(`/products/${productId}/images/reorder`, imageIds);
+export const reorderProductImages = async (
+  productId: number,
+  imageIds: number[]
+): Promise<ProductImage[]> => {
+  const response = await axiosClient.put<ProductImage[]>(
+    `/products/${productId}/images/reorder`,
+    imageIds
+  );
   return response.data;
 };
 
@@ -119,7 +129,10 @@ export const createProductVariant = async (
   productId: number,
   payload: ProductVariantCreateRequest
 ): Promise<ProductVariant> => {
-  const response = await axiosClient.post<ProductVariant>(`/products/${productId}/variants`, payload);
+  const response = await axiosClient.post<ProductVariant>(
+    `/products/${productId}/variants`,
+    payload
+  );
   return response.data;
 };
 
@@ -128,13 +141,19 @@ export const updateProductVariant = async (
   variantId: number,
   payload: ProductVariantUpdateRequest
 ): Promise<ProductVariant> => {
-  const response = await axiosClient.put<ProductVariant>(`/products/${productId}/variants/${variantId}`, payload);
+  const response = await axiosClient.put<ProductVariant>(
+    `/products/${productId}/variants/${variantId}`,
+    payload
+  );
   return response.data;
 };
 
-// Product Specification APIs
-export const getProductSpecifications = async (productId: number): Promise<ProductSpecification[]> => {
-  const response = await axiosClient.get<ProductSpecification[]>(`/products/${productId}/specifications`);
+export const getProductSpecifications = async (
+  productId: number
+): Promise<ProductSpecification[]> => {
+  const response = await axiosClient.get<ProductSpecification[]>(
+    `/products/${productId}/specifications`
+  );
   return response.data;
 };
 
@@ -142,7 +161,10 @@ export const createProductSpecification = async (
   productId: number,
   payload: ProductSpecificationCreateRequest
 ): Promise<ProductSpecification> => {
-  const response = await axiosClient.post<ProductSpecification>(`/products/${productId}/specifications`, payload);
+  const response = await axiosClient.post<ProductSpecification>(
+    `/products/${productId}/specifications`,
+    payload
+  );
   return response.data;
 };
 
@@ -151,7 +173,10 @@ export const updateProductSpecification = async (
   specId: number,
   payload: ProductSpecificationUpdateRequest
 ): Promise<ProductSpecification> => {
-  const response = await axiosClient.put<ProductSpecification>(`/products/${productId}/specifications/${specId}`, payload);
+  const response = await axiosClient.put<ProductSpecification>(
+    `/products/${productId}/specifications/${specId}`,
+    payload
+  );
   return response.data;
 };
 

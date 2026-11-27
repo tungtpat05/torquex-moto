@@ -1,6 +1,8 @@
-import { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
-import { Box, CircularProgress, Typography } from "@mui/material";
+import { useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { Alert, Box, Button, CircularProgress, Snackbar } from "@mui/material";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import StaffBreadcrumbs from "../../components/staff/common/StaffBreadcrumbs";
 import SectionCard from "../../components/staff/common/SectionCard";
 import ProductFilterBar from "../../components/staff/product/ProductFilterBar";
 import ProductsTable from "../../components/staff/product/ProductsTable";
@@ -10,14 +12,34 @@ import { useCategories } from "../../hooks/useCategories";
 
 const ProductsPage = () => {
   const navigate = useNavigate();
-  const { products, loading: productsLoading, error: productsError } = useProducts();
-  const { brands, loading: brandsLoading, error: brandsError } = useBrands();
-  const { categories, loading: categoriesLoading, error: categoriesError } = useCategories();
+  const location = useLocation();
+  const {
+    products,
+    loading: productsLoading,
+    error: productsError,
+    refetch: refetchProducts,
+  } = useProducts();
+  const {
+    brands,
+    loading: brandsLoading,
+    error: brandsError,
+    refetch: refetchBrands,
+  } = useBrands();
+  const {
+    categories,
+    loading: categoriesLoading,
+    error: categoriesError,
+    refetch: refetchCategories,
+  } = useCategories();
 
   const [search, setSearch] = useState("");
   const [brand, setBrand] = useState("");
   const [category, setCategory] = useState("");
   const [status, setStatus] = useState("");
+  const [page, setPage] = useState(1);
+  const [toastMessage, setToastMessage] = useState<string | null>(
+    (location.state as { toast?: string } | null)?.toast || null
+  );
 
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
@@ -30,9 +52,7 @@ const ProductsPage = () => {
         brandName.toLowerCase().includes(search.toLowerCase());
 
       const matchBrand = brand === "" || brandName === brand;
-
       const matchCategory = category === "" || categoryName === category;
-
       const matchStatus =
         status === "" ||
         (status === "active" && product.isActive) ||
@@ -45,45 +65,128 @@ const ProductsPage = () => {
   const loading = productsLoading || brandsLoading || categoriesLoading;
   const error = productsError || brandsError || categoriesError;
 
+  const handleRetry = () => {
+    void Promise.all([refetchProducts(), refetchBrands(), refetchCategories()]);
+  };
+
+  const handleSearchChange = (val: string) => {
+    setSearch(val);
+    setPage(1);
+  };
+
+  const handleBrandChange = (val: string) => {
+    setBrand(val);
+    setPage(1);
+  };
+
+  const handleCategoryChange = (val: string) => {
+    setCategory(val);
+    setPage(1);
+  };
+
+  const handleStatusChange = (val: string) => {
+    setStatus(val);
+    setPage(1);
+  };
+
+  const handleClearFilters = () => {
+    setSearch("");
+    setBrand("");
+    setCategory("");
+    setStatus("");
+    setPage(1);
+  };
+
   if (loading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "400px" }}>
-        <CircularProgress sx={{ color: "#ff6b35" }} />
+      <Box>
+        <StaffBreadcrumbs items={[{ label: "Staff", to: "/staff/dashboard" }, { label: "Products" }]} />
+        <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 360 }}>
+          <CircularProgress sx={{ color: "#FF6700" }} />
+        </Box>
       </Box>
     );
   }
 
   if (error) {
     return (
-      <Box sx={{ display: "flex", gap: 2, flexDirection: "column", justifyContent: "center", alignItems: "center", minHeight: "400px" }}>
-        <Typography color="error" variant="h6">
+      <Box>
+        <StaffBreadcrumbs items={[{ label: "Staff", to: "/staff/dashboard" }, { label: "Products" }]} />
+        <Alert
+          severity="error"
+          sx={{
+            borderRadius: "12px",
+            backgroundColor: "rgba(239, 68, 68, 0.10)",
+            color: "#FCA5A5",
+            border: "1px solid rgba(239, 68, 68, 0.28)",
+            alignItems: "center",
+          }}
+          action={
+            <Button
+              size="small"
+              variant="contained"
+              startIcon={<RefreshIcon fontSize="small" />}
+              onClick={handleRetry}
+              sx={{
+                backgroundColor: "#FF6700",
+                color: "#070709",
+                fontWeight: 800,
+                borderRadius: "8px",
+                "&:hover": { backgroundColor: "#FF7D24" },
+              }}
+            >
+              Retry
+            </Button>
+          }
+        >
           {error}
-        </Typography>
+        </Alert>
       </Box>
     );
   }
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column" }}>
-      {/* Search and Filters Layout */}
+      <StaffBreadcrumbs items={[{ label: "Staff", to: "/staff/dashboard" }, { label: "Products" }]} />
       <ProductFilterBar
         search={search}
-        onSearchChange={setSearch}
+        onSearchChange={handleSearchChange}
         brand={brand}
-        onBrandChange={setBrand}
+        onBrandChange={handleBrandChange}
         category={category}
-        onCategoryChange={setCategory}
+        onCategoryChange={handleCategoryChange}
         status={status}
-        onStatusChange={setStatus}
+        onStatusChange={handleStatusChange}
         brands={brands}
         categories={categories}
+        onReset={handleClearFilters}
         onAddClick={() => navigate("/staff/products/add")}
       />
 
-      {/* Main Table card list */}
       <SectionCard>
-        <ProductsTable products={filteredProducts} />
+        <ProductsTable
+          products={filteredProducts}
+          page={page}
+          onPageChange={setPage}
+          hasActiveFilters={Boolean(search || brand || category || status)}
+          onClearFilters={handleClearFilters}
+        />
       </SectionCard>
+
+      <Snackbar
+        open={Boolean(toastMessage)}
+        autoHideDuration={4000}
+        onClose={() => setToastMessage(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      >
+        <Alert
+          severity="success"
+          onClose={() => setToastMessage(null)}
+          sx={{ borderRadius: "10px", fontWeight: 600 }}
+        >
+          {toastMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
