@@ -92,6 +92,12 @@ const InternalAccountFormPage = ({ mode: propMode }: InternalAccountFormPageProp
 
   const fetchTargetUser = useCallback(async () => {
     if (mode !== "edit" || !id) return;
+    if (!/^[1-9]\d*$/.test(id.trim())) {
+      setLoading(false);
+      setLoadedUser(null);
+      setLoadError("Invalid account ID. Please select a valid staff account.");
+      return;
+    }
     setLoading(true);
     setLoadError(null);
     try {

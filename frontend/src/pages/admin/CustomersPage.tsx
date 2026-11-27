@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Alert,
   Box,
@@ -64,6 +64,15 @@ const CustomersPage = () => {
     size: PAGE_SIZE,
   });
 
+  useEffect(() => {
+    if (loading || page <= 1) return;
+    if (totalPages > 0 && page > totalPages) {
+      setPage(totalPages);
+    } else if (totalPages === 0) {
+      setPage(1);
+    }
+  }, [loading, page, totalPages]);
+
   const hasActiveFilters = Boolean(search || statusFilter);
 
   const handleSearchChange = (value: string) => {
@@ -89,7 +98,6 @@ const CustomersPage = () => {
     const nextActive = !statusTarget.isActive;
     try {
       await updateAdminUserStatus(statusTarget.id, { isActive: nextActive });
-      setStatusTarget(null);
       setToastMessage(
         nextActive
           ? `${statusTarget.fullName} unlocked successfully.`
@@ -102,6 +110,7 @@ const CustomersPage = () => {
       );
     } finally {
       setStatusSubmitting(false);
+      setStatusTarget(null);
     }
   };
 

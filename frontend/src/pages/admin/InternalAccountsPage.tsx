@@ -87,6 +87,15 @@ const InternalAccountsPage = () => {
     size: PAGE_SIZE,
   });
 
+  useEffect(() => {
+    if (loading || page <= 1) return;
+    if (totalPages > 0 && page > totalPages) {
+      setPage(totalPages);
+    } else if (totalPages === 0) {
+      setPage(1);
+    }
+  }, [loading, page, totalPages]);
+
   const hasActiveFilters = Boolean(search || roleFilter || statusFilter);
 
   const handleSearchChange = (value: string) => {
@@ -118,7 +127,6 @@ const InternalAccountsPage = () => {
     const nextActive = !statusTarget.isActive;
     try {
       await updateAdminUserStatus(statusTarget.id, { isActive: nextActive });
-      setStatusTarget(null);
       setToastMessage(
         nextActive
           ? `${statusTarget.fullName} unlocked successfully.`
@@ -131,6 +139,7 @@ const InternalAccountsPage = () => {
       );
     } finally {
       setStatusSubmitting(false);
+      setStatusTarget(null);
     }
   };
 
